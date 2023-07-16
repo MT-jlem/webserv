@@ -17,7 +17,16 @@ public:
 	request(const std::string &req);
 	~request();
 
-	void parse();
+	void parse(std::string &body);
+	std::string 						getMethod();
+	std::string 						getPath();
+	std::string 						getVersion();
+	std::map<std::string, std::string>	getHeader();
+	std::string							getBody();
+	bool								checkVerion();
+	bool								checkPath();
+	bool 								checkMethod();
+	bool								checkHeaders();
 };
 
 

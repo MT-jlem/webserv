@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <cstring>
+#include <fstream>
 #include <unistd.h>
 
 /*to-do:
@@ -18,10 +19,21 @@
 	- cookies and session ...
 */
 
+	//getaddrinfo
+	//socket
+	//setsockopt
+	//bind
+	// fcntl
+	//listen
+	//accept
+	//poll
+	//send || //recv
+
 // int main(int ac, char *av[]){ //takes config file
 int main(){
 
 	struct addrinfo *res, hints;
+	std::ifstream file("index.html");
 
 	std::memset(&hints, 0, sizeof(hints));
 	hints.ai_socktype = SOCK_STREAM;
@@ -42,35 +54,43 @@ int main(){
 			continue;
 		}
 		listen(sock, 2);
-		fcntl(sock, F_SETFL, O_NONBLOCK);
+		// fcntl(sock, F_SETFL, O_NONBLOCK);
 		break;
 	}
 	struct sockaddr_storage s;
 	socklen_t len;
 	int host;
-	host = accept(sock, (sockaddr *)&s, &len);
-	if (host < 0){
-		std::cout << "accept error\n";
-		return 1;
+	while (1)
+	{
+		std::cout << "waiting for new connection\n";
+		host = accept(sock, (sockaddr *)&s, &len);
+		if (host < 0){
+			std::cout << "accept error\n";
+			close(sock);
+			close(host);
+			return 1;
+		}
+		char str[2048];
+		recv(host, str, 2048, 0);
+		// reqParser();
+		std::cout << str <<"\n";
+		std::string res = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
+		std::string buff;
+		std::string tmp;
+		while (getline(file, tmp))
+		{
+			buff += tmp;
+			buff += "\n";
+		}
+		buff.insert(0, res);
+		buff += "\r\n";
+		send(host,(char *)(buff.data()), 2000,0);
+		close(host);
 	}
-	char str[2048];
-	recv(host, str, 2048, 0);
-	//reqParser()
-	std::cout << str <<"\n";
-	char *buff = "200 OK\nDate: Tue, 15 Nov 1994 08:12:31 GMT\nServer: CERN/3.0 lib www/2.17\nContent-Type: text/html\n<html>\nA page with an image\n <img SRC="">\n</html>\n";
-	send(host, buff, 2000,0);
-	//socket
-	//setsockopt
-	//bind
-	//listen
-	//accept
-	//poll // fcntl
-	//send || //recv
+	
 
 	freeaddrinfo(res);
 	close(host);
 	close(sock);
-
-
+	
 }
-
