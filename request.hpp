@@ -17,7 +17,7 @@ public:
 	request(const std::string &req);
 	~request();
 
-	void parse(std::string &body);
+	void parse(const std::string &body);
 	std::string 						getMethod();
 	std::string 						getPath();
 	std::string 						getVersion();

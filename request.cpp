@@ -1,5 +1,7 @@
 #include "request.hpp"
 #include <vector>
+#include <iostream>
+#include <string>
 
 request::request(const std::string &req){
 	rawReq = req;
@@ -8,59 +10,83 @@ request::request(const std::string &req){
 request::~request(){}
 
 std::string 						request::getMethod(){
-
+	return method;
 }
 std::string 						request::getPath(){
-
+	return path;
 }
 std::string 						request::getVersion(){
-
+	return version;
 }
-std::map<std::string, std::string>	request::getHeader(){
+// std::map<std::string, std::string>	request::getHeader(){
 
-}
-std::string							request::getBody(){
+// }
+// std::string							request::getBody(){
 
-}
+// }
 bool								request::checkVerion(){
-
+	return version != "HTTP/1.1";
 }
-bool								request::checkPath(){
+// bool								request::checkPath(){
 
-}
+// }
 bool 								request::checkMethod(){
-
+	if (method != "GET" && method != "POST" && method != "DELETE")
+		return true;
+	return false;
 }
-bool								request::checkHeaders(){
+// bool								request::checkHeaders(){
 
-}
+// }
+void	request::parse(const std::string &body){
 
-void	request::parse(std::string &body){
-
-	std::vector<std::string> vec;
-	size_t i = 0;
-	size_t reqSize = rawReq.size();
+	size_t i = 0, start = 0;
 	std::string	tmp;
-	while (i < reqSize){
-		++i;	
+	std::cout << body;
+
+	i = rawReq.find(" ", 0);//error handling for find and substr
+	if (i == rawReq.npos){
+		std::cerr << "return an error res\n";
+		exit(1);
 	}
+	method = rawReq.substr(0, i);
+	std::cout << method << "-METHOD\n";
 
-	method = getMethod();
-	path = getPath();
-	version =  getVersion();
-	headers = getHeader();
-	body = getBody();
+	start = rawReq.find(" ", i + 1);
+	if (start == rawReq.npos){
+		std::cerr << "return an error res\n";
+		exit(1);
+	}
+	path = rawReq.substr(i + 1, start - i - 1);
+	std::cout << path << "-PATH\n";
 
+	i = rawReq.find("\r", start + 1);
+	if (i == rawReq.npos){
+		std::cerr << "return an error res\n";
+		exit(1);
+	}
+	version = rawReq.substr(start + 1, i - start - 1);
+	std::cout << version << "-VERSION\n";
+	//check for error
 	if (checkVerion()){
-
-	}
-	if (checkPath()){
-
+		std::cerr << "return an error res\n";
+		exit(1);
 	}
 	if (checkMethod()){
-		//error
+		std::cerr << "return an error res\n";
+		exit(1);
 	}
-	if (checkHeaders()){
+	// if (checkPath()){
 
-	}
+	// }
+	// while (i < reqSize){
+	// 	++i;	
+	// }
+
+	// headers = getHeader();
+	// body = getBody();
+
+	// if (checkHeaders()){
+
+	// }
 }

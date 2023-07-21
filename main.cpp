@@ -5,7 +5,9 @@
 #include <netdb.h>
 #include <cstring>
 #include <fstream>
+#include <signal.h>
 #include <unistd.h>
+#include "request.hpp"
 
 /*to-do:
 	- parse conf file
@@ -28,35 +30,48 @@
 	//accept
 	//poll
 	//send || //recv
+	//PS: fcntl(sock, F_SETFL, O_NONBLOCK);//should be used with poll() for non-blocking i/o operations
 
+int sock;
+void handler(int){
+	std::cout << "i'm out here\n";
+	close(sock);
+	exit(1);
+}
 // int main(int ac, char *av[]){ //takes config file
 int main(){
 
 	struct addrinfo *res, hints;
 	std::ifstream file("index.html");
 
+	signal(SIGINT, handler);
 	std::memset(&hints, 0, sizeof(hints));
 	hints.ai_socktype = SOCK_STREAM;
 	if (getaddrinfo("127.0.0.1", "8080", &hints, &res) != 0){
 		std::cerr << "getaddrinfo failed\n";
 	}
 
-	int sock;
+	int yes = 1;
 	for (; res; res = res->ai_next){
 		sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		if (sock < 0){
-			std::cerr << "socket failed retry\n";
+			perror("socket");
+			continue;
+		}
+		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) < 0){
+			perror("setsockopt");
 			continue;
 		}
 		if (bind(sock, res->ai_addr, res->ai_addrlen) != 0){
-			std::cerr << "bind failed retry\n";
 			close(sock);
+			perror("bind");
 			continue;
 		}
-		listen(sock, 2);
-		// fcntl(sock, F_SETFL, O_NONBLOCK);
+		listen(sock, SOMAXCONN);
 		break;
 	}
+	if (!res)
+		return 1;
 	struct sockaddr_storage s;
 	socklen_t len;
 	int host;
@@ -65,15 +80,16 @@ int main(){
 		std::cout << "waiting for new connection\n";
 		host = accept(sock, (sockaddr *)&s, &len);
 		if (host < 0){
-			std::cout << "accept error\n";
 			close(sock);
-			close(host);
+			perror("accept");
 			return 1;
 		}
 		char str[2048];
 		recv(host, str, 2048, 0);
-		// reqParser();
-		std::cout << str <<"\n";
+		
+		request req((char *)str);
+		req.parse("");
+		// std::cout << str <<"\n";
 		std::string res = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 		std::string buff;
 		std::string tmp;
@@ -84,13 +100,11 @@ int main(){
 		}
 		buff.insert(0, res);
 		buff += "\r\n";
-		send(host,(char *)(buff.data()), 2000,0);
+		send(host,(char *)(buff.data()), buff.size(),0);
 		close(host);
 	}
 	
-
 	freeaddrinfo(res);
 	close(host);
 	close(sock);
-	
 }
