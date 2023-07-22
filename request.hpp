@@ -17,12 +17,13 @@ public:
 	request(const std::string &req);
 	~request();
 
-	void parse(const std::string &body);
+	void parse();
 	std::string 						getMethod();
 	std::string 						getPath();
 	std::string 						getVersion();
 	std::map<std::string, std::string>	getHeader();
 	std::string							getBody();
+	size_t								parseHeaders(size_t start);
 	bool								checkVerion();
 	bool								checkPath();
 	bool 								checkMethod();

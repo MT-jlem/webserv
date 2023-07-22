@@ -10,7 +10,9 @@ OBJ = $(SRC:%.cpp=%.o)
 
 HEADERS = request.hpp
 
-all : $(OBJ) $(HEADERS)
+all : $(NAME)
+
+$(NAME) : $(OBJ) $(HEADERS)
 	$(CC) $(CPPFLAGS) $(OBJ) -o $(NAME)
 
 clean : 

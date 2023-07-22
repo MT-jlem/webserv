@@ -77,7 +77,7 @@ int main(){
 	int host;
 	while (1)
 	{
-		std::cout << "waiting for new connection\n";
+		// std::cout << "waiting for new connection\n";
 		host = accept(sock, (sockaddr *)&s, &len);
 		if (host < 0){
 			close(sock);
@@ -88,7 +88,7 @@ int main(){
 		recv(host, str, 2048, 0);
 		
 		request req((char *)str);
-		req.parse("");
+		req.parse();
 		// std::cout << str <<"\n";
 		std::string res = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 		std::string buff;

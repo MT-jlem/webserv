@@ -2,6 +2,8 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <sstream>
+#include <iomanip>
 
 request::request(const std::string &req){
 	rawReq = req;
@@ -38,11 +40,34 @@ bool 								request::checkMethod(){
 // bool								request::checkHeaders(){
 
 // }
-void	request::parse(const std::string &body){
+
+size_t	request::parseHeaders(size_t start){
+
+	size_t end, ret;
+	std::string tmp;
+	end = rawReq.find("\r\n\r\n", start);
+	ret = end;
+	tmp = rawReq.substr(start, end);
+	std::stringstream tab(tmp);
+	std::string str;
+	while (getline(tab, tmp))
+	{
+		end = tmp.find(":", 0);
+		if (end == tmp.npos)
+			break;
+		headers[tmp.substr(0, end)] = tmp.substr(end + 2, tmp.size() - (end + 2));
+	}
+
+	for ( std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it)
+		std::cout << "line >> " << it->first << ":" << it->second << "\n";
+	
+	return ret;
+}
+
+void	request::parse(){
 
 	size_t i = 0, start = 0;
 	std::string	tmp;
-	std::cout << body;
 
 	i = rawReq.find(" ", 0);//error handling for find and substr
 	if (i == rawReq.npos){
@@ -76,17 +101,11 @@ void	request::parse(const std::string &body){
 		std::cerr << "return an error res\n";
 		exit(1);
 	}
+	start = parseHeaders(i + 2);
 	// if (checkPath()){
-
 	// }
-	// while (i < reqSize){
-	// 	++i;	
-	// }
-
-	// headers = getHeader();
-	// body = getBody();
-
 	// if (checkHeaders()){
 
 	// }
 }
+
