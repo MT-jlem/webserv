@@ -24,6 +24,7 @@ public:
 	std::map<std::string, std::string>	getHeader();
 	std::string							getBody();
 	size_t								parseHeaders(size_t start);
+	void								parseBody();
 	bool								checkVerion();
 	bool								checkPath();
 	bool 								checkMethod();

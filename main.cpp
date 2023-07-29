@@ -7,7 +7,9 @@
 #include <fstream>
 #include <signal.h>
 #include <unistd.h>
+#include <string>
 #include "request.hpp"
+#define BUFFER_SIZE 32664
 
 /*to-do:
 	- parse conf file
@@ -15,10 +17,10 @@
 	- create the servers
 		create server class
 	- get the req (parse, ...)
-		create a req class	
-	- proccess the req and send the response (open files, cgi,)
+		create a req class
+	- proccess the req and send the response (read files, cgi,....)
 		create a response string
-	- cookies and session ...
+	- cookies, session ...
 */
 
 	//getaddrinfo
@@ -31,8 +33,8 @@
 	//poll
 	//send || //recv
 	//PS: fcntl(sock, F_SETFL, O_NONBLOCK);//should be used with poll() for non-blocking i/o operations
-
 int sock;
+
 void handler(int){
 	std::cout << "i'm out here\n";
 	close(sock);
@@ -42,7 +44,6 @@ void handler(int){
 int main(){
 
 	struct addrinfo *res, hints;
-	std::ifstream file("index.html");
 
 	signal(SIGINT, handler);
 	std::memset(&hints, 0, sizeof(hints));
@@ -77,18 +78,46 @@ int main(){
 	int host;
 	while (1)
 	{
-		// std::cout << "waiting for new connection\n";
+		std::cout << "waiting for new connection\n";
 		host = accept(sock, (sockaddr *)&s, &len);
 		if (host < 0){
 			close(sock);
 			perror("accept");
 			return 1;
 		}
-		char str[2048];
-		recv(host, str, 2048, 0);
+		char str[BUFFER_SIZE];
+		size_t reqSize;
+		size_t start;
+		size_t recvSize = 0;
+		size_t end;
+		std::string tmpr;
+		bzero(str, BUFFER_SIZE);
+		recvSize += recv(host, str, BUFFER_SIZE , 0);
+		// sleep(1);
+		tmpr.append(str, recvSize);
+		recvSize -= tmpr.find("\r\n\r\n") + 4;
+		bzero(str, BUFFER_SIZE);
+		start = tmpr.find("Content-Length:");
+		if (start != tmpr.npos){
+			end = tmpr.find("\n", start);
+			reqSize = std::stoi(tmpr.substr(start + 16, end - 1));
+			while(1){
+				if (recvSize >= reqSize)
+					break;
+				size_t tmpRecvSize = 0;
+				tmpRecvSize =  recv(host, str, BUFFER_SIZE , 0);
+				recvSize += tmpRecvSize;
+				tmpr.append(str, tmpRecvSize);
+			bzero(str, BUFFER_SIZE);
+
+			}
+		}
+		//check Content-Length and recv all the req
+		{
+			request req(tmpr);
+			req.parse();
 		
-		request req((char *)str);
-		req.parse();
+		std::ifstream file("index.html");
 		// std::cout << str <<"\n";
 		std::string res = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 		std::string buff;
@@ -102,6 +131,8 @@ int main(){
 		buff += "\r\n";
 		send(host,(char *)(buff.data()), buff.size(),0);
 		close(host);
+		}
+		// break;
 	}
 	
 	freeaddrinfo(res);
