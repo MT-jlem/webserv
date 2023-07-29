@@ -3,8 +3,11 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <iomanip>
 
+// remove boundary + headers from the body 
+// handle chunked req && convert size from hex to int and recv the body && remove the boundary
 request::request(const std::string &req){
 	rawReq = req;
 }
@@ -37,9 +40,48 @@ bool 								request::checkMethod(){
 		return true;
 	return false;
 }
-// bool								request::checkHeaders(){
+bool								request::checkHeaders(){
+	if (method == "POST"){
+		if (headers.find("Content-Length") == headers.end())// || headers.find("Content-Type") == headers.end()
+			return true;
+	}
+	return false;
+}
 
-// }
+void	request::parseBody(){
+	std::string boundary;
+	size_t start = headers["Content-Type"].find("boundary");
+	if (start != std::string::npos){
+		boundary = headers["Content-Type"].substr(start + 9, headers["Content-Type"].find("\r", start + 9));
+		std::string tmp;
+		if (headers["Transfer-Encoding"].find("chunked") == std::string::npos){
+			size_t bodyStart = 0;
+			while (true)
+			{				
+				size_t headerStart = body.find(boundary , bodyStart) + boundary.size();
+				size_t fileStart = body.find("\r\n\r\n", bodyStart) + 4;
+				tmp = body.substr(headerStart, fileStart - headerStart);
+				size_t filenameStart = tmp.find("filename") + 10;
+				std::string filename = tmp.substr(filenameStart, tmp.find("\"", filenameStart) - filenameStart);
+				std::ofstream file (filename);
+				size_t fileSize = body.find(boundary, fileStart);
+				if (body[fileSize + boundary.size()] == '-'){
+					file << body.substr(fileStart, fileSize - fileStart - 4);
+					break;
+				}
+				file << body.substr(fileStart, fileSize - fileStart - 4);
+				bodyStart = fileSize;
+			}
+		}
+		else{
+			
+		}
+	}
+	//
+	std::cout << "--------------------------------------------- BODY START\n";
+	std::cout << body << "\n--------------------------------------------- BODY END\n";
+		exit(0);
+}
 
 size_t	request::parseHeaders(size_t start){
 
@@ -55,7 +97,7 @@ size_t	request::parseHeaders(size_t start){
 		end = tmp.find(":", 0);
 		if (end == tmp.npos)
 			break;
-		headers[tmp.substr(0, end)] = tmp.substr(end + 2, tmp.size() - (end + 2));
+		headers[tmp.substr(0, end)] = tmp.substr(end + 2, tmp.size() - (end + 3));
 	}
 
 	for ( std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it)
@@ -102,10 +144,13 @@ void	request::parse(){
 		exit(1);
 	}
 	start = parseHeaders(i + 2);
+	
+	body = rawReq.substr(start+ 4, rawReq.size() - start);
+	parseBody();
+	
 	// if (checkPath()){
 	// }
 	// if (checkHeaders()){
 
 	// }
 }
-
