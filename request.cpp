@@ -1,3 +1,4 @@
+// junky parsing
 #include "request.hpp"
 #include <vector>
 #include <iostream>
@@ -32,18 +33,43 @@ std::string 						request::getVersion(){
 bool								request::checkVerion(){
 	return version != "HTTP/1.1";
 }
-// bool								request::checkPath(){
-
-// }
-bool 								request::checkMethod(){
-	if (method != "GET" && method != "POST" && method != "DELETE")
-		return true;
+bool								request::checkPath(){
+	if (path.size() > 2048)
+		return true; //status code 414
+	for (size_t i = 0; path[i]; ++i){
+			if ((path[i] >= 'A' && path[i] <= 'Z') || (path[i] >= 'a' && path[i] <= 'z') || (path[i] >= '0' && path[i] <= '9'))
+				continue; //400
+			if (path[i] == '~' || path[i] == '!' || (path[i] >= '#' && path[i] <= '/') || path[i] == ':' || path[i] == ';' || path[i] == '=' || path[i] == '?' || path[i] == '@')
+				continue;
+			if (path[i] == '[' || path[i] == ']' || path[i] == '_')
+				continue;
+			return true; // 400
+	}
+	size_t start = path.find("?");
+	if (start != path.npos){
+		query = path.substr(start + 1, path.size() - (start + 1));
+		path = path.substr(0, start);
+	}
+	else
+		query = nullptr;
+	// seprate the query from the url/path then check it && return 404 in error
 	return false;
 }
-bool								request::checkHeaders(){
+bool 								request::checkMethod(){
+	//check method is allowed 405
+	if (method != "GET" && method != "POST" && method != "DELETE")
+		return true;//501
+	return false;
+}
+bool								request::checkHeaders(){  
+	if (headers.find("Transfer-Encoding") != headers.end()){
+		if (headers["Transfer-Encoding"].find("chunked") == std::string::npos)
+			return true;//status code 501
+	}
+
 	if (method == "POST"){
-		if (headers.find("Content-Length") == headers.end())// || headers.find("Content-Type") == headers.end()
-			return true;
+		if (headers.find("Content-Length") == headers.end() && headers.find("Transfer-Encoding") == headers.end())
+			return true;//status code 400
 	}
 	return false;
 }
@@ -78,8 +104,8 @@ void	request::parseBody(){
 		}
 	}
 	//
-	std::cout << "--------------------------------------------- BODY START\n";
-	std::cout << body << "\n--------------------------------------------- BODY END\n";
+	// std::cout << "--------------------------------------------- BODY START\n";
+	// std::cout << body << "\n--------------------------------------------- BODY END\n";
 		exit(0);
 }
 
@@ -146,8 +172,8 @@ void	request::parse(){
 	start = parseHeaders(i + 2);
 	
 	body = rawReq.substr(start+ 4, rawReq.size() - start);
+	//IF body.size() > max body size in config file THEN return 413
 	parseBody();
-	
 	// if (checkPath()){
 	// }
 	// if (checkHeaders()){

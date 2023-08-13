@@ -8,12 +8,16 @@
 #include <signal.h>
 #include <unistd.h>
 #include <string>
+#include <iomanip>
+#include <sstream>
 #include "request.hpp"
+#include "response.hpp"
+#include "server.hpp"
 #define BUFFER_SIZE 32664
 
 /*to-do:
 	- parse conf file
-		create http class 
+		create http class
 	- create the servers
 		create server class
 	- get the req (parse, ...)
@@ -33,6 +37,13 @@
 	//poll
 	//send || //recv
 	//PS: fcntl(sock, F_SETFL, O_NONBLOCK);//should be used with poll() for non-blocking i/o operations
+size_t toHex(const std::string &hex){
+	std::stringstream tmp;
+	size_t res;
+	tmp << std::hex << hex;
+	tmp >> res;
+	return res;
+}
 int sock;
 
 void handler(int){
@@ -93,10 +104,16 @@ int main(){
 		std::string tmpr;
 		bzero(str, BUFFER_SIZE);
 		recvSize += recv(host, str, BUFFER_SIZE , 0);
+		std::cout << recvSize << "=================RECV===============\n";
 		// sleep(1);
 		tmpr.append(str, recvSize);
 		recvSize -= tmpr.find("\r\n\r\n") + 4;
 		bzero(str, BUFFER_SIZE);
+		// if (tmpr.find("Transfer-Encoding: chunked") != tmpr.npos){
+		// 	start = tmpr.find("\r\n\r\n") + 4;
+		// 	reqSize = toHex(tmpr.substr(start, tmpr.find("\n", start) - start));
+
+		// }
 		start = tmpr.find("Content-Length:");
 		if (start != tmpr.npos){
 			end = tmpr.find("\n", start);
@@ -106,17 +123,20 @@ int main(){
 					break;
 				size_t tmpRecvSize = 0;
 				tmpRecvSize =  recv(host, str, BUFFER_SIZE , 0);
+				// std::cout << tmpRecvSize << "=================RECV===============\n";
 				recvSize += tmpRecvSize;
 				tmpr.append(str, tmpRecvSize);
 			bzero(str, BUFFER_SIZE);
 
 			}
 		}
+		Server serv;
 		//check Content-Length and recv all the req
 		{
 			request req(tmpr);
 			req.parse();
-		
+			Response resp;
+
 		std::ifstream file("index.html");
 		// std::cout << str <<"\n";
 		std::string res = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
@@ -138,4 +158,5 @@ int main(){
 	freeaddrinfo(res);
 	close(host);
 	close(sock);
+	
 }
