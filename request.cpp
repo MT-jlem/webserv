@@ -74,6 +74,14 @@ bool								request::checkHeaders(){
 	return false;
 }
 
+bool								request::checkHeaders(){
+	if (method == "POST"){
+		if (headers.find("Content-Length") == headers.end())// || headers.find("Content-Type") == headers.end()
+			return true;
+	}
+	return false;
+}
+
 void	request::parseBody(){
 	std::string boundary;
 	size_t start = headers["Content-Type"].find("boundary");
@@ -106,6 +114,8 @@ void	request::parseBody(){
 	//
 	// std::cout << "--------------------------------------------- BODY START\n";
 	// std::cout << body << "\n--------------------------------------------- BODY END\n";
+	std::cout << "--------------------------------------------- BODY START\n";
+	std::cout << body << "\n--------------------------------------------- BODY END\n";
 		exit(0);
 }
 

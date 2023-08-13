@@ -13,6 +13,7 @@
 #include "request.hpp"
 #include "response.hpp"
 #include "server.hpp"
+#include "request.hpp"
 #define BUFFER_SIZE 32664
 
 /*to-do:
@@ -130,7 +131,9 @@ int main(){
 
 			}
 		}
+
 		Server serv;
+
 		//check Content-Length and recv all the req
 		{
 			request req(tmpr);
