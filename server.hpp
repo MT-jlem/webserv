@@ -4,18 +4,20 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <set>
 
 class Location {
 private:
 public:
+	std::string path;
 	std::string root;
 	std::string index;
 	bool autoIndex;
 	std::vector<std::string> methods;
-	std::pair<std::string, std::string> returnn; 
+	std::pair<std::string, std::string> redir;
 	//cgi
+	std::pair<std::string, std::set<std::string> > errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
 	std::string upload;
-	std::string path;
 	Location();
 	~Location();
 
@@ -30,7 +32,7 @@ public:
 	//listen
 	//host
 	//server name
-	std::pair<std::string, std::string> errorPage;
+	std::pair<std::string, std::set<std::string> > errorPage;
 	std::vector<Location> loc;
 	Server();
 	~Server();

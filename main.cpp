@@ -15,7 +15,9 @@
 #include "server.hpp"
 #include "request.hpp"
 #define BUFFER_SIZE 32664
-
+// ❌❌❌❌❌ use multimap in req headers
+std::string err = "";
+std::map<std::string, std::string> statusCodes;
 /*to-do:
 	- parse conf file
 		create http class
@@ -38,6 +40,35 @@
 	//poll
 	//send || //recv
 	//PS: fcntl(sock, F_SETFL, O_NONBLOCK);//should be used with poll() for non-blocking i/o operations
+
+void statusCodesInitialize(){
+	statusCodes["204"] = " No Content\r\n";
+	statusCodes["200"] = " OK\r\n";
+	statusCodes["201"] = " Created\r\n";
+	statusCodes["301"] = " Moved Permanently\r\n";
+	statusCodes["400"] = " Bad Request\r\n";
+	statusCodes["403"] = " Forbidden\r\n";
+	statusCodes["404"] = " Not Found\r\n";
+	statusCodes["405"] = " Method Not Allowed\r\n";
+	statusCodes["409"] = " Conflict\r\n";
+	statusCodes["414"] = " Request-URI Too Long\r\n";
+	statusCodes["413"] = " Request Entity Too Large\r\n";
+	statusCodes["500"] = " Internal Server Error\r\n";
+	statusCodes["501"] = " Not Implemented\r\n";
+}
+
+void initializeServ(Server &serv){
+	serv.root = "/Users/mjlem/Desktop/webserv";
+	serv.index = "index.html";
+	serv.maxBodySize = 10000000;
+	serv.loc.reserve(1);
+	serv.loc[0].path = "/";
+	serv.loc[0].autoIndex = true;
+	serv.loc[0].methods.push_back("GET");
+	serv.loc[0].methods.push_back("POST");
+	serv.loc[0].methods.push_back("DELETE");
+}
+
 size_t toHex(const std::string &hex){
 	std::stringstream tmp;
 	size_t res;
@@ -133,12 +164,13 @@ int main(){
 		}
 
 		Server serv;
+		initializeServ(serv);
 
 		//check Content-Length and recv all the req
 		{
 			request req(tmpr);
-			req.parse();
-			Response resp;
+			req.parse(serv);
+			Response resp(req, serv);
 
 		std::ifstream file("index.html");
 		// std::cout << str <<"\n";

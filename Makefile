@@ -4,11 +4,11 @@ CC = c++
 
 CPPFLAGS = -Wall -Wextra -Werror -fsanitize=address -fno-omit-frame-pointer
 
-SRC = main.cpp request.cpp
+SRC = main.cpp request.cpp response.cpp server.cpp
 
 OBJ = $(SRC:%.cpp=%.o)
 
-HEADERS = request.hpp
+HEADERS = request.hpp response.hpp server.hpp
 
 all : $(NAME)
 

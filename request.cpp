@@ -6,6 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <iomanip>
+#include "server.hpp"
 
 // remove boundary + headers from the body 
 // handle chunked req && convert size from hex to int and recv the body && remove the boundary
@@ -31,8 +32,9 @@ std::string 						request::getVersion(){
 
 // }
 bool								request::checkVerion(){
-	return version != "HTTP/1.1";
+	return version != "HTTP/1.1"; // error code
 }
+
 bool								request::checkPath(){
 	if (path.size() > 2048)
 		return true; //status code 414
@@ -55,12 +57,14 @@ bool								request::checkPath(){
 	// seprate the query from the url/path then check it && return 404 in error
 	return false;
 }
+
 bool 								request::checkMethod(){
 	//check method is allowed 405
 	if (method != "GET" && method != "POST" && method != "DELETE")
 		return true;//501
 	return false;
 }
+
 bool								request::checkHeaders(){  
 	if (headers.find("Transfer-Encoding") != headers.end()){
 		if (headers["Transfer-Encoding"].find("chunked") == std::string::npos)
@@ -70,14 +74,6 @@ bool								request::checkHeaders(){
 	if (method == "POST"){
 		if (headers.find("Content-Length") == headers.end() && headers.find("Transfer-Encoding") == headers.end())
 			return true;//status code 400
-	}
-	return false;
-}
-
-bool								request::checkHeaders(){
-	if (method == "POST"){
-		if (headers.find("Content-Length") == headers.end())// || headers.find("Content-Type") == headers.end()
-			return true;
 	}
 	return false;
 }
@@ -108,12 +104,9 @@ void	request::parseBody(){
 			}
 		}
 		else{
-			
+			//remove the hex;
 		}
 	}
-	//
-	// std::cout << "--------------------------------------------- BODY START\n";
-	// std::cout << body << "\n--------------------------------------------- BODY END\n";
 	std::cout << "--------------------------------------------- BODY START\n";
 	std::cout << body << "\n--------------------------------------------- BODY END\n";
 		exit(0);
@@ -142,7 +135,7 @@ size_t	request::parseHeaders(size_t start){
 	return ret;
 }
 
-void	request::parse(){
+void	request::parse(Server &serv){
 
 	size_t i = 0, start = 0;
 	std::string	tmp;
@@ -179,14 +172,20 @@ void	request::parse(){
 		std::cerr << "return an error res\n";
 		exit(1);
 	}
+	if (checkPath()){
+		std::cerr << "return an error res\n";
+	}
 	start = parseHeaders(i + 2);
+	if (checkHeaders()){
+		std::cerr << "return an error res\n";
+		exit(1);
+	}
 	
 	body = rawReq.substr(start+ 4, rawReq.size() - start);
 	//IF body.size() > max body size in config file THEN return 413
+	if(body.size() > serv.maxBodySize){
+		std::cerr << "return an error res\n";
+		exit(1);
+	}
 	parseBody();
-	// if (checkPath()){
-	// }
-	// if (checkHeaders()){
-
-	// }
 }
