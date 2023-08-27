@@ -42,8 +42,8 @@ std::map<std::string, std::string> statusCodes;
 	//PS: fcntl(sock, F_SETFL, O_NONBLOCK);//should be used with poll() for non-blocking i/o operations
 
 void statusCodesInitialize(){
-	statusCodes["204"] = " No Content\r\n";
 	statusCodes["200"] = " OK\r\n";
+	statusCodes["204"] = " No Content\r\n";
 	statusCodes["201"] = " Created\r\n";
 	statusCodes["301"] = " Moved Permanently\r\n";
 	statusCodes["400"] = " Bad Request\r\n";
@@ -51,22 +51,29 @@ void statusCodesInitialize(){
 	statusCodes["404"] = " Not Found\r\n";
 	statusCodes["405"] = " Method Not Allowed\r\n";
 	statusCodes["409"] = " Conflict\r\n";
-	statusCodes["414"] = " Request-URI Too Long\r\n";
 	statusCodes["413"] = " Request Entity Too Large\r\n";
+	statusCodes["414"] = " Request-URI Too Long\r\n";
 	statusCodes["500"] = " Internal Server Error\r\n";
 	statusCodes["501"] = " Not Implemented\r\n";
+	statusCodes["505"] = " HTTP Version Not Supported\r\n";
 }
 
 void initializeServ(Server &serv){
-	serv.root = "/Users/mjlem/Desktop/webserv";
+	//if root doesn't have "/" in the end add "/"
+	serv.root = "/Users/mjlem/Desktop/webserv/";
 	serv.index = "index.html";
 	serv.maxBodySize = 10000000;
-	serv.loc.reserve(1);
+	serv.loc.resize(2);
 	serv.loc[0].path = "/";
 	serv.loc[0].autoIndex = true;
 	serv.loc[0].methods.push_back("GET");
 	serv.loc[0].methods.push_back("POST");
 	serv.loc[0].methods.push_back("DELETE");
+	serv.loc[1].path = "/loc";
+	serv.loc[1].autoIndex = true;
+	serv.loc[1].methods.push_back("GET");
+	serv.loc[1].methods.push_back("POST");
+	serv.loc[1].methods.push_back("DELETE");
 }
 
 size_t toHex(const std::string &hex){
@@ -85,7 +92,8 @@ void handler(int){
 }
 // int main(int ac, char *av[]){ //takes config file
 int main(){
-
+	err = "";
+	statusCodesInitialize();
 	struct addrinfo *res, hints;
 
 	signal(SIGINT, handler);
@@ -133,23 +141,23 @@ int main(){
 		size_t start;
 		size_t recvSize = 0;
 		size_t end;
-		std::string tmpr;
+		std::string tmp;
 		bzero(str, BUFFER_SIZE);
 		recvSize += recv(host, str, BUFFER_SIZE , 0);
 		std::cout << recvSize << "=================RECV===============\n";
 		// sleep(1);
-		tmpr.append(str, recvSize);
-		recvSize -= tmpr.find("\r\n\r\n") + 4;
+		tmp.append(str, recvSize);
+		recvSize -= tmp.find("\r\n\r\n") + 4;
 		bzero(str, BUFFER_SIZE);
-		// if (tmpr.find("Transfer-Encoding: chunked") != tmpr.npos){
-		// 	start = tmpr.find("\r\n\r\n") + 4;
-		// 	reqSize = toHex(tmpr.substr(start, tmpr.find("\n", start) - start));
+		// if (tmp.find("Transfer-Encoding: chunked") != tmp.npos){
+		// 	start = tmp.find("\r\n\r\n") + 4;
+		// 	reqSize = toHex(tmp.substr(start, tmp.find("\n", start) - start));
 
 		// }
-		start = tmpr.find("Content-Length:");
-		if (start != tmpr.npos){
-			end = tmpr.find("\n", start);
-			reqSize = std::stoi(tmpr.substr(start + 16, end - 1));
+		start = tmp.find("Content-Length:");
+		if (start != tmp.npos){
+			end = tmp.find("\n", start);
+			reqSize = std::stoi(tmp.substr(start + 16, end - 1));
 			while(1){
 				if (recvSize >= reqSize)
 					break;
@@ -157,7 +165,7 @@ int main(){
 				tmpRecvSize =  recv(host, str, BUFFER_SIZE , 0);
 				// std::cout << tmpRecvSize << "=================RECV===============\n";
 				recvSize += tmpRecvSize;
-				tmpr.append(str, tmpRecvSize);
+				tmp.append(str, tmpRecvSize);
 			bzero(str, BUFFER_SIZE);
 
 			}
@@ -168,22 +176,24 @@ int main(){
 
 		//check Content-Length and recv all the req
 		{
-			request req(tmpr);
+			err = "";
+			request req(tmp);
 			req.parse(serv);
 			Response resp(req, serv);
 
-		std::ifstream file("index.html");
-		// std::cout << str <<"\n";
-		std::string res = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
+		// std::ifstream file("index.html");
+		// // std::cout << str <<"\n";
+		// std::string res = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 		std::string buff;
-		std::string tmp;
-		while (getline(file, tmp))
-		{
-			buff += tmp;
-			buff += "\n";
-		}
-		buff.insert(0, res);
-		buff += "\r\n";
+		// std::string tmp;
+		// while (getline(file, tmp))
+		// {
+		// 	buff += tmp;
+		// 	buff += "\n";
+		// }
+		// buff.insert(0, res);
+		// buff += "\r\n";
+		buff = resp.res;
 		send(host,(char *)(buff.data()), buff.size(),0);
 		close(host);
 		}

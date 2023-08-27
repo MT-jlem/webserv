@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iomanip>
 #include "server.hpp"
+extern std::string err;
 
 // remove boundary + headers from the body 
 // handle chunked req && convert size from hex to int and recv the body && remove the boundary
@@ -25,14 +26,18 @@ std::string 						request::getPath(){
 std::string 						request::getVersion(){
 	return version;
 }
-// std::map<std::string, std::string>	request::getHeader(){
-
-// }
-// std::string							request::getBody(){
-
-// }
+std::map<std::string, std::string>	request::getHeader(){
+	return headers;
+}
+std::string							request::getBody(){
+	return body;
+}
 bool								request::checkVerion(){
-	return version != "HTTP/1.1"; // error code
+	if(version != "HTTP/1.1"){
+		err = "505";
+		return true;
+	}
+	return false; // error code
 }
 
 bool								request::checkPath(){
@@ -45,6 +50,7 @@ bool								request::checkPath(){
 				continue;
 			if (path[i] == '[' || path[i] == ']' || path[i] == '_')
 				continue;
+			err = "400";
 			return true; // 400
 	}
 	size_t start = path.find("?");
@@ -53,27 +59,34 @@ bool								request::checkPath(){
 		path = path.substr(0, start);
 	}
 	else
-		query = nullptr;
-	// seprate the query from the url/path then check it && return 404 in error
+		query = "";
+	// std::cout << "---------------------HERE---------------------\n";
+	// separate the query from the url/path then check it && return 404 in error
 	return false;
 }
 
 bool 								request::checkMethod(){
 	//check method is allowed 405
-	if (method != "GET" && method != "POST" && method != "DELETE")
+	if (method != "GET" && method != "POST" && method != "DELETE"){
+		err = "501";
 		return true;//501
+	}
 	return false;
 }
 
 bool								request::checkHeaders(){  
 	if (headers.find("Transfer-Encoding") != headers.end()){
-		if (headers["Transfer-Encoding"].find("chunked") == std::string::npos)
+		if (headers["Transfer-Encoding"].find("chunked") == std::string::npos){
+			err = "501";
 			return true;//status code 501
+		}
 	}
 
 	if (method == "POST"){
-		if (headers.find("Content-Length") == headers.end() && headers.find("Transfer-Encoding") == headers.end())
+		if (headers.find("Content-Length") == headers.end() && headers.find("Transfer-Encoding") == headers.end()){
+			err = "400";
 			return true;//status code 400
+		}
 	}
 	return false;
 }
@@ -107,9 +120,8 @@ void	request::parseBody(){
 			//remove the hex;
 		}
 	}
-	std::cout << "--------------------------------------------- BODY START\n";
-	std::cout << body << "\n--------------------------------------------- BODY END\n";
-		exit(0);
+	// std::cout << "--------------------------------------------- BODY START\n";
+	// std::cout << body << "\n--------------------------------------------- BODY END\n";
 }
 
 size_t	request::parseHeaders(size_t start){
@@ -128,10 +140,8 @@ size_t	request::parseHeaders(size_t start){
 			break;
 		headers[tmp.substr(0, end)] = tmp.substr(end + 2, tmp.size() - (end + 3));
 	}
-
-	for ( std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it)
-		std::cout << "line >> " << it->first << ":" << it->second << "\n";
-	
+	// for ( std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it)
+	// 	std::cout << "line >> " << it->first << ":" << it->second << "\n";
 	return ret;
 }
 
@@ -142,50 +152,42 @@ void	request::parse(Server &serv){
 
 	i = rawReq.find(" ", 0);//error handling for find and substr
 	if (i == rawReq.npos){
-		std::cerr << "return an error res\n";
-		exit(1);
+		err = "400";
+		return;
 	}
 	method = rawReq.substr(0, i);
-	std::cout << method << "-METHOD\n";
+	// std::cout << method << "-METHOD\n";
 
 	start = rawReq.find(" ", i + 1);
 	if (start == rawReq.npos){
-		std::cerr << "return an error res\n";
-		exit(1);
+		err = "400";
+		return;
 	}
 	path = rawReq.substr(i + 1, start - i - 1);
-	std::cout << path << "-PATH\n";
+	// std::cout << path << "-PATH\n";
 
 	i = rawReq.find("\r", start + 1);
 	if (i == rawReq.npos){
-		std::cerr << "return an error res\n";
-		exit(1);
+		err = "400";
+		return;
 	}
 	version = rawReq.substr(start + 1, i - start - 1);
-	std::cout << version << "-VERSION\n";
+	// std::cout << version << "-VERSION\n";
 	//check for error
-	if (checkVerion()){
-		std::cerr << "return an error res\n";
-		exit(1);
-	}
-	if (checkMethod()){
-		std::cerr << "return an error res\n";
-		exit(1);
-	}
-	if (checkPath()){
-		std::cerr << "return an error res\n";
-	}
+	if (checkVerion())
+		return;
+	if (checkMethod())
+		return;
+	if (checkPath())
+		return;
 	start = parseHeaders(i + 2);
-	if (checkHeaders()){
-		std::cerr << "return an error res\n";
-		exit(1);
-	}
-	
+	if (checkHeaders())
+		return;
 	body = rawReq.substr(start+ 4, rawReq.size() - start);
 	//IF body.size() > max body size in config file THEN return 413
 	if(body.size() > serv.maxBodySize){
-		std::cerr << "return an error res\n";
-		exit(1);
+		err = "413";
+		return;
 	}
 	parseBody();
 }

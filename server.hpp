@@ -32,7 +32,7 @@ public:
 	//listen
 	//host
 	//server name
-	std::pair<std::string, std::set<std::string> > errorPage;
+	std::pair<std::string, std::set<std::string> > errorPage; //must be a vector
 	std::vector<Location> loc;
 	Server();
 	~Server();
