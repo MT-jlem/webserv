@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <sys/_types/_size_t.h>
+#include <vector>
 #include "request.hpp"
 #include "server.hpp"
 class Response {
@@ -17,14 +18,15 @@ private:
 	int locIndex;
 	std::string path;
 	std::string file;
+	std::vector<std::string> data;
 	size_t pos;
 public:
 	std::string res;
 	Response();
 	Response(request &req, Server &serv);
 	~Response();
-	void	getM();
-	void	postM(request &req, Server &serv);
+	void	getM(Server &serv);
+	void	postM(request &req);
 	void	deleteM(request &req, Server &serv);
 	void	resBuilder(request &req, Server &serv);
 	void	errorRes(Server &serv);

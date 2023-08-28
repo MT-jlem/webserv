@@ -98,23 +98,23 @@ void	request::parseBody(){
 		boundary = headers["Content-Type"].substr(start + 9, headers["Content-Type"].find("\r", start + 9));
 		std::string tmp;
 		if (headers["Transfer-Encoding"].find("chunked") == std::string::npos){
-			size_t bodyStart = 0;
-			while (true)
-			{				
-				size_t headerStart = body.find(boundary , bodyStart) + boundary.size();
-				size_t fileStart = body.find("\r\n\r\n", bodyStart) + 4;
-				tmp = body.substr(headerStart, fileStart - headerStart);
-				size_t filenameStart = tmp.find("filename") + 10;
-				std::string filename = tmp.substr(filenameStart, tmp.find("\"", filenameStart) - filenameStart);
-				std::ofstream file (filename);
-				size_t fileSize = body.find(boundary, fileStart);
-				if (body[fileSize + boundary.size()] == '-'){
-					file << body.substr(fileStart, fileSize - fileStart - 4);
-					break;
-				}
-				file << body.substr(fileStart, fileSize - fileStart - 4);
-				bodyStart = fileSize;
-			}
+			// size_t bodyStart = 0;
+			// while (true)
+			// {				
+			// 	size_t headerStart = body.find(boundary , bodyStart) + boundary.size();
+			// 	size_t fileStart = body.find("\r\n\r\n", bodyStart) + 4;
+			// 	tmp = body.substr(headerStart, fileStart - headerStart);
+			// 	size_t filenameStart = tmp.find("filename") + 10;
+			// 	std::string filename = tmp.substr(filenameStart, tmp.find("\"", filenameStart) - filenameStart);
+			// 	std::ofstream file (filename);
+			// 	size_t fileSize = body.find(boundary, fileStart);
+			// 	if (body[fileSize + boundary.size()] == '-'){
+			// 		file << body.substr(fileStart, fileSize - fileStart - 4);
+			// 		break;
+			// 	}
+			// 	file << body.substr(fileStart, fileSize - fileStart - 4);
+			// 	bodyStart = fileSize;
+			// }
 		}
 		else{
 			//remove the hex;
@@ -140,8 +140,8 @@ size_t	request::parseHeaders(size_t start){
 			break;
 		headers[tmp.substr(0, end)] = tmp.substr(end + 2, tmp.size() - (end + 3));
 	}
-	// for ( std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it)
-	// 	std::cout << "line >> " << it->first << ":" << it->second << "\n";
+	for ( std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it)
+		std::cout << "line >> " << it->first << ":" << it->second << "\n";
 	return ret;
 }
 
