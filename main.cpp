@@ -145,7 +145,6 @@ int main(){
 		bzero(str, BUFFER_SIZE);
 		recvSize += recv(host, str, BUFFER_SIZE , 0);
 		std::cout << recvSize << "=================RECV===============\n";
-		// sleep(1);
 		tmp.append(str, recvSize);
 		recvSize -= tmp.find("\r\n\r\n") + 4;
 		bzero(str, BUFFER_SIZE);
@@ -154,6 +153,8 @@ int main(){
 		// 	reqSize = toHex(tmp.substr(start, tmp.find("\n", start) - start));
 
 		// }
+
+		//check Content-Length and recv all the req
 		start = tmp.find("Content-Length:");
 		if (start != tmp.npos){
 			end = tmp.find("\n", start);
@@ -174,25 +175,14 @@ int main(){
 		Server serv;
 		initializeServ(serv);
 
-		//check Content-Length and recv all the req
+
 		{
 			err = "";
+			// std::cout << tmp << '\n';
 			request req(tmp);
 			req.parse(serv);
 			Response resp(req, serv);
-
-		// std::ifstream file("index.html");
-		// // std::cout << str <<"\n";
-		// std::string res = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 		std::string buff;
-		// std::string tmp;
-		// while (getline(file, tmp))
-		// {
-		// 	buff += tmp;
-		// 	buff += "\n";
-		// }
-		// buff.insert(0, res);
-		// buff += "\r\n";
 		buff = resp.res;
 		send(host,(char *)(buff.data()), buff.size(),0);
 		close(host);

@@ -27,7 +27,7 @@ public:
 	~Response();
 	void	getM(Server &serv);
 	void	postM(request &req);
-	void	deleteM(request &req, Server &serv);
+	void	deleteM();
 	void	resBuilder(request &req, Server &serv);
 	void	errorRes(Server &serv);
 	std::string getResLine(request &req, Server &serv);
@@ -39,6 +39,8 @@ public:
 	std::string getPath(request &req, Server &serv);
 	int getLocation(request &req, Server &serv);
 	std::string getFile(Server &serv);
+	std::string generateDirHtml(std::string path);
+	std::string generateErrHtml();
 };
 
 #endif

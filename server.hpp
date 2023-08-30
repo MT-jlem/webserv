@@ -1,6 +1,7 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
+#include <list>
 #include <string>
 #include <vector>
 #include <utility>
@@ -28,11 +29,10 @@ private:
 public:
 	std::string root;
 	std::string index;
+	std::set<std::string> serverName;
+	std::vector<std::pair<std::string, std::string> > listen;
 	size_t maxBodySize;
-	//listen
-	//host
-	//server name
-	std::pair<std::string, std::set<std::string> > errorPage; //must be a vector
+	std::pair<std::string, std::set<std::string> > errorPage; //maybe a vector
 	std::vector<Location> loc;
 	Server();
 	~Server();

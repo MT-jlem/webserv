@@ -61,7 +61,7 @@ bool								request::checkPath(){
 	else
 		query = "";
 	// std::cout << "---------------------HERE---------------------\n";
-	// separate the query from the url/path then check it && return 404 in error
+	// separate the query from the url/path then check it && check for err
 	return false;
 }
 
@@ -140,8 +140,8 @@ size_t	request::parseHeaders(size_t start){
 			break;
 		headers[tmp.substr(0, end)] = tmp.substr(end + 2, tmp.size() - (end + 3));
 	}
-	for ( std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it)
-		std::cout << "line >> " << it->first << ":" << it->second << "\n";
+	// for ( std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it)
+	// 	std::cout << "line >> " << it->first << ":" << it->second << "\n";
 	return ret;
 }
 
