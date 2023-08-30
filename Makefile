@@ -1,27 +1,40 @@
-NAME = webserv
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: tbouzalm <tbouzalm@student.42.fr>          +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2023/07/17 06:08:14 by tbouzalm          #+#    #+#              #
+#    Updated: 2023/08/29 14:01:06 by tbouzalm         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
 
-CC = c++
+NAME = server
 
-CPPFLAGS = -Wall -Wextra -Werror -fsanitize=address -fno-omit-frame-pointer
+CPP = c++ 
 
-SRC = main.cpp request.cpp
+FLAGS = -Wall -Wextra -Werror -std=c++98
 
-OBJ = $(SRC:%.cpp=%.o)
+OBJ =  $(SRC:.cpp=.o)
 
-HEADERS = request.hpp
+SRC = main2.cpp server.cpp request.cpp 
+# SRC1 = test_conf.cpp
 
 all : $(NAME)
 
-$(NAME) : $(OBJ) $(HEADERS)
-	$(CC) $(CPPFLAGS) $(OBJ) -o $(NAME)
+%.o: %.cpp server.hpp
+	$(CPP) $(FLAGS) -c $< -o $@
+
+$(NAME): $(OBJ)
+	$(CPP) $(FLAGS) $(OBJ) -o $(NAME)
 
 clean : 
-	-rm -rf $(OBJ)
+		rm -f $(OBJ)
 
 fclean : clean
-	-rm -rf $(NAME)
+		rm -rf $(NAME)
 
 re : fclean all
 
-b : re
-	clear && ./$(NAME)
+.PHONY : clean fclean

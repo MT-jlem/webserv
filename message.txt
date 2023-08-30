@@ -1,0 +1,155 @@
+```bash
+# Define the first server block
+server
+{
+  # Set the server to listen on port 80
+  listen 127.0.0.1:80;
+  listen 10.0.20.13:80;
+  
+
+  # Set the server name and document root
+  root /Users/nhanafi/goinfre/test/;
+  server_name example.tv;
+  # Set a default file to serve for directory requests
+  # Define a location block for the /downloads route
+  # client_max_body_size 4;
+  # location /downloads {
+  #   # Set the file system path to the directory to serve
+  #   methods GET;
+  #   root /Users/bmaaqoul/Desktop/webserv/test/download;
+  #   # Enable directory listing
+  #   # index index.html;
+  #   autoindex on;
+
+  #   # Limit the maximum size of a client request body
+    
+  # }
+
+  location /upload {
+    # Set the file system path to the directory to serve
+    methods POST GET DELETE;
+    root /Users/nhanafi/goinfre/test/download;
+    # Enable directory listing
+    index index.html;
+    autoindex on;
+
+    # Limit the maximum size of a client request body
+    
+  }
+  location /cookies {
+    # Set the file system path to the directory to serve
+    methods POST GET DELETE;
+    root /Users/nhanafi/goinfre/test/cookies;
+    # Enable directory listing
+    cgi .py /usr/bin/python3;
+    autoindex on;
+
+    # Limit the maximum size of a client request body
+  }
+  location /cgi {
+    # Set the file system path to the directory to serve
+    methods GET POST;
+    root /Users/nhanafi/goinfre/test/cgi;
+    cgi .py /usr/bin/python3;
+    autoindex on;
+    # index file1.html;
+    # Limit the maximum size of a client request body
+    
+  }
+
+  location /rbCgi {
+    # Set the file system path to the directory to serve
+    methods GET POST;
+    root /Users/nhanafi/goinfre/test/cgi;
+    cgi .rb /usr/bin/ruby;
+    autoindex on;
+    index file1.html;
+    # Limit the maximum size of a client request body
+    
+  }
+
+  # # Define custom error pages
+  error_page 404 500 502 503 504 error/404.html;
+  # error_page 500 502 503 504 /50x.html;
+  # location = /50x.html {
+  #   root /var/www/example.com;
+  # }
+
+}
+
+server
+{
+  # Set the server to listen on port 80
+  listen 80;
+
+  # Set the server name and document root
+  server_name example.com;
+  root /Users/nhanafi/goinfre/test2/;
+
+  # Set a default file to serve for directory requests
+  # Define a location block for the /downloads route
+  # client_max_body_size 4;
+  # location /downloads {
+  #   # Set the file system path to the directory to serve
+  #   methods GET;
+  #   root /Users/bmaaqoul/Desktop/webserv/test/download;
+  #   # Enable directory listing
+  #   # index index.html;
+  #   autoindex on;
+
+  #   # Limit the maximum size of a client request body
+    
+  # }
+
+  location /upload {
+    # Set the file system path to the directory to serve
+    methods POST GET DELETE;
+    root /Users/nhanafi/goinfre/test2/download;
+    # Enable directory listing
+    index index.html;
+    autoindex on;
+
+    # Limit the maximum size of a client request body
+    
+  }
+  location /cookies {
+    # Set the file system path to the directory to serve
+    methods POST GET DELETE;
+    root /Users/nhanafi/goinfre/test2/cookies;
+    # Enable directory listing
+    cgi .py /usr/bin/python3;
+    autoindex on;
+
+    # Limit the maximum size of a client request body
+  }
+  location /cgi {
+    # Set the file system path to the directory to serve
+    methods GET POST;
+    root /Users/nhanafi/goinfre/test2/cgi;
+    cgi .py /usr/bin/python3;
+    autoindex on;
+    # index file1.html;
+    # Limit the maximum size of a client request body
+    
+  }
+
+  location /rbCgi {
+    # Set the file system path to the directory to serve
+    methods GET POST;
+    root /Users/nhanafi/goinfre/test2/cgi;
+    cgi .rb /usr/bin/ruby;
+    autoindex on;
+    index file1.html;
+    # Limit the maximum size of a client request body
+    
+  }
+
+  # # Define custom error pages
+  error_page 404 500 502 503 504 error/404.html;
+  # error_page 500 502 503 504 /50x.html;
+  # location = /50x.html {
+  #   root /var/www/example.com;
+  # }
+
+}
+```
