@@ -7,6 +7,9 @@
 #include <utility>
 #include <set>
 
+#define GET 0
+#define POST 1
+#define DELETE 2
 class Location {
 private:
 public:
@@ -14,7 +17,7 @@ public:
 	std::string root;
 	std::string index;
 	bool autoIndex;
-	std::vector<std::string> methods;
+	int methods[3];
 	std::pair<std::string, std::string> redir;
 	//cgi
 	std::pair<std::string, std::set<std::string> > errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
@@ -34,6 +37,7 @@ public:
 	size_t maxBodySize;
 	std::pair<std::string, std::set<std::string> > errorPage; //maybe a vector
 	std::vector<Location> loc;
+	//vector  fd;
 	Server();
 	~Server();
 };

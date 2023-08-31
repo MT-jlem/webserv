@@ -1,6 +1,9 @@
 #include <regex>
+#include <sys/_types/_s_ifmt.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
+#include "request.hpp"
 #include "response.hpp"
 #include "server.hpp"
 #include <cstdlib>
@@ -10,10 +13,27 @@
 #include <string>
 #include <cstdio>
 #include <sys/_types/_size_t.h>
+#include <algorithm>
+#include <utility>
 extern std::string err;
 extern std::map<std::string, std::string> statusCodes;
 
 //❌ to-do change error handling and err res
+bool checkReDirPath(std::string path){
+	if (path.size() > 2048)
+		return true; //status code 414
+	for (size_t i = 0; path[i]; ++i){
+			if ((path[i] >= 'A' && path[i] <= 'Z') || (path[i] >= 'a' && path[i] <= 'z') || (path[i] >= '0' && path[i] <= '9'))
+				continue; //400
+			if (path[i] == '~' || path[i] == '!' || (path[i] >= '#' && path[i] <= '/') || path[i] == ':' || path[i] == ';' || path[i] == '=' || path[i] == '?' || path[i] == '@')
+				continue;
+			if (path[i] == '[' || path[i] == ']' || path[i] == '_')
+				continue;
+			err = "400";
+			return true; // 400
+	}
+	return false;
+}
 
 Response::Response(){}
 Response::Response(request &req, Server &serv){
@@ -23,25 +43,72 @@ Response::Response(request &req, Server &serv){
 	if (locIndex == -1){
 		std::cout << "LOC not found\n";
 		err = "404";
-		exit(1);
+	} else {
+		path = getPath(req, serv);
+		file = getFile(serv);
 	}
-	//❌ check if method is allowed in the location
 	// std::cout << serv.loc[locIndex].path << "<<\n";
-	path = getPath(req, serv);
 	// std::cout << path << "<< path\n";
-	file = getFile(serv);
 	// std::cout << file << "<< file \n";
+	//❌ check if method is allowed in the location
 	if (err != "")
-		errorRes(serv);
-	else if(req.getMethod() == "GET")
-		getM(serv);
-	else if (req.getMethod() == "POST")
-		postM(req);
-	else
-		deleteM();
+		errorRes(serv, req);
+	else if(req.getMethod() == "GET" ){
+		if (serv.loc[locIndex].methods[GET]){
+			if (!serv.loc[locIndex].redir.first.empty())
+				reDirRes(serv, req);
+			else 
+				getM(serv, req);
+		}
+		else{
+			err = "405";
+			errorRes(serv, req);
+		}
+	}
+	else if (req.getMethod() == "POST"){
+		if (serv.loc[locIndex].methods[POST]){
+			if (!serv.loc[locIndex].redir.first.empty())
+				reDirRes(serv, req);
+			else
+				postM(req);
+		}
+		else{
+			err = "405";
+			errorRes(serv, req);
+		}
+	}
+	else{
+		if (serv.loc[locIndex].methods[POST]){
+			if (!serv.loc[locIndex].redir.first.empty())
+				reDirRes(serv, req);
+			else
+				deleteM();
+		}
+		else{
+			err = "405";
+			errorRes(serv, req);
+		}
+	}
 }
 
 Response::~Response(){}
+
+void Response::reDirRes(Server &serv, request &req){
+	std::pair<std::string, std::string> tmp = serv.loc[locIndex].redir;
+	if (checkReDirPath(tmp.second)){
+		err = "500";
+		errorRes(serv, req);
+	} else {
+		res += tmp.first;
+		res += statusCodes[tmp.first];
+		res += getDate();
+		res += "Server: webServ\r\n";
+		res += "Content-Length: 0\r\n";
+		res += "Location: "; res += tmp.second; res += "\r\n";
+		res += "\r\n";
+	}
+	
+}
 
 std::string Response::getPath(request &req, Server &serv){
 	std::string root = serv.loc[locIndex].root != "" ? serv.loc[locIndex].root : serv.root;
@@ -54,6 +121,7 @@ std::string Response::getPath(request &req, Server &serv){
 		return "";
 	return  root + file;
 }
+
 
 std::string Response::getFile(Server &serv){
 	if (err != "")
@@ -88,10 +156,10 @@ int Response::getLocation(request &req, Server &serv){
 	return -1;
 }
 
-void Response::getM(Server &serv){
-	body = getBody(path);
+void Response::getM(Server &serv, request &req){
+	body = getBody(path, serv, req);
 	if (err!= "")
-		errorRes(serv);
+		errorRes(serv, req);
 	res += "200 ";
 	res += statusCodes["200"];
 	res += getHeaders();
@@ -106,7 +174,7 @@ void Response::postM(request &req){
 	std::string tmpData = req.getBody();
 	size_t bodyStart = 0;
 	size_t start = req.getHeader()["Content-Type"].find("boundary");
-	if (req.getHeader()["Content-Type"].find("multipart/form-data") != std::string::npos && start != std::string::npos){
+	if (req.getHeader()["Content-Type"].find("multipart") != std::string::npos && start != std::string::npos){
 		boundary = req.getHeader()["Content-Type"].substr(start + 9, req.getHeader()["Content-Type"].find("\r", start + 9));
 		while (true)
 		{				
@@ -138,8 +206,8 @@ void Response::postM(request &req){
 		data.push_back(tmpData);	
 	}	else
 		err = "501";
-	for (size_t i = 0; i < data.size(); ++i)
-		std::cout << data[i] << "<<line\n";
+	// for (size_t i = 0; i < data.size(); ++i)
+	// 	std::cout << data[i] << "<<line\n";
 	res += "200 ";
 	res += statusCodes["200"];
 	res += getHeaders();
@@ -152,7 +220,6 @@ void Response::deleteM(){
 		err = "";
 		exit(1);
 	}
-
 	res += "204 ";
 	res += statusCodes["204"];
 	res += getDate();
@@ -312,15 +379,27 @@ std::string Response::getHeaders(){
 	return str;
 }
 
-std::string Response::getBody(const std::string &path){
+std::string Response::getBody(const std::string &path, Server &serv, request &req){
 	std::string buff;
 	std::string tmp;
+	struct stat st;
+	stat(path.data(),  &st);
+	if ((st.st_mode & S_IFMT) == S_IFDIR){
+		if (!serv.loc[locIndex].autoIndex){
+			err = "403";
+			return "";
+		}
+		std::string str = generateDirHtml(path, req);
+		file = ".html";
+		return str;
+	}
+	// use access to check for permission
+	// use state to check if path is dir
 	std::ifstream file(path);
 	if (!file.is_open()){
 		err = "404";
 		return "";
 	}
-	
 	while (getline(file, tmp)){
 		buff += tmp;
 		buff += "\n";
@@ -328,7 +407,7 @@ std::string Response::getBody(const std::string &path){
 	return buff;
 }
 
-void	 Response::errorRes(Server &serv){
+void	 Response::errorRes(Server &serv, request &req){
 	// if there's custom error page we should know which location the error occurred
 	std::string path;
 	if (serv.loc[locIndex].errorPage.second.find(err) != serv.loc[locIndex].errorPage.second.end())
@@ -340,29 +419,41 @@ void	 Response::errorRes(Server &serv){
 	}
 	res += err; res += " ";
 	res += statusCodes[err]; res += " \r\n";
-	body = getBody(path);
+	body = getBody(path, serv,req);
 	res += getHeaders();
 	res += "\r\n";
 	res += body;
 	res += "\r\n";
 }
 
-std::string generateDirHtml(std::string path){
+std::string Response::generateDirHtml(std::string path, request &req){
 	DIR *dir;
 	struct dirent *dirFile;
 	std::string str;
 	dir = opendir(path.data());
-	str += "<!DOCTYPE html>\n<html>\n<head>\n<title>";
-	str += path.substr(path.rfind("/"), path.size());
-	str += "</title>\n</head>\n";
-	str += "<body>\n";
+	std::string tmpFile = req.getPath();
+	
+
+	str +=	"<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody { background: lightgray; }\n"
+			"li { font-size: 1.2em; margin: 10px; }\n</style>\n<title>Directory</title>\n</head>\n<body>\n";
+	str += "<h1>";
+	str += "directory list";
+	str += "</h1>\n<ul>\n";
+	path = path[path.size() - 1] != '/' ? path + "/" : path;
 	while ((dirFile = readdir(dir))) {
+	str += "<li><a href=\"";
+	tmpFile = tmpFile[tmpFile.size() -1] != '/' ? tmpFile + "/" : tmpFile;
+	str += tmpFile + dirFile->d_name;//replace
+	str += "\">";
+	str += dirFile->d_name;//replace
+	str += "</a></li>\n";
 		
 	}
-	return "";
+	str += "</ul>\n</body>\n</html>";
+	return str;
 }
 
-std::string generateErrHtml(){
+std::string Response::generateErrHtml(){
 	std::string str;
 
 	str += "<!DOCTYPE html>\n<html>\n<head>\n<title>Error Page</title>\n</head>\n";

@@ -40,12 +40,27 @@ std::map<std::string, std::string> statusCodes;
 	//poll
 	//send || //recv
 	//PS: fcntl(sock, F_SETFL, O_NONBLOCK);//should be used with poll() for non-blocking i/o operations
-
+/*
+			"300"  ; Section 10.3.1: Multiple Choices
+          | "301"  ; Section 10.3.2: Moved Permanently
+          | "302"  ; Section 10.3.3: Found
+          | "303"  ; Section 10.3.4: See Other
+          | "304"  ; Section 10.3.5: Not Modified
+          | "305"  ; Section 10.3.6: Use Proxy
+          | "307"  ; Section 10.3.8: Temporary Redirect
+*/
 void statusCodesInitialize(){
 	statusCodes["200"] = " OK\r\n";
 	statusCodes["204"] = " No Content\r\n";
 	statusCodes["201"] = " Created\r\n";
+	statusCodes["300"] = " Multiple Choices\r\n";
 	statusCodes["301"] = " Moved Permanently\r\n";
+	statusCodes["302"] = " Found\r\n";
+	statusCodes["303"] = " See Other\r\n";
+	statusCodes["304"] = " Not Modified\r\n";
+	statusCodes["305"] = " Use Proxy\r\n";
+	statusCodes["306"] = " Switch Proxy\r\n";
+	statusCodes["307"] = " Temporary Redirect\r\n";
 	statusCodes["400"] = " Bad Request\r\n";
 	statusCodes["403"] = " Forbidden\r\n";
 	statusCodes["404"] = " Not Found\r\n";
@@ -61,19 +76,21 @@ void statusCodesInitialize(){
 void initializeServ(Server &serv){
 	//if root doesn't have "/" in the end add "/"
 	serv.root = "/Users/mjlem/Desktop/webserv/";
-	serv.index = "index.html";
+	// serv.index = "index.html";
 	serv.maxBodySize = 10000000;
 	serv.loc.resize(2);
 	serv.loc[0].path = "/";
 	serv.loc[0].autoIndex = true;
-	serv.loc[0].methods.push_back("GET");
-	serv.loc[0].methods.push_back("POST");
-	serv.loc[0].methods.push_back("DELETE");
+	serv.loc[0].methods[GET] = 1;
+	serv.loc[0].methods[POST] = 1;
+	serv.loc[0].methods[DELETE] = 1;
+	// serv.loc[0].redir.first = "301";
+	// serv.loc[0].redir.second = "https://youtu.be/3f72kbqN6hg?t=99";
 	serv.loc[1].path = "/loc";
 	serv.loc[1].autoIndex = true;
-	serv.loc[1].methods.push_back("GET");
-	serv.loc[1].methods.push_back("POST");
-	serv.loc[1].methods.push_back("DELETE");
+	serv.loc[1].methods[GET] = 1;
+	serv.loc[1].methods[POST] = 1;
+	serv.loc[1].methods[DELETE] = 1;
 }
 
 size_t toHex(const std::string &hex){
@@ -144,7 +161,7 @@ int main(){
 		std::string tmp;
 		bzero(str, BUFFER_SIZE);
 		recvSize += recv(host, str, BUFFER_SIZE , 0);
-		std::cout << recvSize << "=================RECV===============\n";
+		std::cout << "=================RECV===============\n";
 		tmp.append(str, recvSize);
 		recvSize -= tmp.find("\r\n\r\n") + 4;
 		bzero(str, BUFFER_SIZE);
