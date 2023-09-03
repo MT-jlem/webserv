@@ -2,7 +2,7 @@ NAME = webserv
 
 CC = c++
 
-CPPFLAGS = -Wall -Wextra -Werror -fsanitize=address -fno-omit-frame-pointer
+CPPFLAGS = -Wall -Wextra  -fsanitize=address -fno-omit-frame-pointer
 
 SRC =	main.cpp request.cpp response.cpp server.cpp \
 		config/conf.cpp config/read_config.cpp

@@ -112,6 +112,8 @@ void handler(int){
 int main(int ac, char *av[]) // main for config
 {
 	ReadConfig readConfig(ac, av[1]);
+	readConfig.readingFile();
+	readConfig.checkBraces();
 }
 
 

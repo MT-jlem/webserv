@@ -8,7 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
-
+#include <stack>
 
 class ReadConfig
 {
