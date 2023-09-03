@@ -10,20 +10,21 @@
 #include <algorithm>
 
 
-class read_config
+class ReadConfig
 {
-private:
-    std::string     _config_file;
-    int             _ac;
-    char            *_av;
-public:
-    read_config(int ac, char *av);
-    ~read_config();
+    private:
+        std::string     _configFile;
+        int             _ac;
+        char            *_av;
+        std::vector<std::vector<std::string> > _serverBlocks;
+    public:
+        ReadConfig(int ac, char *av);
+        ~ReadConfig();
 
-    std::string readingFile();
+        void readingFile(); // read the config file and return a string
+        void checkBraces(); // check if the braces are well placed
+        void parseServerBlocks(); // parse the string and return a vector of server blocks
 };
-
-
 
 
 #endif

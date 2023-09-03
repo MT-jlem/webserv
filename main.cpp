@@ -14,6 +14,7 @@
 #include "response.hpp"
 #include "server.hpp"
 #include "request.hpp"
+#include "config/read_config.hpp"
 #define BUFFER_SIZE 32664
 // ❌❌❌❌❌ use multimap in req headers
 std::string err = "";
@@ -107,108 +108,114 @@ void handler(int){
 	close(sock);
 	exit(1);
 }
-// int main(int ac, char *av[]){ //takes config file
-int main(){
-	err = "";
-	statusCodesInitialize();
-	struct addrinfo *res, hints;
 
-	signal(SIGINT, handler);
-	std::memset(&hints, 0, sizeof(hints));
-	hints.ai_socktype = SOCK_STREAM;
-	if (getaddrinfo("127.0.0.1", "8080", &hints, &res) != 0){
-		std::cerr << "getaddrinfo failed\n";
-	}
-
-	int yes = 1;
-	for (; res; res = res->ai_next){
-		sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-		if (sock < 0){
-			perror("socket");
-			continue;
-		}
-		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) < 0){
-			perror("setsockopt");
-			continue;
-		}
-		if (bind(sock, res->ai_addr, res->ai_addrlen) != 0){
-			close(sock);
-			perror("bind");
-			continue;
-		}
-		listen(sock, SOMAXCONN);
-		break;
-	}
-	if (!res)
-		return 1;
-	struct sockaddr_storage s;
-	socklen_t len;
-	int host;
-	while (1)
-	{
-		std::cout << "waiting for new connection\n";
-		host = accept(sock, (sockaddr *)&s, &len);
-		if (host < 0){
-			close(sock);
-			perror("accept");
-			return 1;
-		}
-		char str[BUFFER_SIZE];
-		size_t reqSize;
-		size_t start;
-		size_t recvSize = 0;
-		size_t end;
-		std::string tmp;
-		bzero(str, BUFFER_SIZE);
-		recvSize += recv(host, str, BUFFER_SIZE , 0);
-		std::cout << "=================RECV===============\n";
-		tmp.append(str, recvSize);
-		recvSize -= tmp.find("\r\n\r\n") + 4;
-		bzero(str, BUFFER_SIZE);
-		// if (tmp.find("Transfer-Encoding: chunked") != tmp.npos){
-		// 	start = tmp.find("\r\n\r\n") + 4;
-		// 	reqSize = toHex(tmp.substr(start, tmp.find("\n", start) - start));
-
-		// }
-
-		//check Content-Length and recv all the req
-		start = tmp.find("Content-Length:");
-		if (start != tmp.npos){
-			end = tmp.find("\n", start);
-			reqSize = std::stoi(tmp.substr(start + 16, end - 1));
-			while(1){
-				if (recvSize >= reqSize)
-					break;
-				size_t tmpRecvSize = 0;
-				tmpRecvSize =  recv(host, str, BUFFER_SIZE , 0);
-				// std::cout << tmpRecvSize << "=================RECV===============\n";
-				recvSize += tmpRecvSize;
-				tmp.append(str, tmpRecvSize);
-			bzero(str, BUFFER_SIZE);
-
-			}
-		}
-
-		Server serv;
-		initializeServ(serv);
-
-
-		{
-			err = "";
-			// std::cout << tmp << '\n';
-			request req(tmp);
-			req.parse(serv);
-			Response resp(req, serv);
-		std::string buff;
-		buff = resp.res;
-		send(host,(char *)(buff.data()), buff.size(),0);
-		close(host);
-		}
-		// break;
-	}
-	
-	freeaddrinfo(res);
-	close(host);
-	close(sock);
-	
+int main(int ac, char *av[]) // main for config
+{
+	ReadConfig readConfig(ac, av[1]);
 }
+
+
+// int main(){
+// 	err = "";
+// 	statusCodesInitialize();
+// 	struct addrinfo *res, hints;
+
+// 	signal(SIGINT, handler);
+// 	std::memset(&hints, 0, sizeof(hints));
+// 	hints.ai_socktype = SOCK_STREAM;
+// 	if (getaddrinfo("127.0.0.1", "8080", &hints, &res) != 0){
+// 		std::cerr << "getaddrinfo failed\n";
+// 	}
+
+// 	int yes = 1;
+// 	for (; res; res = res->ai_next){
+// 		sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+// 		if (sock < 0){
+// 			perror("socket");
+// 			continue;
+// 		}
+// 		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) < 0){
+// 			perror("setsockopt");
+// 			continue;
+// 		}
+// 		if (bind(sock, res->ai_addr, res->ai_addrlen) != 0){
+// 			close(sock);
+// 			perror("bind");
+// 			continue;
+// 		}
+// 		listen(sock, SOMAXCONN);
+// 		break;
+// 	}
+// 	if (!res)
+// 		return 1;
+// 	struct sockaddr_storage s;
+// 	socklen_t len;
+// 	int host;
+// 	while (1)
+// 	{
+// 		std::cout << "waiting for new connection\n";
+// 		host = accept(sock, (sockaddr *)&s, &len);
+// 		if (host < 0){
+// 			close(sock);
+// 			perror("accept");
+// 			return 1;
+// 		}
+// 		char str[BUFFER_SIZE];
+// 		size_t reqSize;
+// 		size_t start;
+// 		size_t recvSize = 0;
+// 		size_t end;
+// 		std::string tmp;
+// 		bzero(str, BUFFER_SIZE);
+// 		recvSize += recv(host, str, BUFFER_SIZE , 0);
+// 		std::cout << "=================RECV===============\n";
+// 		tmp.append(str, recvSize);
+// 		recvSize -= tmp.find("\r\n\r\n") + 4;
+// 		bzero(str, BUFFER_SIZE);
+// 		// if (tmp.find("Transfer-Encoding: chunked") != tmp.npos){
+// 		// 	start = tmp.find("\r\n\r\n") + 4;
+// 		// 	reqSize = toHex(tmp.substr(start, tmp.find("\n", start) - start));
+
+// 		// }
+
+// 		//check Content-Length and recv all the req
+// 		start = tmp.find("Content-Length:");
+// 		if (start != tmp.npos){
+// 			end = tmp.find("\n", start);
+// 			reqSize = std::stoi(tmp.substr(start + 16, end - 1));
+// 			while(1){
+// 				if (recvSize >= reqSize)
+// 					break;
+// 				size_t tmpRecvSize = 0;
+// 				tmpRecvSize =  recv(host, str, BUFFER_SIZE , 0);
+// 				// std::cout << tmpRecvSize << "=================RECV===============\n";
+// 				recvSize += tmpRecvSize;
+// 				tmp.append(str, tmpRecvSize);
+// 			bzero(str, BUFFER_SIZE);
+
+// 			}
+// 		}
+
+// 		Server serv;
+// 		initializeServ(serv);
+
+
+// 		{
+// 			err = "";
+// 			// std::cout << tmp << '\n';
+// 			request req(tmp);
+// 			req.parse(serv);
+// 			Response resp(req, serv);
+// 		std::string buff;
+// 		buff = resp.res;
+// 		send(host,(char *)(buff.data()), buff.size(),0);
+// 		close(host);
+// 		}
+// 		// break;
+// 	}
+	
+// 	freeaddrinfo(res);
+// 	close(host);
+// 	close(sock);
+	
+// }
