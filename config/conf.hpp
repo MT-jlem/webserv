@@ -12,13 +12,16 @@
 #include "read_config.hpp"
 
 
-class conf
+class Conf : public ReadConfig
 {
-private:
-    
-public:
-    conf(){};
-    ~conf(){};
+    private:
+        
+    public:
+        Conf(int ac, char *av);
+        ~Conf();
+        void    fill_Directives_Locations();
+        // void    
+        // take for every serv a vec of loc
 };
 
 

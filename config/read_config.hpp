@@ -12,11 +12,11 @@
 
 class ReadConfig
 {
-    private:
+    protected:
         std::string     _configFile;
         int             _ac;
         char            *_av;
-        std::vector<std::vector<std::string> > _serverBlocks;
+        std::vector<std::string> _serverBlocks;
     public:
         ReadConfig(int ac, char *av);
         ~ReadConfig();

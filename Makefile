@@ -4,7 +4,7 @@ CC = c++
 
 CPPFLAGS = -Wall -Wextra  -fsanitize=address -fno-omit-frame-pointer
 
-SRC =	main.cpp request.cpp response.cpp server.cpp \
+SRC =	main.cpp \
 		config/conf.cpp config/read_config.cpp
 
 OBJ = $(SRC:%.cpp=%.o)
