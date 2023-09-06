@@ -1,5 +1,5 @@
 #include "conf.hpp"
-
+#include "../server.hpp"
 
 Conf::Conf(int ac, char *av) : ReadConfig(ac, av)
 {
@@ -43,8 +43,6 @@ void    Conf::fill_Directives_Locations()
             {
                 int pos = _serverBlocks[i].find('\n', j);
                 _serverBlocks[i] = _serverBlocks[i].erase(j, pos-j);
-                // _serverBlocks[i].erase(_serverBlocks[i][j], _serverBlocks[i].find('\n'));
-
             }
             if (_serverBlocks[i][j] == ';' || _serverBlocks[i][j] == '{')
                 if (_serverBlocks[i][j+1] != '\n')
@@ -57,22 +55,27 @@ void    Conf::fill_Directives_Locations()
     std::cout << this->_serverBlocks[1] << std::endl;
 
     // std::cout << pos << "\n";
+    std::cout << "--------------------------------\n";
     int indx = 0;
-    // for (int i = 0; i < (int)_serverBlocks.size(); i++) // making server as a singel string without new line '\n'
-    // {
-    //     while (_serverBlocks[i].size())
-    //     {
-    //         int pos = _serverBlocks[i].find(' ');
-    //         std::string keyWord = _serverBlocks[i].substr(0, pos);
-    //         _serverBlocks[i] = _serverBlocks[i].substr(pos);
+    for (int i = 0; i < (int)_serverBlocks.size(); i++) // making server as a singel string without new line '\n'
+    {
+        while ((int)_serverBlocks[i].size() > 1)
+        {
+            int pos = _serverBlocks[i].find('\n', 0);
+            std::string keyWord = _serverBlocks[i].substr(0, pos);
+            _serverBlocks[i] = _serverBlocks[i].substr(pos+1, _serverBlocks[i].size()-pos - 1);
+            std::cout << keyWord << "\n";
+            // j+=pos;
+            // std::cout << "j = " << j << "\n";
+            std::cout << "size = " << _serverBlocks[i].size() << "\n";
+        }
 
-    //         std::cout << "-*"<< _serverBlocks[i].size() << "*-\n";
-            
-    //         // std::cout << pos << _serverBlocks[i] << "\n";
-    //     }
+        // while (_serverBlocks[i].size())
+        // {
+        // }
         
-    //     // int pos = _serverBlocks[i].find(' ');
-    //     // // std::cout << pos << "\n";
-    //     // std::string keyWord = _serverBlocks[i].substr(indx, pos);
-    // }     
+        // int pos = _serverBlocks[i].find(' ');
+        // // std::cout << pos << "\n";
+        // std::string keyWord = _serverBlocks[i].substr(indx, pos);
+    }     
 }
