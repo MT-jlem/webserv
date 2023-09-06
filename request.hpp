@@ -3,6 +3,8 @@
 
 #include <string>
 #include <map>
+#include <map>
+#include "server.hpp"
 class request
 {
 private:
@@ -10,6 +12,7 @@ private:
 	std::string method;
 	std::string path;
 	std::string version;
+	std::string query;
 	std::map<std::string, std::string> headers;
 	//std::vector<std::pair<std::string, std::string> > headers;
 	std::string body;
@@ -17,7 +20,7 @@ public:
 	request(const std::string &req);
 	~request();
 
-	void parse();
+	void parse(server &serv);
 	std::string 						getMethod();
 	std::string 						getPath();
 	std::string 						getVersion();

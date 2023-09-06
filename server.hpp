@@ -1,52 +1,55 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   server.hpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: tbouzalm <tbouzalm@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/07/16 00:52:53 by tbouzalm          #+#    #+#             */
-/*   Updated: 2023/08/29 16:00:51 by tbouzalm         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include "request.hpp"
-
-#include <iostream>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <cstring>
-#include <unistd.h>
+#include <list>
+#include <string>
 #include <vector>
-#include <poll.h>
+#include <utility>
 #include <set>
-#include <sys/fcntl.h>
+#include <poll.h>
 
-
+#include <fcntl.h>
+#include <iostream>
 #include <sys/types.h>
-
+#include <sys/socket.h>
 #include <netdb.h>
 #include <cstring>
 #include <fstream>
 #include <signal.h>
+#include <unistd.h>
 #include <string>
+#include <iomanip>
+#include <sstream>
 
-#define BUFFER_SIZE 32664
+#define GET 0
+#define POST 1
+#define DELETE 2
+class Location {
+private:
+public:
+	std::string path;
+	std::string root;
+	std::string index;
+	bool autoIndex;
+	int methods[3];
+	std::pair<std::string, std::string> redir;
+	//cgi
+	std::pair<std::string, std::set<std::string> > errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
+	std::string upload;
+	Location();
+	~Location();
 
-class server
-{
-    public:
+};
+
+class server{
+private:
+public:
         int fd_socket;
         socklen_t adresslen;
         struct sockaddr_in client_address;
         long count_read;
         struct sockaddr_in serv_addr;
         //  std::vector<pollfd> fd;
-    public:
         server(int port,std::vector<pollfd> &fd,std::vector<int> &server_fd);
         const int   &get_fd_srv();
         int     create_socket();
@@ -54,7 +57,17 @@ class server
         void    listening_socket(int fd_socket);
         int     accepte_connect(int fd_socket);
         void    get_info_server();
-
+		std::string root;
+		std::string index;
+		std::set<std::string> serverName;
+		std::vector<std::pair<std::string, std::string> > host;
+		size_t maxBodySize;
+		std::pair<std::string, std::set<std::string> > errorPage; //maybe a vector
+		std::vector<Location> loc;
+		//vector  fd;
+		server();
+		~server();
 };
+
 
 #endif

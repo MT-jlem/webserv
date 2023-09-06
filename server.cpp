@@ -1,18 +1,29 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   server.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: tbouzalm <tbouzalm@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/18 01:13:32 by tbouzalm          #+#    #+#             */
-/*   Updated: 2023/08/29 15:44:23 by tbouzalm         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
+#include <fcntl.h>
+#include <iostream>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <cstring>
+#include <fstream>
+#include <signal.h>
+#include <unistd.h>
+#include <string>
+#include <iomanip>
+#include <sstream>
+#include "request.hpp"
+#include "response.hpp"
 #include "server.hpp"
-// #include <sys/fcntl.h>
+#include "request.hpp"
+#include <poll.h>
 
+Location::Location(){}
+
+Location::~Location(){}
+
+server::server(){}
+
+server::~server(){}
 
 int server::create_socket()
 {
@@ -68,19 +79,6 @@ const int &server::get_fd_srv()
     return (this->fd_socket);
 }
 
-void    server::get_info_server()
-{
-    std::ifstream file("default.toml");
-    
-    if (file.is_open() != 1)
-    {
-        std::cout << "erreur open config file" << std::endl;
-        exit(1); 
-    }
-    
-    // std::vector<char>::iterator it = file;
-}
-
 server::server(int port, std::vector<pollfd> &fd,std::vector<int> &server_fd)
 {
     adresslen = sizeof(serv_addr);
@@ -111,5 +109,3 @@ server::server(int port, std::vector<pollfd> &fd,std::vector<int> &server_fd)
     fd.push_back(fds);
     server_fd.push_back(fd_socket);
 }
-
-
