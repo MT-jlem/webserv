@@ -13,7 +13,7 @@ HEADERS = request.hpp response.hpp server.hpp
 all : $(NAME)
 
 $(NAME) : $(OBJ) $(HEADERS)
-	$(CC) $(CPPFLAGS) $(OBJ) -o $(NAME)
+	$(CC) $(CPPFLAGS) -DDPATH="/Users/mjlem/Desktop/upload/" $(OBJ) -o $(NAME)
 
 clean : 
 	-rm -rf $(OBJ)

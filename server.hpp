@@ -10,6 +10,9 @@
 #define GET 0
 #define POST 1
 #define DELETE 2
+
+#define BUFFER_SIZE 32664
+
 class Location {
 private:
 public:
@@ -19,7 +22,7 @@ public:
 	bool autoIndex;
 	int methods[3];
 	std::pair<std::string, std::string> redir;
-	//cgi
+	bool cgi;
 	std::pair<std::string, std::set<std::string> > errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
 	std::string upload;
 	Location();

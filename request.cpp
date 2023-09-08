@@ -37,7 +37,7 @@ bool								request::checkVerion(){
 		err = "505";
 		return true;
 	}
-	return false; // error code
+	return false;
 }
 
 bool								request::checkPath(){

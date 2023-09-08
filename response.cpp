@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <sys/_types/_size_t.h>
 #include <algorithm>
+#include <unistd.h>
 #include <utility>
 extern std::string err;
 extern std::map<std::string, std::string> statusCodes;
@@ -45,6 +46,7 @@ Response::Response(request &req, Server &serv){
 		err = "404";
 	} else {
 		path = getPath(req, serv);
+		// std::cout << path << "\n";
 		file = getFile(serv);
 	}
 	// std::cout << serv.loc[locIndex].path << "<<\n";
@@ -70,7 +72,7 @@ Response::Response(request &req, Server &serv){
 			if (!serv.loc[locIndex].redir.first.empty())
 				reDirRes(serv, req);
 			else
-				postM(req);
+				postM(serv, req);
 		}
 		else{
 			err = "405";
@@ -157,6 +159,7 @@ int Response::getLocation(request &req, Server &serv){
 }
 
 void Response::getM(Server &serv, request &req){
+	// std::cout << "GET\n";
 	body = getBody(path, serv, req);
 	if (err!= "")
 		errorRes(serv, req);
@@ -168,50 +171,61 @@ void Response::getM(Server &serv, request &req){
 	res += "\r\n";
 }
 
-void Response::postM(request &req){
+void Response::postM(Server &serv, request &req){
 	std::string tmp;
 	std::string boundary;
 	std::string tmpData = req.getBody();
 	size_t bodyStart = 0;
-	size_t start = req.getHeader()["Content-Type"].find("boundary");
-	if (req.getHeader()["Content-Type"].find("multipart") != std::string::npos && start != std::string::npos){
-		boundary = req.getHeader()["Content-Type"].substr(start + 9, req.getHeader()["Content-Type"].find("\r", start + 9));
-		while (true)
-		{				
-			size_t headerStart = tmpData.find(boundary , bodyStart) + boundary.size();
-			size_t fileStart = tmpData.find("\r\n\r\n", bodyStart) + 4;
-			tmp = tmpData.substr(headerStart, fileStart - headerStart);
-			size_t filenameStart = tmp.find("filename");
-			size_t fileSize = tmpData.find(boundary, fileStart);
-			if (filenameStart != tmp.npos)
-			{
-				filenameStart += 10;
-				std::string filename = tmp.substr(filenameStart, tmp.find("\"", filenameStart) - filenameStart);
-				std::ofstream file (filename);
-				if (tmpData[fileSize + boundary.size()] == '-'){
+	if (!tmpData.empty()){
+		size_t start = req.getHeader()["Content-Type"].find("boundary");
+		if (req.getHeader()["Content-Type"].find("multipart") != std::string::npos && start != std::string::npos){
+			boundary = req.getHeader()["Content-Type"].substr(start + 9, req.getHeader()["Content-Type"].find("\r", start + 9));
+			while (true)
+			{				
+				size_t headerStart = tmpData.find(boundary , bodyStart) + boundary.size();
+				size_t fileStart = tmpData.find("\r\n\r\n", bodyStart) + 4;
+				tmp = tmpData.substr(headerStart, fileStart - headerStart);
+				size_t filenameStart = tmp.find("filename");
+				size_t fileSize = tmpData.find(boundary, fileStart);
+				if (filenameStart != tmp.npos)
+				{
+					filenameStart += 10;
+					std::string filename = tmp.substr(filenameStart, tmp.find("\"", filenameStart) - filenameStart);
+					// path = path[path.size() -1 ] != '/' ? path + "/" : path;
+					std::string upload = serv.loc[locIndex].upload != "" ? serv.loc[locIndex].upload : "/tmp/";
+					std::ofstream file (upload + filename);
+					if (!file.is_open() || file.fail()){
+						std::cout << "WAAAAHASAAAN\n";
+						exit(1);
+					}
+					if (tmpData[fileSize + boundary.size()] == '-'){
+						file << tmpData.substr(fileStart, fileSize - fileStart - 4);
+						break;
+					}
 					file << tmpData.substr(fileStart, fileSize - fileStart - 4);
-					break;
-				}
-				file << tmpData.substr(fileStart, fileSize - fileStart - 4);
-			} else {
-				if (tmpData[fileSize + boundary.size()] == '-'){
+				} else {
+					if (tmpData[fileSize + boundary.size()] == '-'){
+						data.push_back(tmpData.substr(fileStart, fileSize - fileStart - 4));
+						break;
+					}
 					data.push_back(tmpData.substr(fileStart, fileSize - fileStart - 4));
-					break;
 				}
-				data.push_back(tmpData.substr(fileStart, fileSize - fileStart - 4));
+				bodyStart = fileSize;
 			}
-			bodyStart = fileSize;
-		}
-	} else if (req.getHeader()["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos){
-		data.push_back(tmpData);	
-	}	else
-		err = "501";
-	// for (size_t i = 0; i < data.size(); ++i)
-	// 	std::cout << data[i] << "<<line\n";
-	res += "200 ";
-	res += statusCodes["200"];
-	res += getHeaders();
-	res += "\r\n\r\n";
+		} else if (req.getHeader()["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos){
+			data.push_back(tmpData);	
+		}	else
+			err = "501";
+		// for (size_t i = 0; i < data.size(); ++i)
+		// 	std::cout << data[i] << "<<line\n";
+		res += "200 ";
+		res += statusCodes["200"];
+		res += getHeaders();
+		res += "\r\n\r\n";
+	}
+	else {
+		getM(serv, req);
+	}
 }
 
 void Response::deleteM(){
@@ -379,7 +393,7 @@ std::string Response::getHeaders(){
 	return str;
 }
 
-std::string Response::getBody(const std::string &path, Server &serv, request &req){
+std::string Response:: getBody(const std::string &path, Server &serv, request &req){
 	std::string buff;
 	std::string tmp;
 	struct stat st;
@@ -450,6 +464,7 @@ std::string Response::generateDirHtml(std::string path, request &req){
 		
 	}
 	str += "</ul>\n</body>\n</html>";
+	closedir(dir);
 	return str;
 }
 
@@ -465,3 +480,29 @@ std::string Response::generateErrHtml(){
 	return str;
 }
 
+void Response::execCgi(){
+	std::string var[] = {"PATH_INFO", "REQUEST_METHOD", "QUERY_STRING",
+						"CONTENT_TYPE", "CONTENT_LENGTH", "HTTP_HOST",
+						"HTTP_COOKIE", "SCRIPT_NAME"};
+	int fd[2];
+	int pid;
+	int file;
+	char **arg;
+	// std::string path = getCgiPath();
+	if (pipe(fd) < 0){
+		exit (1);
+		//err = "500";
+	}
+	pid = fork();
+	if (pid < 0){
+		exit(1); // err = "500"; errorRes();
+	} else if (pid == 0){
+		dup2(fd[1], STDOUT_FILENO);
+		// execve(path.data(), arg, env);
+		close(fd[1]);
+	} else{
+		char *buff[BUFFER_SIZE];
+		close(fd[0]);
+		read(fd[0], buff, BUFFER_SIZE);
+	}
+}

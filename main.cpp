@@ -14,8 +14,8 @@
 #include "response.hpp"
 #include "server.hpp"
 #include "request.hpp"
-#define BUFFER_SIZE 32664
-// ❌❌❌❌❌ use multimap in req headers
+// ❌❌❌❌❌ use multimap in req headers 
+// check for "connection" and "Host" headers in a req
 std::string err = "";
 std::map<std::string, std::string> statusCodes;
 /*to-do:
@@ -29,7 +29,6 @@ std::map<std::string, std::string> statusCodes;
 		create a response string
 	- cookies, session ...
 */
-
 	//getaddrinfo
 	//socket
 	//setsockopt
@@ -40,19 +39,15 @@ std::map<std::string, std::string> statusCodes;
 	//poll
 	//send || //recv
 	//PS: fcntl(sock, F_SETFL, O_NONBLOCK);//should be used with poll() for non-blocking i/o operations
-/*
-			"300"  ; Section 10.3.1: Multiple Choices
-          | "301"  ; Section 10.3.2: Moved Permanently
-          | "302"  ; Section 10.3.3: Found
-          | "303"  ; Section 10.3.4: See Other
-          | "304"  ; Section 10.3.5: Not Modified
-          | "305"  ; Section 10.3.6: Use Proxy
-          | "307"  ; Section 10.3.8: Temporary Redirect
-*/
+
 void statusCodesInitialize(){
 	statusCodes["200"] = " OK\r\n";
-	statusCodes["204"] = " No Content\r\n";
 	statusCodes["201"] = " Created\r\n";
+	statusCodes["202"] = " Accepted\r\n";
+	statusCodes["203"] = " Non-Authoritative Information\r\n";
+	statusCodes["204"] = " No Content\r\n";
+	statusCodes["205"] = " Reset Content\r\n";
+	statusCodes["206"] = " Partial Content\r\n";
 	statusCodes["300"] = " Multiple Choices\r\n";
 	statusCodes["301"] = " Moved Permanently\r\n";
 	statusCodes["302"] = " Found\r\n";
@@ -62,12 +57,23 @@ void statusCodesInitialize(){
 	statusCodes["306"] = " Switch Proxy\r\n";
 	statusCodes["307"] = " Temporary Redirect\r\n";
 	statusCodes["400"] = " Bad Request\r\n";
+	statusCodes["401"] = " Unauthorized\r\n";
+	statusCodes["402"] = " Payment Required\r\n";
 	statusCodes["403"] = " Forbidden\r\n";
 	statusCodes["404"] = " Not Found\r\n";
 	statusCodes["405"] = " Method Not Allowed\r\n";
+	statusCodes["406"] = " Not Acceptable\r\n";
+	statusCodes["407"] = " Proxy Authentication Required\r\n";
+	statusCodes["408"] = " Request Time-out\r\n";
 	statusCodes["409"] = " Conflict\r\n";
+	statusCodes["410"] = " Gone\r\n";
+	statusCodes["411"] = " Length Required\r\n";
+	statusCodes["412"] = " Precondition Failed\r\n";
 	statusCodes["413"] = " Request Entity Too Large\r\n";
 	statusCodes["414"] = " Request-URI Too Long\r\n";
+	statusCodes["415"] = " Unsupported Media Type\r\n";
+	statusCodes["416"] = " Requested range not satisfiable\r\n";
+	statusCodes["417"] = " Expectation Failed\r\n";
 	statusCodes["500"] = " Internal Server Error\r\n";
 	statusCodes["501"] = " Not Implemented\r\n";
 	statusCodes["505"] = " HTTP Version Not Supported\r\n";
@@ -84,6 +90,7 @@ void initializeServ(Server &serv){
 	serv.loc[0].methods[GET] = 1;
 	serv.loc[0].methods[POST] = 1;
 	serv.loc[0].methods[DELETE] = 1;
+	serv.loc[0].upload = "/Users/mjlem/Desktop/upload/";
 	// serv.loc[0].redir.first = "301";
 	// serv.loc[0].redir.second = "https://youtu.be/3f72kbqN6hg?t=99";
 	serv.loc[1].path = "/loc";
@@ -111,6 +118,8 @@ void handler(int){
 int main(){
 	err = "";
 	statusCodesInitialize();
+	Server serv;
+	initializeServ(serv);
 	struct addrinfo *res, hints;
 
 	signal(SIGINT, handler);
@@ -189,18 +198,17 @@ int main(){
 			}
 		}
 
-		Server serv;
-		initializeServ(serv);
-
+		//check "Host" header if not found return err = "400" res
 
 		{
 			err = "";
-			// std::cout << tmp << '\n';
+			std::cout << tmp << '\n';
 			request req(tmp);
 			req.parse(serv);
 			Response resp(req, serv);
 		std::string buff;
 		buff = resp.res;
+		std::cout << resp.res;
 		send(host,(char *)(buff.data()), buff.size(),0);
 		close(host);
 		}

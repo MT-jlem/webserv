@@ -26,7 +26,7 @@ public:
 	Response(request &req, Server &serv);
 	~Response();
 	void	getM(Server &serv, request &req);
-	void	postM(request &req);
+	void	postM(Server &serv, request &req);
 	void	deleteM();
 	void	resBuilder(request &req, Server &serv);
 	void	errorRes(Server &serv, request &req);
@@ -42,6 +42,7 @@ public:
 	std::string generateDirHtml(std::string path, request &req);
 	std::string generateErrHtml();
 	void reDirRes(Server &serv, request &req);
+	void execCgi();
 };
 
 #endif
