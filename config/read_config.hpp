@@ -17,6 +17,7 @@ class ReadConfig
         int             _ac;
         char            *_av;
         std::vector<std::string> _serverBlocks;
+        bool isServer;
     public:
         ReadConfig(int ac, char *av);
         ~ReadConfig();

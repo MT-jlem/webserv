@@ -30,6 +30,33 @@ Conf::~Conf()
 
 
 
+void    Conf::checkIsServer(int servIndex)
+{
+    isServer = false;
+    int pos = _serverBlocks[servIndex].find('\n', 0);
+    std::string keyWord = _serverBlocks[servIndex].substr(0, pos);
+    _serverBlocks[servIndex] = _serverBlocks[servIndex].substr(pos+1, _serverBlocks[servIndex].size()-pos - 1);
+    keyWord.erase(remove(keyWord.begin(), keyWord.end(), ' '), keyWord.end());
+    if (keyWord == "server")
+    {
+        if (_serverBlocks[servIndex][0] == '{')
+        {
+            puts("hnaaaa12");
+            isServer = true;
+            _serverBlocks[servIndex] = _serverBlocks[servIndex].substr(2, _serverBlocks[servIndex].size()-2);
+            // std::cout << "=>" << _serverBlocks[servIndex] << std::endl;
+        }
+    }
+    else if (keyWord == "server{")
+    {
+        isServer = true;
+        // std::cout << "=>" << _serverBlocks[servIndex] << std::endl;
+    }
+}
+
+
+
+
 void    Conf::fill_Directives_Locations()
 {
     for (int i = 0; i < (int)_serverBlocks.size(); i++)
@@ -48,34 +75,39 @@ void    Conf::fill_Directives_Locations()
                 if (_serverBlocks[i][j+1] != '\n')
                     _serverBlocks[i] = _serverBlocks[i].insert(j+1, "\n");
         }
-
     }
-    std::cout << this->_serverBlocks[0] << std::endl;
-    std::cout << "--------------------------------\n";
-    std::cout << this->_serverBlocks[1] << std::endl;
-
-    // std::cout << pos << "\n";
-    std::cout << "--------------------------------\n";
-    int indx = 0;
-    for (int i = 0; i < (int)_serverBlocks.size(); i++) // making server as a singel string without new line '\n'
+    
+    // std::cout << this->_serverBlocks[0] << std::endl;
+    // std::cout << "--------------------------------\n";
+    // std::cout << this->_serverBlocks[1] << std::endl;
+    listenIndx = 0;
+    for (int i = 0; i < (int)_serverBlocks.size(); i++)
     {
-        while ((int)_serverBlocks[i].size() > 1)
+        checkIsServer(i);
+        while (isServer == true && (int)_serverBlocks[i].size() > 1)
         {
             int pos = _serverBlocks[i].find('\n', 0);
             std::string keyWord = _serverBlocks[i].substr(0, pos);
             _serverBlocks[i] = _serverBlocks[i].substr(pos+1, _serverBlocks[i].size()-pos - 1);
-            std::cout << keyWord << "\n";
-            // j+=pos;
-            // std::cout << "j = " << j << "\n";
-            std::cout << "size = " << _serverBlocks[i].size() << "\n";
-        }
+            if (keyWord != "\n")
+            {
+                size_t lindx = keyWord.find_first_not_of(" \n");
+                size_t rindx = keyWord.find_last_not_of(" \n");
+                if (lindx == std::string::npos || rindx == std::string::npos)
+                    continue;
+                keyWord = keyWord.substr(lindx, rindx+1);
+            }
+            std::string key = keyWord.substr(0, keyWord.find_first_of(" "));
+            std::string value = keyWord.substr(keyWord.find_first_of(" ")+1, keyWord.find_first_of(";}"));
+            if (value == "" || value == "")
+                std::cout << key << " value is empty" << std::endl;
+            // if (key == "listen")
+            // {
+            //     listen.push_back(std::make_pair(value, "80"));
+            // }
 
-        // while (_serverBlocks[i].size())
-        // {
-        // }
-        
-        // int pos = _serverBlocks[i].find(' ');
-        // // std::cout << pos << "\n";
-        // std::string keyWord = _serverBlocks[i].substr(indx, pos);
+            // std::cout << /* "=>" << keyWord <<  " <=====> "*/  key << " <=====> " << value << std::endl;
+        }
+        std::cout << "--------------------------------\n";
     }     
 }
