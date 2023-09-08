@@ -195,6 +195,7 @@ int main() {
 			initializeServ(serv);
             if (fd[i].revents & POLLOUT) 
             {
+                err = "";
                 // std::cout << tmp << "\n";
                 request req(tmp);
 
@@ -214,7 +215,7 @@ int main() {
             if (fd[i].revents & POLLERR)
             {
                 std::cout << "Erreur on socket " << fd[i].fd << std::endl;
-                // close(fd[i].fd);
+                close(fd[i].fd);
                 // Remove the socket from the vectors and adjust the index
                 // fd.erase(fd.begin() + i);
                 // for (size_t j = 0; j < client.size(); j++)
@@ -243,7 +244,7 @@ int main() {
                 //         client.erase(client.begin() + j);
                 //     }
                 // }
-                // fd.erase(fd.begin() + i);
+                fd.erase(fd.begin() + i);
                 // client.erase(client.begin() + i);
             }
             if (fd[i].revents  & POLLNVAL) 
