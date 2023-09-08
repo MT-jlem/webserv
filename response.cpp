@@ -195,7 +195,7 @@ void Response::postM(Server &serv, request &req){
 					std::string upload = serv.loc[locIndex].upload != "" ? serv.loc[locIndex].upload : "/tmp/";
 					std::ofstream file (upload + filename);
 					if (!file.is_open() || file.fail()){
-						std::cout << "WAAAAHASAAAN\n";
+						std::cout << "can't upload(file not created)\n";
 						exit(1);
 					}
 					if (tmpData[fileSize + boundary.size()] == '-'){

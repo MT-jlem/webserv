@@ -6,6 +6,7 @@
 #include <vector>
 #include <utility>
 #include <set>
+#include <map>
 
 #define GET 0
 #define POST 1
@@ -25,6 +26,7 @@ public:
 	bool cgi;
 	std::pair<std::string, std::set<std::string> > errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
 	std::string upload;
+	std::map<std::string, std::string> cgiPath;
 	Location();
 	~Location();
 
