@@ -101,25 +101,25 @@ int main() {
     std::vector<pollfd> fd;
     std::vector<server> all_server; 
 
-    char str[BUFFER_SIZE];
-    size_t reqSize;
-    size_t start;
-    size_t recvSize = 0;
-    size_t end;
+    // char str[BUFFER_SIZE];
+    // size_t reqSize;
+    // size_t start; 
+    // size_t recvSize = 0;
+    // size_t end;
     std::string tmp;
 
 
     // int port_numbers[] = {5001, 5002, 5003, 5004, 5006, 5007, 5008, 4040, 5050, 5051, 5052, 5053};
     int port_numbers[] = {5001};
-    int num_ports = sizeof(port_numbers) / sizeof(port_numbers[0]);
+    // int num_ports = sizeof(port_numbers) / sizeof(port_numbers[0]);
 
-    for (int i = 0; i < num_ports; ++i) 
+    for (int i = 0; i < 1; ++i) 
     {
         // server serv;
 		// initializeServ(serv);
         all_server.push_back(server(port_numbers[i], fd, server_fd));
     }
-
+    std::cout << "server_size = " << server_fd.size() << std::endl;
     statusCodesInitialize();
     while (1) 
     {
@@ -134,16 +134,21 @@ int main() {
 
         for (size_t i = 0; i < fd.size(); i++) 
         {
+			server serv;
+			initializeServ(serv);
+            std::cout << "size_fd = " << fd.size() << std::endl;
             if (fd[i].revents & POLLIN) 
             {
                 std::vector<int>::iterator it = std::find(server_fd.begin(), server_fd.end(), fd[i].fd);
-                if (it != server_fd.end()) 
+                if (it != server_fd.end())
                 {
                     int new_fd_socket;
-                    if ((new_fd_socket = accept(*it, (struct sockaddr *)&all_server[std::distance(server_fd.begin(),it)].client_address , (socklen_t *)&all_server[std::distance(server_fd.begin(),it)].adresslen)) < 0) 
+                    new_fd_socket = accept(fd[i].fd, (struct sockaddr *)&all_server[std::distance(server_fd.begin(),it)].client_address , (socklen_t *)&all_server[std::distance(server_fd.begin(),it)].adresslen);
+                    if (new_fd_socket < 0) 
                     {
                         std::cout << "erreur acceptation" << std::endl;
-                        exit(1);
+                        
+                        break;
                     }
                     // std::cout << "adresse_ip_client = "  << serv_addr.sin_addr.s_addr << std::endl;
                     fcntl(new_fd_socket, F_SETFL, O_NONBLOCK);
@@ -151,106 +156,108 @@ int main() {
                     struct pollfd fds;
                     fds.fd = new_fd_socket;
                     fds.events = POLLIN;
+                    // std::cout << fds.fd << "||||\n";
+
                     fd.push_back(fds);
                     client.push_back(new_fd_socket);
-                    // std::cout << "accept client and push fd_socket_client in tab fd and in struct fds " << new_fd_socket << std::endl;
-                }
-                else 
-                {
+                } else {
 
-                    tmp = "";
-                    bzero(str, BUFFER_SIZE);
-                    recvSize += read(fd[i].fd, str, BUFFER_SIZE);
-                    std::cout << "=================RECV===============\n";
-                    tmp.append(str, recvSize);
-                    recvSize -= tmp.find("\r\n\r\n") + 4;
-                    bzero(str, BUFFER_SIZE);
+
+                    // tmp = "";
+                    // bzero(str, 1024);
+                    // recvSize += read(fd[i].fd, str, 1024);
+                    // // std::cout << "=================RECV===============\n" << fd.size();
+                    // // tmp.append(str, recvSize);
+                    // // recvSize -= tmp.find("\r\n\r\n") + 4;
+                    // bzero(str, 1024);
 
 
                     //check Content-Length and recv all the req
-                    start = tmp.find("Content-Length:");
-                    if (start != tmp.npos)
-                    {
-                        end = tmp.find("\n", start);
-                        reqSize = std::stoi(tmp.substr(start + 16, end - 1));
-                        while(1)
-                        {
-                            if (recvSize >= reqSize)
-                            {
-                                fd[i].revents = POLLOUT;
-                                break;
-                            }
-                            size_t tmpRecvSize = 0;
-                            tmpRecvSize =  read(fd[i].fd, str, BUFFER_SIZE);
-                            recvSize += tmpRecvSize;
-                            tmp.append(str, tmpRecvSize);
-                            bzero(str, BUFFER_SIZE);
-                        }
-                    }
-                    else
-                        fd[i].revents = POLLOUT;
-                }
+                    // start = tmp.find("Content-Length:");
+                    // if (start != tmp.npos)
+                    // {
+                    //     end = tmp.find("\n", start);
+                    //     reqSize = std::stoi(tmp.substr(start + 16, end - 1));
+                    //     while(1)
+                    //     {
+                    //         if (recvSize >= reqSize)
+                    //         {
+                    //             fd[i].events = POLLOUT;
+                    //             break;
+                    //         }
+                    //         size_t tmpRecvSize = 0;
+                    //         tmpRecvSize =  read(fd[i].fd, str, BUFFER_SIZE);
+                    //         recvSize += tmpRecvSize;
+                    //         tmp.append(str, tmpRecvSize);
+                    //         bzero(str, BUFFER_SIZE);
+                    //     }
+                    // }
+                               // else
+                        fd[i].events = POLLOUT;
+                }  // std::cout << "accept client and push fd_socket_client in tab fd and in struct fds " << new_fd_socket << std::endl;
             }
-			server serv;
-			initializeServ(serv);
-            if (fd[i].revents & POLLOUT) 
+            
+            else if (fd[i].revents & POLLOUT) 
             {
+                //socket pret a ecriture
                 err = "";
                 // std::cout << tmp << "\n";
-                request req(tmp);
+                // request req(tmp);
 
-                req.parse(serv);
-                Response resp(req, serv);
-				std::string buff;
-				buff = resp.res;
-                std::cout << buff;
+                // req.parse(serv);
+                // Response resp(req, serv);
+				// std::string buff;
+				// buff = resp.res;
+                // std::cout << buff;
+std::string str = "HTTP/1.1 200  OK\r\n";
+str +=  "Content-Length: 5\r\n";
+str +=  "Content-Type: text/html\r\n";
+str +=  "\r\n";
+str += "helor\r\n";
 
-                write(fd[i].fd, (char *)(buff.data()) , buff.length());
+
+
+
+                write(fd[i].fd, (char *)(str.data()) , str.length());
                 // send(fd[i].fd,(char *)(buff.data()), buff.size(),0);
-                puts("|||||||||||||||||");
+                // puts("|||||||||||||||||");
                 close(fd[i].fd);
-                // fd.erase(fd.begin() + i);
+
+                fd.erase(fd.begin() + i);
+
+
       
             }
-            if (fd[i].revents & POLLERR)
+            else if (fd[i].revents & POLLERR)
             {
+      
                 std::cout << "Erreur on socket " << fd[i].fd << std::endl;
                 close(fd[i].fd);
+          
                 // Remove the socket from the vectors and adjust the index
-                // fd.erase(fd.begin() + i);
-                // for (size_t j = 0; j < client.size(); j++)
-                // {
-                //     std::vector<int>::iterator it = std::find(client.begin(), client.end(), fd[i].fd);
-                //     if (it != client.end())
-                //     {
-                //         client.erase(client.begin() + j);
-                //     }
-                // }
                 fd.erase(fd.begin() + i);
+
+                
                 
             }
-            if (fd[i].revents & POLLHUP)
+            else if (fd[i].revents & POLLHUP)
             {
                 std::cout << "Hang up on socket " << fd[i].fd << std::endl;
                 close(fd[i].fd);
-                // Remove the socket from the vectors and adjust the index
-                // fd.erase(fd.begin() + i);
-                // for (size_t j = 0; j < client.size(); j++)
-                // {
-                //     std::vector<int>::iterator it = std::find(client.begin(), client.end(), fd[i].fd);
-                //     if (it != client.end())
-                //     {
-                //         puts("supprime fd_client");
-                //         client.erase(client.begin() + j);
-                //     }
-                // }
+ 
                 fd.erase(fd.begin() + i);
-                // client.erase(client.begin() + i);
+                
             }
-            if (fd[i].revents  & POLLNVAL) 
+            else if (fd[i].revents  & POLLNVAL) 
             {
+                  std::cout << "Erreur on socket " << fd[i].fd << std::endl;
                 close(fd[i].fd);
+
                 fd.erase(fd.begin() + i);
+
+                 
+              
+             
             }
         }
     }

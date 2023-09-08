@@ -414,7 +414,6 @@ void	 Response::errorRes(server &serv, request &req){
 
 	// if there's custom error page we should know which location the error occurred
 	std::string path;
-	std::cout << "la == " << path << std::endl;
 	if (serv.loc[locIndex].errorPage.second.find(err) != serv.loc[locIndex].errorPage.second.end())
 		path = serv.loc[locIndex].errorPage.first;
 	else{
@@ -438,13 +437,14 @@ std::string Response::generateDirHtml(std::string path, request &req){
 	dir = opendir(path.data());
 	std::string tmpFile = req.getPath();
 	
-
 	str +=	"<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody { background: lightgray; }\n"
 			"li { font-size: 1.2em; margin: 10px; }\n</style>\n<title>Directory</title>\n</head>\n<body>\n";
 	str += "<h1>";
 	str += "directory list";
 	str += "</h1>\n<ul>\n";
 	path = path[path.size() - 1] != '/' ? path + "/" : path;
+	if(!dir)
+		return str;
 	while ((dirFile = readdir(dir))) {
 	str += "<li><a href=\"";
 	tmpFile = tmpFile[tmpFile.size() -1] != '/' ? tmpFile + "/" : tmpFile;
