@@ -101,10 +101,10 @@ int main() {
     std::vector<pollfd> fd;
     std::vector<server> all_server; 
 
-    // char str[BUFFER_SIZE];
+    char str[BUFFER_SIZE];
     // size_t reqSize;
     // size_t start; 
-    // size_t recvSize = 0;
+    size_t recvSize = 0;
     // size_t end;
     std::string tmp;
 
@@ -136,7 +136,7 @@ int main() {
         {
 			server serv;
 			initializeServ(serv);
-            std::cout << "size_fd = " << fd.size() << std::endl;
+            // std::cout << "size_fd = " << fd.size() << std::endl;
             if (fd[i].revents & POLLIN) 
             {
                 std::vector<int>::iterator it = std::find(server_fd.begin(), server_fd.end(), fd[i].fd);
@@ -163,10 +163,13 @@ int main() {
                 } else {
 
 
-                    // tmp = "";
-                    // bzero(str, 1024);
-                    // recvSize += read(fd[i].fd, str, 1024);
-                    // // std::cout << "=================RECV===============\n" << fd.size();
+                    tmp = "";
+                    bzero(str, BUFFER_SIZE);
+                    recvSize += read(fd[i].fd, str, BUFFER_SIZE);
+                    std::cout << "=================RECV===============\n";
+                    tmp.append(str, recvSize);
+                    recvSize -= tmp.find("\r\n\r\n") + 4;
+                    bzero(str, BUFFER_SIZE);
                     // // tmp.append(str, recvSize);
                     // // recvSize -= tmp.find("\r\n\r\n") + 4;
                     // bzero(str, 1024);
@@ -202,23 +205,23 @@ int main() {
                 //socket pret a ecriture
                 err = "";
                 // std::cout << tmp << "\n";
-                // request req(tmp);
+                request req(tmp);
 
-                // req.parse(serv);
-                // Response resp(req, serv);
-				// std::string buff;
-				// buff = resp.res;
+                req.parse(serv);
+                Response resp(req, serv);
+				std::string buff;
+				buff = resp.res;
                 // std::cout << buff;
-std::string str = "HTTP/1.1 200  OK\r\n";
-str +=  "Content-Length: 5\r\n";
-str +=  "Content-Type: text/html\r\n";
-str +=  "\r\n";
-str += "helor\r\n";
+// std::string str = "HTTP/1.1 200  OK\r\n";
+// str +=  "Content-Length: 5\r\n";
+// str +=  "Content-Type: text/html\r\n";
+// str +=  "\r\n";
+// str += "helor\r\n";
 
 
 
 
-                write(fd[i].fd, (char *)(str.data()) , str.length());
+                write(fd[i].fd, (char *)(buff.data()) , buff.length());
                 // send(fd[i].fd,(char *)(buff.data()), buff.size(),0);
                 // puts("|||||||||||||||||");
                 close(fd[i].fd);
@@ -236,8 +239,6 @@ str += "helor\r\n";
           
                 // Remove the socket from the vectors and adjust the index
                 fd.erase(fd.begin() + i);
-
-                
                 
             }
             else if (fd[i].revents & POLLHUP)
@@ -255,9 +256,6 @@ str += "helor\r\n";
 
                 fd.erase(fd.begin() + i);
 
-                 
-              
-             
             }
         }
     }

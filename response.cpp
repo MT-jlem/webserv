@@ -193,9 +193,11 @@ void Response::postM(request &req){
 				std::ofstream file (filename);
 				if (tmpData[fileSize + boundary.size()] == '-'){
 					file << tmpData.substr(fileStart, fileSize - fileStart - 4);
+					file.close();
 					break;
 				}
 				file << tmpData.substr(fileStart, fileSize - fileStart - 4);
+				file.close();
 			} else {
 				if (tmpData[fileSize + boundary.size()] == '-'){
 					data.push_back(tmpData.substr(fileStart, fileSize - fileStart - 4));
@@ -407,6 +409,7 @@ std::string Response::getBody(const std::string &path, server &serv, request &re
 		buff += tmp;
 		buff += "\n";
 	}
+	file.close();
 	return buff;
 }
 
@@ -455,6 +458,7 @@ std::string Response::generateDirHtml(std::string path, request &req){
 		
 	}
 	str += "</ul>\n</body>\n</html>";
+	closedir(dir);
 	return str;
 }
 
