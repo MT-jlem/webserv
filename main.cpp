@@ -1,3 +1,4 @@
+#include <climits>
 #include <fcntl.h>
 #include <iostream>
 #include <sys/types.h>
@@ -14,10 +15,12 @@
 #include "response.hpp"
 #include "server.hpp"
 #include "request.hpp"
+void initializeEncode();
 // ❌❌❌❌❌ use multimap in req headers 
 // check for "connection" and "Host" headers in a req
 std::string err = "";
 std::map<std::string, std::string> statusCodes;
+extern std::map<std::string, std::string> encode;
 /*to-do:
 	- parse conf file
 		create http class
@@ -83,7 +86,7 @@ void initializeServ(Server &serv){
 	//if root doesn't have "/" in the end add "/"
 	serv.root = "/Users/mjlem/Desktop/webserv/";
 	// serv.index = "index.html";
-	serv.maxBodySize = 10000000;
+	serv.maxBodySize = LONG_LONG_MAX;
 	serv.loc.resize(2);
 	serv.loc[0].path = "/";
 	serv.loc[0].autoIndex = true;
@@ -118,6 +121,7 @@ void handler(int){
 int main(){
 	err = "";
 	statusCodesInitialize();
+	initializeEncode();
 	Server serv;
 	initializeServ(serv);
 	struct addrinfo *res, hints;
@@ -202,13 +206,13 @@ int main(){
 
 		{
 			err = "";
-			std::cout << tmp << '\n';
+			// std::cout << tmp << '\n';
 			request req(tmp);
 			req.parse(serv);
 			Response resp(req, serv);
 		std::string buff;
 		buff = resp.res;
-		std::cout << resp.res;
+		// std::cout << resp.res;
 		send(host,(char *)(buff.data()), buff.size(),0);
 		close(host);
 		}

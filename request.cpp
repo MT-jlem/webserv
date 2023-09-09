@@ -8,9 +8,33 @@
 #include <iomanip>
 #include "server.hpp"
 extern std::string err;
+std::map<std::string, std::string> encode;
 
 // remove boundary + headers from the body 
 // handle chunked req && convert size from hex to int and recv the body && remove the boundary
+void initializeEncode(){
+	encode["%20"] = " ";
+	encode["%21"] = "!";
+	encode["%22"] = "\"";
+	encode["%23"] = "#";
+	encode["%24"] = "$";
+	encode["%25"] = "%";
+	encode["%26"] = "&";
+	encode["%27"] = "\'";
+	encode["%28"] = "(";
+	encode["%29"] = ")";
+	encode["%2A"] = "*";
+	encode["%2B"] = "+";
+	encode["%2C"] = ",";
+	encode["%2F"] = "/";
+	encode["%3A"] = ":";
+	encode["%3B"] = ";";
+	encode["%3D"] = "=";
+	encode["%3F"] = "?";
+	encode["%40"] = "@";
+	encode["%5B"] = "[";
+	encode["%5D"] = "]";
+}
 request::request(const std::string &req){
 	rawReq = req;
 }
@@ -39,7 +63,14 @@ bool								request::checkVerion(){
 	}
 	return false;
 }
+void								request::urlDecoding(){
+	size_t start = 0;
 
+	while ((start = path.find("%", start)) != path.npos) {
+		path.replace(start, 3, encode[path.substr(start, 3)]);
+	}
+
+}
 bool								request::checkPath(){
 	if (path.size() > 2048)
 		return true; //status code 414
@@ -180,6 +211,9 @@ void	request::parse(Server &serv){
 		return;
 	if (checkPath())
 		return;
+	std::cout << path << " before \n";
+	urlDecoding();
+	std::cout << path << " after \n";
 	start = parseHeaders(i + 2);
 	if (checkHeaders())
 		return;

@@ -200,9 +200,11 @@ void Response::postM(Server &serv, request &req){
 					}
 					if (tmpData[fileSize + boundary.size()] == '-'){
 						file << tmpData.substr(fileStart, fileSize - fileStart - 4);
+						file.close();
 						break;
 					}
 					file << tmpData.substr(fileStart, fileSize - fileStart - 4);
+					file.close();
 				} else {
 					if (tmpData[fileSize + boundary.size()] == '-'){
 						data.push_back(tmpData.substr(fileStart, fileSize - fileStart - 4));
@@ -418,6 +420,7 @@ std::string Response:: getBody(const std::string &path, Server &serv, request &r
 		buff += tmp;
 		buff += "\n";
 	}
+	file.close();
 	return buff;
 }
 
@@ -480,29 +483,29 @@ std::string Response::generateErrHtml(){
 	return str;
 }
 
-void Response::execCgi(){
-	std::string var[] = {"PATH_INFO", "REQUEST_METHOD", "QUERY_STRING",
-						"CONTENT_TYPE", "CONTENT_LENGTH", "HTTP_HOST",
-						"HTTP_COOKIE", "SCRIPT_NAME"};
-	int fd[2];
-	int pid;
-	int file;
-	char **arg;
-	// std::string path = getCgiPath();
-	if (pipe(fd) < 0){
-		exit (1);
-		//err = "500";
-	}
-	pid = fork();
-	if (pid < 0){
-		exit(1); // err = "500"; errorRes();
-	} else if (pid == 0){
-		dup2(fd[1], STDOUT_FILENO);
-		// execve(path.data(), arg, env);
-		close(fd[1]);
-	} else{
-		char *buff[BUFFER_SIZE];
-		close(fd[0]);
-		read(fd[0], buff, BUFFER_SIZE);
-	}
-}
+// void Response::execCgi(){
+// 	std::string var[] = {"PATH_INFO", "REQUEST_METHOD", "QUERY_STRING",
+// 						"CONTENT_TYPE", "CONTENT_LENGTH", "HTTP_HOST",
+// 						"HTTP_COOKIE", "SCRIPT_NAME"};
+// 	int fd[2];
+// 	int pid;
+// 	int file;
+// 	char **arg;
+// 	// std::string path = getCgiPath();
+// 	if (pipe(fd) < 0){
+// 		exit (1);
+// 		//err = "500";
+// 	}
+// 	pid = fork();
+// 	if (pid < 0){
+// 		exit(1); // err = "500"; errorRes();
+// 	} else if (pid == 0){
+// 		dup2(fd[1], STDOUT_FILENO);
+// 		// execve(path.data(), arg, env);
+// 		close(fd[1]);
+// 	} else{
+// 		char *buff[BUFFER_SIZE];
+// 		close(fd[0]);
+// 		read(fd[0], buff, BUFFER_SIZE);
+// 	}
+// }

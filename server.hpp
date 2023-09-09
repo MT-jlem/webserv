@@ -12,7 +12,7 @@
 #define POST 1
 #define DELETE 2
 
-#define BUFFER_SIZE 32664
+#define BUFFER_SIZE 8388608
 
 class Location {
 private:
