@@ -13,7 +13,7 @@ private:
 	std::string path;
 	std::string version;
 	std::string query;
-	std::map<std::string, std::string> headers;
+	std::multimap<std::string, std::string> headers;
 	//std::vector<std::pair<std::string, std::string> > headers;
 	std::string body;
 public:
@@ -21,10 +21,11 @@ public:
 	~request();
 
 	void parse(Server &serv);
+	std::string							getQuery();
 	std::string 						getMethod();
 	std::string 						getPath();
 	std::string 						getVersion();
-	std::map<std::string, std::string>	getHeader();
+	std::multimap<std::string, std::string>&	getHeader();
 	std::string							getBody();
 	size_t								parseHeaders(size_t start);
 	void								urlDecoding();

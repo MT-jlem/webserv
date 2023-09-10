@@ -20,6 +20,7 @@ private:
 	std::string file;
 	std::vector<std::string> data;
 	size_t pos;
+	char *cgiEnv[11];
 public:
 	std::string res;
 	Response();
@@ -42,7 +43,8 @@ public:
 	std::string generateDirHtml(std::string path, request &req);
 	std::string generateErrHtml();
 	void reDirRes(Server &serv, request &req);
-	void execCgi();
+	void execCgi(Server &serv, request &req);
+	void initializeEnv(Server &serv, request &req);
 };
 
 #endif

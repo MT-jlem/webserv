@@ -1,3 +1,5 @@
+#include <cstring>
+#include <map>
 #include <regex>
 #include <sys/_types/_s_ifmt.h>
 #include <sys/types.h>
@@ -24,14 +26,16 @@ bool checkReDirPath(std::string path){
 	if (path.size() > 2048)
 		return true; //status code 414
 	for (size_t i = 0; path[i]; ++i){
-			if ((path[i] >= 'A' && path[i] <= 'Z') || (path[i] >= 'a' && path[i] <= 'z') || (path[i] >= '0' && path[i] <= '9'))
-				continue; //400
-			if (path[i] == '~' || path[i] == '!' || (path[i] >= '#' && path[i] <= '/') || path[i] == ':' || path[i] == ';' || path[i] == '=' || path[i] == '?' || path[i] == '@')
-				continue;
-			if (path[i] == '[' || path[i] == ']' || path[i] == '_')
-				continue;
-			err = "400";
-			return true; // 400
+		if ((path[i] >= 'A' && path[i] <= 'Z') || (path[i] >= 'a' && path[i] <= 'z') ||
+		 (path[i] >= '0' && path[i] <= '9'))
+			continue; //400
+		if (path[i] == '~' || path[i] == '!' || (path[i] >= '#' && path[i] <= '/') ||
+			path[i] == ':' || path[i] == ';' || path[i] == '=' || path[i] == '?' || path[i] == '@')
+			continue;
+		if (path[i] == '[' || path[i] == ']' || path[i] == '_')
+			continue;
+		err = "400";
+		return true; // 400
 	}
 	return false;
 }
@@ -104,12 +108,12 @@ void Response::reDirRes(Server &serv, request &req){
 		res += tmp.first;
 		res += statusCodes[tmp.first];
 		res += getDate();
-		res += "Server: webServ\r\n";
+		res += "Server: webServ(liban lik)\r\n";
 		res += "Content-Length: 0\r\n";
 		res += "Location: "; res += tmp.second; res += "\r\n";
 		res += "\r\n";
 	}
-	
+
 }
 
 std::string Response::getPath(request &req, Server &serv){
@@ -117,8 +121,8 @@ std::string Response::getPath(request &req, Server &serv){
 	std::string reqPath = req.getPath();
 	if (pos != std::string::npos)
 		file = reqPath.substr(pos + 1, reqPath.size() - pos + 1);
-		// if (serv.loc[locIndex].errorPage.second.find(err) != serv.loc[locIndex].errorPage.second.end())
-		//check if there a custom error page if not generate the default
+	// if (serv.loc[locIndex].errorPage.second.find(err) != serv.loc[locIndex].errorPage.second.end())
+	//check if there a custom error page if not generate the default
 	if (err != "")
 		return "";
 	return  root + file;
@@ -177,9 +181,10 @@ void Response::postM(Server &serv, request &req){
 	std::string tmpData = req.getBody();
 	size_t bodyStart = 0;
 	if (!tmpData.empty()){
-		size_t start = req.getHeader()["Content-Type"].find("boundary");
-		if (req.getHeader()["Content-Type"].find("multipart") != std::string::npos && start != std::string::npos){
-			boundary = req.getHeader()["Content-Type"].substr(start + 9, req.getHeader()["Content-Type"].find("\r", start + 9));
+		std::multimap<std::string, std::string>::iterator it =  req.getHeader().find("Content-Type");
+		size_t start = it->second.find("boundary");
+		if (req.getHeader().find("Content-Type")->second.find("multipart") != std::string::npos && start != std::string::npos){
+			boundary = req.getHeader().find("Content-Type")->second.substr(start + 9, req.getHeader().find("Content-Type")->second.find("\r", start + 9));
 			while (true)
 			{				
 				size_t headerStart = tmpData.find(boundary , bodyStart) + boundary.size();
@@ -214,7 +219,7 @@ void Response::postM(Server &serv, request &req){
 				}
 				bodyStart = fileSize;
 			}
-		} else if (req.getHeader()["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos){
+		} else if (req.getHeader().find("Content-Type")->second.find("application/x-www-form-urlencoded") != std::string::npos){
 			data.push_back(tmpData);	
 		}	else
 			err = "501";
@@ -299,93 +304,93 @@ std::string Response::getContentLength(){
 
 std::string Response::getContentType(){
 	std::string str = "text/plain";
-    if (file.rfind('.') != std::string::npos) {
-        std::string ext = file.substr(file.rfind('.'), file.size());
-        if (ext == ".html")
-            str = "text/html";
-        else if (ext == ".js")
-            str = "application/javascript";
-        else if (ext == ".css")
-            str = "text/css";
-        else if (ext == ".ico")
-            str = "image/x-icon";
-        else if (ext == ".jpeg" || ext == ".jpg")
-            str = "image/jpeg";
-        else if (ext == ".png")
-            str = "image/png";
-        else if (ext == ".mp4")
-            str = "video/mp4";
-        else if (ext == ".gif")
-            str = "image/gif";
-        else if (ext == ".tiff")
-            str = "image/tiff";
-        else if (ext == ".svg")
-            str = "image/svg+xml";
-        else if (ext == ".csv")
-            str = "text/csv";
-        else if (ext == ".xml")
-            str = "application/xml";
-        else if (ext == ".zip")
-            str = "application/zip";
-        else if (ext == ".mp3")
-            str = "audio/mpeg";
-        else if (ext == ".wma")
-            str = "audio/x-ms-wma";
-        else if (ext == ".ra")
-            str = "audio/vnd.rn-realaudio";
-        else if (ext == ".wav")
-            str = "audio/x-wav";
-        else if (ext == ".mpeg")
-            str = "video/mpeg";
-        else if (ext == ".mov")
-            str = "video/quicktime";
-        else if (ext == ".m4v")
-            str = "video/x-m4v";
-        else if (ext == ".qt")
-            str = "video/quicktime";
-        else if (ext == ".wmv")
-            str = "video/x-ms-wmv";
-        else if (ext == ".avi")
-            str = "video/x-msvideo";
-        else if (ext == ".flv")
-            str = "video/x-flv";
-        else if (ext == ".webm")
-            str = "video/webm";
-        else if (ext == ".odt")
-            str = "application/vnd.oasis.opendocument.text";
-        else if (ext == ".ods")
-            str = "application/vnd.oasis.opendocument.spreadsheet";
-        else if (ext == ".odp")
-            str = "application/vnd.oasis.opendocument.presentation";
-        else if (ext == ".odg")
-            str = "application/vnd.oasis.opendocument.graphics";
-        else if (ext == ".ods")
-            str = "application/vnd.oasis.opendocument.spreadsheet";
-        else if (ext == ".odt")
-            str = "application/vnd.oasis.opendocument.text";
-        else if (ext == ".ppt")
-            str = "application/vnd.ms-powerpoint";
-        else if (ext == ".pptx")
-            str = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-        else if (ext == ".xls")
-            str = "application/vnd.ms-excel";
-        else if (ext == ".xlsx")
-            str = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        else if (ext == ".doc")
-            str = "application/msword";
-        else if (ext == ".docx")
-            str = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        else if (ext == ".xul")
-            str = "application/vnd.mozilla.xul+xml";
-    }
-    return str;
+	if (file.rfind('.') != std::string::npos) {
+		std::string ext = file.substr(file.rfind('.'), file.size());
+		if (ext == ".html")
+			str = "text/html";
+		else if (ext == ".js")
+			str = "application/javascript";
+		else if (ext == ".css")
+			str = "text/css";
+		else if (ext == ".ico")
+			str = "image/x-icon";
+		else if (ext == ".jpeg" || ext == ".jpg")
+			str = "image/jpeg";
+		else if (ext == ".png")
+			str = "image/png";
+		else if (ext == ".mp4")
+			str = "video/mp4";
+		else if (ext == ".gif")
+			str = "image/gif";
+		else if (ext == ".tiff")
+			str = "image/tiff";
+		else if (ext == ".svg")
+			str = "image/svg+xml";
+		else if (ext == ".csv")
+			str = "text/csv";
+		else if (ext == ".xml")
+			str = "application/xml";
+		else if (ext == ".zip")
+			str = "application/zip";
+		else if (ext == ".mp3")
+			str = "audio/mpeg";
+		else if (ext == ".wma")
+			str = "audio/x-ms-wma";
+		else if (ext == ".ra")
+			str = "audio/vnd.rn-realaudio";
+		else if (ext == ".wav")
+			str = "audio/x-wav";
+		else if (ext == ".mpeg")
+			str = "video/mpeg";
+		else if (ext == ".mov")
+			str = "video/quicktime";
+		else if (ext == ".m4v")
+			str = "video/x-m4v";
+		else if (ext == ".qt")
+			str = "video/quicktime";
+		else if (ext == ".wmv")
+			str = "video/x-ms-wmv";
+		else if (ext == ".avi")
+			str = "video/x-msvideo";
+		else if (ext == ".flv")
+			str = "video/x-flv";
+		else if (ext == ".webm")
+			str = "video/webm";
+		else if (ext == ".odt")
+			str = "application/vnd.oasis.opendocument.text";
+		else if (ext == ".ods")
+			str = "application/vnd.oasis.opendocument.spreadsheet";
+		else if (ext == ".odp")
+			str = "application/vnd.oasis.opendocument.presentation";
+		else if (ext == ".odg")
+			str = "application/vnd.oasis.opendocument.graphics";
+		else if (ext == ".ods")
+			str = "application/vnd.oasis.opendocument.spreadsheet";
+		else if (ext == ".odt")
+			str = "application/vnd.oasis.opendocument.text";
+		else if (ext == ".ppt")
+			str = "application/vnd.ms-powerpoint";
+		else if (ext == ".pptx")
+			str = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+		else if (ext == ".xls")
+			str = "application/vnd.ms-excel";
+		else if (ext == ".xlsx")
+			str = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+		else if (ext == ".doc")
+			str = "application/msword";
+		else if (ext == ".docx")
+			str = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+		else if (ext == ".xul")
+			str = "application/vnd.mozilla.xul+xml";
+	}
+	return str;
 }
 
 
 std::string Response::getHeaders(){
 	std::string str;
 	str += getDate();
-	str += "Server: webServ\r\n";
+	str += "Server: webServ(liban lik)\r\n";
 	str += getContentLength();
 	str += "Content-Type: ";
 	if (err != "")
@@ -449,22 +454,22 @@ std::string Response::generateDirHtml(std::string path, request &req){
 	std::string str;
 	dir = opendir(path.data());
 	std::string tmpFile = req.getPath();
-	
+
 
 	str +=	"<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody { background: lightgray; }\n"
-			"li { font-size: 1.2em; margin: 10px; }\n</style>\n<title>Directory</title>\n</head>\n<body>\n";
+		"li { font-size: 1.2em; margin: 10px; }\n</style>\n<title>Directory</title>\n</head>\n<body>\n";
 	str += "<h1>";
 	str += "directory list";
 	str += "</h1>\n<ul>\n";
 	path = path[path.size() - 1] != '/' ? path + "/" : path;
 	while ((dirFile = readdir(dir))) {
-	str += "<li><a href=\"";
-	tmpFile = tmpFile[tmpFile.size() -1] != '/' ? tmpFile + "/" : tmpFile;
-	str += tmpFile + dirFile->d_name;//replace
-	str += "\">";
-	str += dirFile->d_name;//replace
-	str += "</a></li>\n";
-		
+		str += "<li><a href=\"";
+		tmpFile = tmpFile[tmpFile.size() -1] != '/' ? tmpFile + "/" : tmpFile;
+		str += tmpFile + dirFile->d_name;//replace
+		str += "\">";
+		str += dirFile->d_name;//replace
+		str += "</a></li>\n";
+
 	}
 	str += "</ul>\n</body>\n</html>";
 	closedir(dir);
@@ -476,36 +481,61 @@ std::string Response::generateErrHtml(){
 
 	str += "<!DOCTYPE html>\n<html>\n<head>\n<title>Error Page</title>\n</head>\n";
 	str += "<body>\n<div style=\"border: 5px solid black; position: "
-			"absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); "
-			"padding: 10px;\">\n<p style=\"font-size: larger;\"> ";
+		"absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); "
+		"padding: 10px;\">\n<p style=\"font-size: larger;\"> ";
 	str += err; str += ' '; str += statusCodes[err];
 	str += "</p>\n</div>\n</body>\n</html>\n";
 	return str;
 }
 
-// void Response::execCgi(){
-// 	std::string var[] = {"PATH_INFO", "REQUEST_METHOD", "QUERY_STRING",
-// 						"CONTENT_TYPE", "CONTENT_LENGTH", "HTTP_HOST",
-// 						"HTTP_COOKIE", "SCRIPT_NAME"};
-// 	int fd[2];
-// 	int pid;
-// 	int file;
-// 	char **arg;
-// 	// std::string path = getCgiPath();
-// 	if (pipe(fd) < 0){
-// 		exit (1);
-// 		//err = "500";
-// 	}
-// 	pid = fork();
-// 	if (pid < 0){
-// 		exit(1); // err = "500"; errorRes();
-// 	} else if (pid == 0){
-// 		dup2(fd[1], STDOUT_FILENO);
-// 		// execve(path.data(), arg, env);
-// 		close(fd[1]);
-// 	} else{
-// 		char *buff[BUFFER_SIZE];
-// 		close(fd[0]);
-// 		read(fd[0], buff, BUFFER_SIZE);
-// 	}
-// }
+void Response::initializeEnv(Server &serv, request &req){
+	std::string var[] = {"PATH_INFO=", "REQUEST_METHOD=", "QUERY_STRING=",
+	"CONTENT_TYPE=", "CONTENT_LENGTH=","HTTP_COOKIE=", "SCRIPT_NAME=",
+	"HTTP_USER_AGENT=", "SCRIPT_FILENAME=", "REDIRECT_STATUS="};
+	std::multimap<std::string, std::string> headers = req.getHeader();
+	std::multimap<std::string, std::string>::iterator it;
+	var[0] = "";
+	var[1] = req.getMethod();
+	var[2] = req.getQuery();
+	it = headers.find("Content-Type");
+	var[3] = it != headers.end() ? it->second : "";
+	it = headers.find("Content-Length");
+	var[4] = it != headers.end() ? it->second : "";
+	it = headers.find("Cookie");
+	var[5] = it->second;
+	var[6] = req.getPath();
+	it = headers.find("User-Agent");
+	var[7] = it->second;
+	var[8] = path;
+	var[9] = "200";
+	for (int i = 0; i < 10; ++i){
+		cgiEnv[i] = strdup(var[i].c_str());
+	}
+}
+
+void Response::execCgi(Server &serv, request &req){
+
+	initializeEnv(serv, req);
+	int fd[2];
+	int pid;
+	// int file;
+	// char *env[11];
+	// char *arg[3];
+	// std::string path = getCgiPath();
+	if (pipe(fd) < 0){
+		exit (1);
+		//err = "500";
+	}
+	pid = fork();
+	if (pid < 0){
+		exit(1); // err = "500"; errorRes();
+	} else if (pid == 0){
+		dup2(fd[1], STDOUT_FILENO);
+		// execve(path.data(), arg, env);
+		close(fd[1]);
+	} else{
+		char *buff[BUFFER_SIZE];
+		close(fd[0]);
+		read(fd[0], buff, BUFFER_SIZE);
+	}
+}

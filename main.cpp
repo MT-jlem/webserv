@@ -173,6 +173,8 @@ int main(){
 		size_t end;
 		std::string tmp;
 		bzero(str, BUFFER_SIZE);
+
+
 		recvSize += recv(host, str, BUFFER_SIZE , 0);
 		std::cout << "=================RECV===============\n";
 		tmp.append(str, recvSize);
@@ -189,6 +191,7 @@ int main(){
 		if (start != tmp.npos){
 			end = tmp.find("\n", start);
 			reqSize = std::stoi(tmp.substr(start + 16, end - 1));
+			std::cout << reqSize;
 			while(1){
 				if (recvSize >= reqSize)
 					break;

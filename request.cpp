@@ -1,5 +1,7 @@
 // junky parsing
 #include "request.hpp"
+#include <map>
+#include <utility>
 #include <vector>
 #include <iostream>
 #include <string>
@@ -7,6 +9,7 @@
 #include <fstream>
 #include <iomanip>
 #include "server.hpp"
+
 extern std::string err;
 std::map<std::string, std::string> encode;
 
@@ -50,12 +53,17 @@ std::string 						request::getPath(){
 std::string 						request::getVersion(){
 	return version;
 }
-std::map<std::string, std::string>	request::getHeader(){
+std::multimap<std::string, std::string>&	request::getHeader(){
 	return headers;
 }
 std::string							request::getBody(){
 	return body;
 }
+
+std::string							request::getQuery(){
+	return query;
+}
+
 bool								request::checkVerion(){
 	if(version != "HTTP/1.1"){
 		err = "505";
@@ -107,7 +115,7 @@ bool 								request::checkMethod(){
 
 bool								request::checkHeaders(){  
 	if (headers.find("Transfer-Encoding") != headers.end()){
-		if (headers["Transfer-Encoding"].find("chunked") == std::string::npos){
+		if (headers.find("Transfer-Encoding")->second.find("chunked") == std::string::npos){
 			err = "501";
 			return true;//status code 501
 		}
@@ -124,11 +132,22 @@ bool								request::checkHeaders(){
 
 void	request::parseBody(){
 	std::string boundary;
-	size_t start = headers["Content-Type"].find("boundary");
+
+	std::multimap<std::string, std::string>::iterator it =  headers.find("Content-Type");
+
+	if (it == headers.end())
+			return;
+	std::string header = it->second;
+	size_t start = header.find("boundary");
 	if (start != std::string::npos){
-		boundary = headers["Content-Type"].substr(start + 9, headers["Content-Type"].find("\r", start + 9));
-		std::string tmp;
-		if (headers["Transfer-Encoding"].find("chunked") == std::string::npos){
+		boundary = header.substr(start + 9, header.find("\r", start + 9));
+		// std::string tmp;
+		it = headers.find("Transfer-Encoding");
+		if (it == headers.end())
+			return;
+		header = it->second;
+	std::cout << "===============================error ==============\n";
+		if (header.find("chunked") == std::string::npos){
 			// size_t bodyStart = 0;
 			// while (true)
 			// {				
@@ -169,9 +188,9 @@ size_t	request::parseHeaders(size_t start){
 		end = tmp.find(":", 0);
 		if (end == tmp.npos)
 			break;
-		headers[tmp.substr(0, end)] = tmp.substr(end + 2, tmp.size() - (end + 3));
+		headers.insert(std::make_pair(tmp.substr(0, end) , tmp.substr(end + 2, tmp.size() - (end + 3))));
 	}
-	// for ( std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it)
+	// for ( std::multimap<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it)
 	// 	std::cout << "line >> " << it->first << ":" << it->second << "\n";
 	return ret;
 }
