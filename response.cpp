@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <sys/_types/_size_t.h>
 #include <algorithm>
+#include <sys/unistd.h>
 #include <unistd.h>
 #include <utility>
 extern std::string err;
@@ -42,6 +43,10 @@ bool checkReDirPath(std::string path){
 
 Response::Response(){}
 Response::Response(request &req, Server &serv){
+	if (err != ""){
+		errorRes(serv, req);
+		return;
+	}
 	pos = std::string::npos;
 	res = "HTTP/1.1 ";
 	locIndex = getLocation(req, serv);
@@ -225,7 +230,7 @@ void Response::postM(Server &serv, request &req){
 			err = "501";
 		// for (size_t i = 0; i < data.size(); ++i)
 		// 	std::cout << data[i] << "<<line\n";
-		res += "200 ";
+		res += "204 ";
 		res += statusCodes["200"];
 		res += getHeaders();
 		res += "\r\n\r\n";
@@ -416,9 +421,16 @@ std::string Response:: getBody(const std::string &path, Server &serv, request &r
 	}
 	// use access to check for permission
 	// use state to check if path is dir
+	if (access(path.data(), F_OK)){
+		err = "404";
+		return "";
+	} else if (access(path.data(), R_OK)){
+		err = "403";
+		return "";
+	}
 	std::ifstream file(path);
 	if (!file.is_open()){
-		err = "404";
+		err = "500";
 		return "";
 	}
 	while (getline(file, tmp)){
@@ -431,17 +443,18 @@ std::string Response:: getBody(const std::string &path, Server &serv, request &r
 
 void	 Response::errorRes(Server &serv, request &req){
 	// if there's custom error page we should know which location the error occurred
+	body = "";
 	std::string path;
-	if (serv.loc[locIndex].errorPage.second.find(err) != serv.loc[locIndex].errorPage.second.end())
-		path = serv.loc[locIndex].errorPage.first;
-	else{
-		path = "./errorPages/";
-		path += err;
-		path += ".html";
+	if (locIndex > 0){
+		if (serv.loc[locIndex].errorPage[err] != "")
+			body = getBody(serv.loc[locIndex].errorPage[err], serv,req);
+		else if (serv.errorPage[err] != "")
+			body = getBody(serv.errorPage[err], serv,req);
 	}
+	if (body == "")
+		body = generateErrHtml();
 	res += err; res += " ";
 	res += statusCodes[err]; res += " \r\n";
-	body = getBody(path, serv,req);
 	res += getHeaders();
 	res += "\r\n";
 	res += body;
@@ -494,6 +507,7 @@ void Response::initializeEnv(Server &serv, request &req){
 	"HTTP_USER_AGENT=", "SCRIPT_FILENAME=", "REDIRECT_STATUS="};
 	std::multimap<std::string, std::string> headers = req.getHeader();
 	std::multimap<std::string, std::string>::iterator it;
+	std::cout << serv.index << '\n';
 	var[0] = "";
 	var[1] = req.getMethod();
 	var[2] = req.getQuery();
@@ -502,14 +516,18 @@ void Response::initializeEnv(Server &serv, request &req){
 	it = headers.find("Content-Length");
 	var[4] = it != headers.end() ? it->second : "";
 	it = headers.find("Cookie");
-	var[5] = it->second;
+	var[5] =  it != headers.end() ? it->second : "";
 	var[6] = req.getPath();
 	it = headers.find("User-Agent");
-	var[7] = it->second;
+	var[7] =  it != headers.end() ? it->second : "";
 	var[8] = path;
 	var[9] = "200";
 	for (int i = 0; i < 10; ++i){
 		cgiEnv[i] = strdup(var[i].c_str());
+	}
+	int j = 0;
+	while (cgiEnv[j++]) {
+		std::cout << cgiEnv[j] << '\n';
 	}
 }
 

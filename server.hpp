@@ -24,7 +24,7 @@ public:
 	int methods[3];
 	std::pair<std::string, std::string> redir;
 	bool cgi;
-	std::pair<std::string, std::set<std::string> > errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
+	std::map<std::string, std::string> errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
 	std::string upload;
 	std::map<std::string, std::string> cgiPath;
 	Location();
@@ -40,7 +40,7 @@ public:
 	std::set<std::string> serverName;
 	std::vector<std::pair<std::string, std::string> > listen;
 	size_t maxBodySize;
-	std::pair<std::string, std::set<std::string> > errorPage; //maybe a vector
+	std::map<std::string, std::string> errorPage; //maybe a vector
 	std::vector<Location> loc;
 	//vector  fd;
 	Server();
