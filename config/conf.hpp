@@ -49,7 +49,8 @@ class Conf : public ReadConfig
         Conf(int ac, char *av);
         ~Conf();
         void    fill_Directives_Locations();
-        void    checkIsServer(int i);
+        void    checkIsServer(int serverIndex);
+		void	parseListen(std::string listen);
 };
 
 #endif

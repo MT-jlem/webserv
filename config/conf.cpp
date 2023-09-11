@@ -41,7 +41,7 @@ void    Conf::checkIsServer(int servIndex)
     {
         if (_serverBlocks[servIndex][0] == '{')
         {
-            puts("hnaaaa12");
+            // puts("hnaaaa12");
             isServer = true;
             _serverBlocks[servIndex] = _serverBlocks[servIndex].substr(2, _serverBlocks[servIndex].size()-2);
             // std::cout << "=>" << _serverBlocks[servIndex] << std::endl;
@@ -55,6 +55,15 @@ void    Conf::checkIsServer(int servIndex)
 }
 
 
+void	Conf::parseListen(std::string listen)
+{
+    std::string port;
+    std::string ip;
+    int pos = listen.find(':');
+    if (pos == -1)
+    {
+    }
+}
 
 
 void    Conf::fill_Directives_Locations()
@@ -86,28 +95,35 @@ void    Conf::fill_Directives_Locations()
         checkIsServer(i);
         while (isServer == true && (int)_serverBlocks[i].size() > 1)
         {
+            std::string key;
+            std::string value;
             int pos = _serverBlocks[i].find('\n', 0);
             std::string keyWord = _serverBlocks[i].substr(0, pos);
             _serverBlocks[i] = _serverBlocks[i].substr(pos+1, _serverBlocks[i].size()-pos - 1);
-            if (keyWord != "\n")
+            size_t lindx = keyWord.find_first_not_of(" \n");
+            size_t rindx = keyWord.find_last_not_of(" \n");
+            if (lindx == std::string::npos || rindx == std::string::npos)
+                continue;
+            keyWord = keyWord.substr(lindx, rindx+1);
+            try
             {
-                size_t lindx = keyWord.find_first_not_of(" \n");
-                size_t rindx = keyWord.find_last_not_of(" \n");
-                if (lindx == std::string::npos || rindx == std::string::npos)
-                    continue;
-                keyWord = keyWord.substr(lindx, rindx+1);
+                key = keyWord.substr(0, keyWord.find_first_of(" "));
+                keyWord.replace(0, key.size(), "");
+                value = keyWord.substr(keyWord.find_first_not_of(" "), keyWord.find_first_of(";}"));
             }
-            std::string key = keyWord.substr(0, keyWord.find_first_of(" "));
-            std::string value = keyWord.substr(keyWord.find_first_of(" ")+1, keyWord.find_first_of(";}"));
-            if (value == "" || value == "")
-                std::cout << key << " value is empty" << std::endl;
-            // if (key == "listen")
-            // {
-            //     listen.push_back(std::make_pair(value, "80"));
-            // }
+            catch(const std::exception& e)
+            {
+                // std::cerr << e.what() << '\n';
+            }
+            if (key == "listen")
+            {
+                
+            }
 
-            // std::cout << /* "=>" << keyWord <<  " <=====> "*/  key << " <=====> " << value << std::endl;
+            std::cout << /* "=>" << keyWord <<  " <=====> "  << */ key << "<=====>" << value << std::endl;
         }
         std::cout << "--------------------------------\n";
     }     
 }
+
+// do a check variable to check if a pass a location block pass the curly bracket
