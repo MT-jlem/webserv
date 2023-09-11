@@ -15,7 +15,8 @@
 #include "server.hpp"
 #include "request.hpp"
 #include <poll.h>
-#define BUFFER_SIZE 32664
+#include "client.hpp"
+#define BUFFER_SIZE 1024
 // ❌❌❌❌❌ use multimap in req headers
 std::string err = "";
 std::map<std::string, std::string> statusCodes;
@@ -94,17 +95,20 @@ void initializeServ(server &serv){
 	serv.loc[1].methods[DELETE] = 1;
 }
 
+
+
 int main() {
     
     std::vector<int> server_fd;
-    std::vector<int> client;
+    std::vector<int> client_;
     std::vector<pollfd> fd;
-    std::vector<server> all_server; 
+    std::vector<server> all_server;
+    std::vector<client> all_client;
 
     char str[BUFFER_SIZE];
     // size_t reqSize;
     // size_t start; 
-    size_t recvSize = 0;
+    // size_t recvSize = 0;
     // size_t end;
     std::string tmp;
 
@@ -159,45 +163,54 @@ int main() {
                     // std::cout << fds.fd << "||||\n";
 
                     fd.push_back(fds);
-                    client.push_back(new_fd_socket);
+                    client_.push_back(new_fd_socket);
+                    all_client.push_back(client(new_fd_socket));
                 } else {
 
 
+                    size_t start;
                     tmp = "";
                     bzero(str, BUFFER_SIZE);
-                    recvSize += read(fd[i].fd, str, BUFFER_SIZE);
-                    std::cout << "=================RECV===============\n";
-                    tmp.append(str, recvSize);
-                    recvSize -= tmp.find("\r\n\r\n") + 4;
+                    start = read(fd[i].fd, str, BUFFER_SIZE);
+                    //find content lenght  one more
+                    for (size_t j = 0; j < all_client.size(); j++)
+                    {
+                        if (fd[i].fd == all_client[j].fd_socket)
+                        {
+                            all_client[j].req.append(str,BUFFER_SIZE);
+                            all_client[j].a_lire+=1024;
+                            if (all_client[j].first_requset == true)
+                            {
+                                all_client[j].find_content();
+                            }
+                        }
+
+                    }
                     bzero(str, BUFFER_SIZE);
-                    // // tmp.append(str, recvSize);
-                    // // recvSize -= tmp.find("\r\n\r\n") + 4;
-                    // bzero(str, 1024);
+                  //    if /r/n/0/r/n  in request OR alire >= valeur_content_lenght
+                    for (size_t j = 0; j < all_client.size(); j++)
+                    {
+                        if (fd[i].fd == all_client[j].fd_socket)
+                        {
+                            if ((!all_client[j].ischenked   &&   all_client[j].a_lire >= all_client[j].valeur_content_len) || all_client[j].not_cont_chenke == true || (all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n") !=  std::string::npos ))
+                            {
+                                  std::ofstream outputFile("output.txt");
+                                if (!outputFile.is_open()) {
+                                    std::cerr << "Failed to open the file for writing." << std::endl;
+                                    return 1; // Return an error code
+                                }
+                                outputFile << all_client[j].req;
+                                outputFile.close();
+                                all_client[j].req="";
+                                fd[i].events = POLLOUT;
+		                    }
+                           
+                        }
 
-
-                    //check Content-Length and recv all the req
-                    // start = tmp.find("Content-Length:");
-                    // if (start != tmp.npos)
-                    // {
-                    //     end = tmp.find("\n", start);
-                    //     reqSize = std::stoi(tmp.substr(start + 16, end - 1));
-                    //     while(1)
-                    //     {
-                    //         if (recvSize >= reqSize)
-                    //         {
-                    //             fd[i].events = POLLOUT;
-                    //             break;
-                    //         }
-                    //         size_t tmpRecvSize = 0;
-                    //         tmpRecvSize =  read(fd[i].fd, str, BUFFER_SIZE);
-                    //         recvSize += tmpRecvSize;
-                    //         tmp.append(str, tmpRecvSize);
-                    //         bzero(str, BUFFER_SIZE);
-                    //     }
-                    // }
-                               // else
-                        fd[i].events = POLLOUT;
-                }  // std::cout << "accept client and push fd_socket_client in tab fd and in struct fds " << new_fd_socket << std::endl;
+                    }
+      
+                       
+                } 
             }
             
             else if (fd[i].revents & POLLOUT) 
