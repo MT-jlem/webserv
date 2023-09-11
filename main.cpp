@@ -192,15 +192,15 @@ int main() {
                     {
                         if (fd[i].fd == all_client[j].fd_socket)
                         {
-                            if ((!all_client[j].ischenked   &&   all_client[j].a_lire >= all_client[j].valeur_content_len) || all_client[j].not_cont_chenke == true || (all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n") !=  std::string::npos ))
+                            if ((!all_client[j].ischenked && all_client[j].a_lire >= all_client[j].valeur_content_len) || (all_client[j].not_cont_chenke == true) || (all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n") !=  std::string::npos ))
                             {
-                                  std::ofstream outputFile("output.txt");
-                                if (!outputFile.is_open()) {
-                                    std::cerr << "Failed to open the file for writing." << std::endl;
-                                    return 1; // Return an error code
-                                }
-                                outputFile << all_client[j].req;
-                                outputFile.close();
+                                //   std::ofstream outputFile("output.txt");
+                                // if (!outputFile.is_open()) {
+                                //     std::cerr << "Failed to open the file for writing." << std::endl;
+                                //     return 1;
+                                // }
+                                // outputFile << all_client[j].req;
+                                // outputFile.close();
                                 all_client[j].req="";
                                 fd[i].events = POLLOUT;
 		                    }
@@ -218,23 +218,23 @@ int main() {
                 //socket pret a ecriture
                 err = "";
                 // std::cout << tmp << "\n";
-                request req(tmp);
+                // request req(tmp);
 
-                req.parse(serv);
-                Response resp(req, serv);
-				std::string buff;
-				buff = resp.res;
+                // req.parse(serv);
+                // Response resp(req, serv);
+				// std::string buff;
+				// buff = resp.res;
                 // std::cout << buff;
-// std::string str = "HTTP/1.1 200  OK\r\n";
-// str +=  "Content-Length: 5\r\n";
-// str +=  "Content-Type: text/html\r\n";
-// str +=  "\r\n";
-// str += "helor\r\n";
+std::string str = "HTTP/1.1 200  OK\r\n";
+str +=  "Content-Length: 5\r\n";
+str +=  "Content-Type: text/html\r\n";
+str +=  "\r\n";
+str += "helor\r\n";
 
 
 
 
-                write(fd[i].fd, (char *)(buff.data()) , buff.length());
+                write(fd[i].fd, (char *)(str.data()) , str.length());
                 // send(fd[i].fd,(char *)(buff.data()), buff.size(),0);
                 // puts("|||||||||||||||||");
                 close(fd[i].fd);

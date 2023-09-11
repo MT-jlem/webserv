@@ -75,15 +75,13 @@ void    client::find_content()
     {
 
         valeur_content_len = std::stoi(req.substr(start + 16));
-    if (valeur_content_len == -1)
-    {
-        not_cont_chenke = true;
+        if (valeur_content_len == -1)
+        {
+            not_cont_chenke = true;
+        }
+        a_lire = (req.find("\r\n\r\n") + 4) *-1;
+        first_requset = false;
     }
-    a_lire = (req.find("\r\n\r\n") + 4) *-1;
-    first_requset = false;
-    }
-   
-
 
 }
 
