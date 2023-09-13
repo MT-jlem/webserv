@@ -219,29 +219,37 @@ int main() {
             else if (fd[i].revents & POLLOUT) 
             {
                 //socket pret a ecriture
-
-                for (size_t j = 0; j < all_client.size(); j++)
+                size_t j = 0;
+                while (j < all_client.size())
                 {
                     if (all_client[j].fd_socket == fd[i].fd)
                     {
-                        if (all_client[j].traiter != true)
-                        {
-                            request req(all_client[j].req);
-                            req.parse(serv);
-                            Response resp(req, serv);
-                            std::string buff;
-                            buff = resp.res;
-                            // std::cout << "buff = " << std::endl;
-                            write(fd[i].fd, (char *)(buff.data()) , buff.length());
-                            all_client[j].traiter = true;
-                            close(fd[i].fd);
-                            fd.erase(fd.begin() + i);
-                        }
-                        else
-                            break;
+                        break;
                     }
                 }
-                
+              
+                if (all_client[j].traiter != true)
+                {
+                    request req(all_client[j].req);
+                    req.parse(serv);
+                    Response resp(req, serv);
+                    std::string buff;
+                    buff = resp.res;
+                    write(fd[i].fd, (char *)(buff.data()) , buff.length());
+                    all_client[j].traiter = true;
+                    // close(fd[i].fd);
+                    // fd.erase(fd.begin() + i);
+                    // all_client.erase(all_client.begin() + j);
+                    // all_client.erase(fd.begin() + j);
+                }
+                else
+                {
+                    close(fd[i].fd);
+                    fd.erase(fd.begin() + i);
+                    all_client.erase(all_client.begin() + j);
+                }
+                    
+            
                 // err = "";
                 // request req(all_client[j].);
 
