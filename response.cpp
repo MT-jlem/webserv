@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <cstring>
 #include <map>
 #include <regex>
@@ -525,9 +526,10 @@ void Response::initializeEnv(Server &serv, request &req){
 	for (int i = 0; i < 10; ++i){
 		cgiEnv[i] = strdup(var[i].c_str());
 	}
+	cgiEnv[10] = NULL;
 	int j = 0;
-	while (cgiEnv[j++]) {
-		std::cout << cgiEnv[j] << '\n';
+	while (cgiEnv[j]) {
+		std::cout << cgiEnv[j++] << '\n';
 	}
 }
 

@@ -209,7 +209,7 @@ int main(){
 
 		{
 			err = "";
-			// std::cout << tmp << '\n';
+			std::cout << tmp << '\n';
 			request req(tmp);
 			req.parse(serv);
 			Response resp(req, serv);
