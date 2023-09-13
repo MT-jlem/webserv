@@ -166,7 +166,8 @@ int main() {
                     tmp = "";
                     bzero(str, BUFFER_SIZE);
                     start = read(fd[i].fd, str, BUFFER_SIZE);
-                    // std::cout << "la = " << str << std::endl;
+    
+                    // std::cout << "la = " << str << " +==================================== "<< std::endl;
                     if (start < 0)
                         perror("read");
                     //find content lenght  one more
@@ -180,10 +181,13 @@ int main() {
                             {
                                 all_client[j].take_servername();
                                 all_client[j].find_content();
+                                // all_client[j].first_requset = false;
+                                std::cout << "may content = " << all_client[j].valeur_content_len << std::endl;
                             }
                         }
 
                     }
+            
                     // std::cout << "|||||||||" << str  << "||||||||||"<< std::endl;
                     bzero(str, BUFFER_SIZE);
                   //    if /r/n/0/r/n  in request OR alire >= valeur_content_lenght
@@ -196,13 +200,13 @@ int main() {
                             // || (all_client[j].not_cont_chenke == true) || (all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n") !=  std::string::npos )
                             // if ((all_client[j].a_lire >= all_client[j].valeur_content_len) || (all_client[j].not_cont_chunked == true) || (all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n") !=  std::string::npos ) )
                             {
-                                //   std::ofstream outputFile("show.txt");
-                                // if (!outputFile.is_open()) {
-                                //     std::cerr << "Failed to open the file for writing." << std::endl;
-                                //     return 1;
-                                // }
-                                // outputFile << all_client[j].req;
-                                // outputFile.close();
+                                  std::ofstream outputFile("show.txt");
+                                if (!outputFile.is_open()) {
+                                    std::cerr << "Failed to open the file for writing." << std::endl;
+                                    return 1;
+                                }
+                                outputFile << all_client[j].req;
+                                outputFile.close();
                                 // std::cout << ""
                                 // tmp.append(all_client[j].req, BUFFER_SIZE);
                                 // std::cout << "tmp ||||||" << tmp << "|||||||" << std::endl;
