@@ -106,10 +106,6 @@ int main() {
     std::vector<client> all_client;
 
     char str[BUFFER_SIZE];
-    // size_t reqSize;
-    // size_t start; 
-    // size_t recvSize = 0;
-    // size_t end;
     std::string tmp;
 
 
@@ -123,7 +119,7 @@ int main() {
 		// initializeServ(serv);
         all_server.push_back(server(port_numbers[i], fd, server_fd));
     }
-    std::cout << "server_size = " << server_fd.size() << std::endl;
+    // std::cout << "server_size = " << server_fd.size() << std::endl;
     statusCodesInitialize();
     while (1) 
     {
@@ -140,7 +136,6 @@ int main() {
         {
 			server serv;
 			initializeServ(serv);
-            // std::cout << "size_fd = " << fd.size() << std::endl;
             if (fd[i].revents & POLLIN) 
             {
                 std::vector<int>::iterator it = std::find(server_fd.begin(), server_fd.end(), fd[i].fd);
@@ -154,24 +149,26 @@ int main() {
                         
                         break;
                     }
-                    // std::cout << "adresse_ip_client = "  << serv_addr.sin_addr.s_addr << std::endl;
                     fcntl(new_fd_socket, F_SETFL, O_NONBLOCK);
-                    // push_fd(new_fd_socket, fd);
                     struct pollfd fds;
                     fds.fd = new_fd_socket;
                     fds.events = POLLIN;
-                    // std::cout << fds.fd << "||||\n";
 
                     fd.push_back(fds);
                     client_.push_back(new_fd_socket);
                     all_client.push_back(client(new_fd_socket));
-                } else {
+                } 
+                else 
+                {
 
 
-                    size_t start;
+                    long long start;
                     tmp = "";
                     bzero(str, BUFFER_SIZE);
                     start = read(fd[i].fd, str, BUFFER_SIZE);
+                    // std::cout << "la = " << str << std::endl;
+                    if (start < 0)
+                        perror("read");
                     //find content lenght  one more
                     for (size_t j = 0; j < all_client.size(); j++)
                     {
@@ -181,65 +178,93 @@ int main() {
                             all_client[j].a_lire+=1024;
                             if (all_client[j].first_requset == true)
                             {
+                                all_client[j].take_servername();
                                 all_client[j].find_content();
                             }
                         }
 
                     }
+                    // std::cout << "|||||||||" << str  << "||||||||||"<< std::endl;
                     bzero(str, BUFFER_SIZE);
                   //    if /r/n/0/r/n  in request OR alire >= valeur_content_lenght
                     for (size_t j = 0; j < all_client.size(); j++)
                     {
                         if (fd[i].fd == all_client[j].fd_socket)
                         {
-                            if ((!all_client[j].ischenked && all_client[j].a_lire >= all_client[j].valeur_content_len) || (all_client[j].not_cont_chenke == true) || (all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n") !=  std::string::npos ))
+                            if((all_client[j].req.length() && !all_client[j].ischenked && all_client[j].req.find("\r\n\r\n") != std::string::npos  &&  all_client[j].valeur_content_len <= all_client[j].a_lire) 
+                                || ( all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n\r\n") != std::string::npos) )
+                            // || (all_client[j].not_cont_chenke == true) || (all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n") !=  std::string::npos )
+                            // if ((all_client[j].a_lire >= all_client[j].valeur_content_len) || (all_client[j].not_cont_chunked == true) || (all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n") !=  std::string::npos ) )
                             {
-                                //   std::ofstream outputFile("output.txt");
+                                //   std::ofstream outputFile("show.txt");
                                 // if (!outputFile.is_open()) {
                                 //     std::cerr << "Failed to open the file for writing." << std::endl;
                                 //     return 1;
                                 // }
                                 // outputFile << all_client[j].req;
                                 // outputFile.close();
-                                all_client[j].req="";
+                                // std::cout << ""
+                                // tmp.append(all_client[j].req, BUFFER_SIZE);
+                                // std::cout << "tmp ||||||" << tmp << "|||||||" << std::endl;
+                                // all_client[j].req="";
                                 fd[i].events = POLLOUT;
 		                    }
                            
                         }
 
-                    }
-      
-                       
+                    }  
                 } 
             }
             
             else if (fd[i].revents & POLLOUT) 
             {
                 //socket pret a ecriture
-                err = "";
-                // std::cout << tmp << "\n";
-                // request req(tmp);
+
+                for (size_t j = 0; j < all_client.size(); j++)
+                {
+                    if (all_client[j].fd_socket == fd[i].fd)
+                    {
+                        if (all_client[j].traiter != true)
+                        {
+                            request req(all_client[j].req);
+                            req.parse(serv);
+                            Response resp(req, serv);
+                            std::string buff;
+                            buff = resp.res;
+                            // std::cout << "buff = " << std::endl;
+                            write(fd[i].fd, (char *)(buff.data()) , buff.length());
+                            all_client[j].traiter = true;
+                            close(fd[i].fd);
+                            fd.erase(fd.begin() + i);
+                        }
+                        else
+                            break;
+                    }
+                }
+                
+                // err = "";
+                // request req(all_client[j].);
 
                 // req.parse(serv);
                 // Response resp(req, serv);
 				// std::string buff;
 				// buff = resp.res;
                 // std::cout << buff;
-std::string str = "HTTP/1.1 200  OK\r\n";
-str +=  "Content-Length: 5\r\n";
-str +=  "Content-Type: text/html\r\n";
-str +=  "\r\n";
-str += "helor\r\n";
+// std::string str = "HTTP/1.1 200  OK\r\n";
+// str +=  "Content-Length: 5\r\n";
+// str +=  "Content-Type: text/html\r\n";
+// str +=  "\r\n";
+// str += "helor\r\n";
 
 
 
 
-                write(fd[i].fd, (char *)(str.data()) , str.length());
-                // send(fd[i].fd,(char *)(buff.data()), buff.size(),0);
-                // puts("|||||||||||||||||");
-                close(fd[i].fd);
+                // write(fd[i].fd, (char *)(buff.data()) , buff.length());
+                // // send(fd[i].fd,(char *)(buff.data()), buff.size(),0);
+                // // puts("|||||||||||||||||");
+                // close(fd[i].fd);
 
-                fd.erase(fd.begin() + i);
+                // fd.erase(fd.begin() + i);
 
 
       

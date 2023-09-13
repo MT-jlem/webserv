@@ -142,7 +142,6 @@ std::string Response::getFile(server &serv){
 int Response::getLocation(request &req, server &serv){
 	size_t vecSize = serv.loc.size();
 	std::string str = req.getPath();
-
 	while (true) {
 		for (size_t i = 0; i < vecSize; ++i){
 			if (str == serv.loc[i].path)
@@ -417,12 +416,14 @@ void	 Response::errorRes(server &serv, request &req){
 
 	// if there's custom error page we should know which location the error occurred
 	std::string path;
-	if (serv.loc[locIndex].errorPage.second.find(err) != serv.loc[locIndex].errorPage.second.end())
-		path = serv.loc[locIndex].errorPage.first;
-	else{
-		path = "./errorPages/";
-		path += err;
-		path += ".html";
+	if (locIndex > 0){
+		if (serv.loc[locIndex].errorPage.second.find(err) != serv.loc[locIndex].errorPage.second.end())
+			path = serv.loc[locIndex].errorPage.first;
+		else{
+			path = "./errorPages/";
+			path += err;
+			path += ".html";
+		}
 	}
 	res += err; res += " ";
 	res += statusCodes[err]; res += " \r\n";

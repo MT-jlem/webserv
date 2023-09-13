@@ -8,7 +8,7 @@ SRC = main.cpp request.cpp response.cpp server.cpp
 
 OBJ = $(SRC:%.cpp=%.o)
 
-HEADERS = request.hpp response.hpp server.hpp
+HEADERS = request.hpp response.hpp server.hpp client.hpp
 
 all : $(NAME)
 
