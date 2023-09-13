@@ -37,7 +37,7 @@ bool								request::checkVerion(){
 		err = "505";
 		return true;
 	}
-	return false; // error code
+	return false;
 }
 
 bool								request::checkPath(){
@@ -145,7 +145,7 @@ size_t	request::parseHeaders(size_t start){
 	return ret;
 }
 
-void	request::parse(server &serv){
+void	request::parse(Server &serv){
 
 	size_t i = 0, start = 0;
 	std::string	tmp;
