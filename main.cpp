@@ -94,6 +94,9 @@ void initializeServ(Server &serv){
 	serv.loc[0].methods[POST] = 1;
 	serv.loc[0].methods[DELETE] = 1;
 	serv.loc[0].upload = "/Users/mjlem/Desktop/upload/";
+	serv.loc[0].cgi = true;
+	serv.loc[0].cgiPath[".py"] = "/usr/bin/python";
+	serv.loc[0].cgiPath[".php"] = "/usr/bin/php";
 	// serv.loc[0].redir.first = "301";
 	// serv.loc[0].redir.second = "https://youtu.be/3f72kbqN6hg?t=99";
 	serv.loc[1].path = "/loc";
