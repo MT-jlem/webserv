@@ -100,6 +100,7 @@ void    client::find_content(char const *req,int count_read)
         }
     }
     this->req.append(req, count_read);
+    std::cout << "||||||||debut \n " << req << "\nfin|||||||||||||||||" << std::endl;
 }
 
 #endif

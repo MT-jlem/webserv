@@ -237,6 +237,7 @@ int main() {
               
                 if (all_client[j].traiter != true)
                 {
+                    err = "";
                     request req(all_client[j].req);
                     req.parse(serv);
                     Response resp(req, serv);
@@ -245,15 +246,17 @@ int main() {
                     write(fd[i].fd, (char *)(buff.data()) , buff.length());
                     all_client[j].traiter = true;
                     // close(fd[i].fd);
+                    puts("la");
                     // fd.erase(fd.begin() + i);
                     // all_client.erase(all_client.begin() + j);
                     // all_client.erase(fd.begin() + j);
                 }
-                else
+                else if (all_client[j].traiter == true)
                 {
                     close(fd[i].fd);
                     fd.erase(fd.begin() + i);
                     all_client.erase(all_client.begin() + j);
+                    puts("il est traite donc je supprime le client");
                 }
                 continue;
                     
