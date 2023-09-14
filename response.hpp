@@ -26,7 +26,7 @@ public:
 	Response(request &req, server &serv);
 	~Response();
 	void	getM(server &serv, request &req);
-	void	postM(request &req);
+	void	postM(server &serv, request &req);	
 	void	deleteM();
 	void	resBuilder(request &req, server &serv);
 	void	errorRes(server &serv, request &req);

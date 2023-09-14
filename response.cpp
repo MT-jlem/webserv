@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <unistd.h>
 #include <utility>
+#define BUFFER_SIZE 1024
 extern std::string err;
 extern std::map<std::string, std::string> statusCodes;
 
@@ -37,7 +38,7 @@ bool checkReDirPath(std::string path){
 }
 
 Response::Response(){}
-Response::Response(request &req, Server &serv){
+Response::Response(request &req, server &serv){
 	pos = std::string::npos;
 	res = "HTTP/1.1 ";
 	locIndex = getLocation(req, serv);
@@ -95,7 +96,7 @@ Response::Response(request &req, Server &serv){
 
 Response::~Response(){}
 
-void Response::reDirRes(Server &serv, request &req){
+void Response::reDirRes(server &serv, request &req){
 	std::pair<std::string, std::string> tmp = serv.loc[locIndex].redir;
 	if (checkReDirPath(tmp.second)){
 		err = "500";
@@ -112,7 +113,7 @@ void Response::reDirRes(Server &serv, request &req){
 	
 }
 
-std::string Response::getPath(request &req, Server &serv){
+std::string Response::getPath(request &req, server &serv){
 	std::string root = serv.loc[locIndex].root != "" ? serv.loc[locIndex].root : serv.root;
 	std::string reqPath = req.getPath();
 	if (pos != std::string::npos)
@@ -125,7 +126,7 @@ std::string Response::getPath(request &req, Server &serv){
 }
 
 
-std::string Response::getFile(Server &serv){
+std::string Response::getFile(server &serv){
 	if (err != "")
 		return "";
 	if (file != "")
@@ -141,7 +142,7 @@ std::string Response::getFile(Server &serv){
 	return "";
 }
 
-int Response::getLocation(request &req, Server &serv){
+int Response::getLocation(request &req, server &serv){
 	size_t vecSize = serv.loc.size();
 	std::string str = req.getPath();
 
@@ -158,7 +159,7 @@ int Response::getLocation(request &req, Server &serv){
 	return -1;
 }
 
-void Response::getM(Server &serv, request &req){
+void Response::getM(server &serv, request &req){
 	// std::cout << "GET\n";
 	body = getBody(path, serv, req);
 	if (err!= "")
@@ -171,7 +172,7 @@ void Response::getM(Server &serv, request &req){
 	res += "\r\n";
 }
 
-void Response::postM(Server &serv, request &req){
+void Response::postM(server &serv, request &req){
 	std::string tmp;
 	std::string boundary;
 	std::string tmpData = req.getBody();
@@ -393,7 +394,7 @@ std::string Response::getHeaders(){
 	return str;
 }
 
-std::string Response:: getBody(const std::string &path, Server &serv, request &req){
+std::string Response:: getBody(const std::string &path, server &serv, request &req){
 	std::string buff;
 	std::string tmp;
 	struct stat st;
@@ -421,7 +422,7 @@ std::string Response:: getBody(const std::string &path, Server &serv, request &r
 	return buff;
 }
 
-void	 Response::errorRes(Server &serv, request &req){
+void	 Response::errorRes(server &serv, request &req){
 	// if there's custom error page we should know which location the error occurred
 	std::string path;
 	if (serv.loc[locIndex].errorPage.second.find(err) != serv.loc[locIndex].errorPage.second.end())
@@ -480,29 +481,29 @@ std::string Response::generateErrHtml(){
 	return str;
 }
 
-void Response::execCgi(){
-	std::string var[] = {"PATH_INFO", "REQUEST_METHOD", "QUERY_STRING",
-						"CONTENT_TYPE", "CONTENT_LENGTH", "HTTP_HOST",
-						"HTTP_COOKIE", "SCRIPT_NAME"};
-	int fd[2];
-	int pid;
-	int file;
-	char **arg;
-	// std::string path = getCgiPath();
-	if (pipe(fd) < 0){
-		exit (1);
-		//err = "500";
-	}
-	pid = fork();
-	if (pid < 0){
-		exit(1); // err = "500"; errorRes();
-	} else if (pid == 0){
-		dup2(fd[1], STDOUT_FILENO);
-		// execve(path.data(), arg, env);
-		close(fd[1]);
-	} else{
-		char *buff[BUFFER_SIZE];
-		close(fd[0]);
-		read(fd[0], buff, BUFFER_SIZE);
-	}
-}
+// void Response::execCgi(){
+// 	std::string var[] = {"PATH_INFO", "REQUEST_METHOD", "QUERY_STRING",
+// 						"CONTENT_TYPE", "CONTENT_LENGTH", "HTTP_HOST",
+// 						"HTTP_COOKIE", "SCRIPT_NAME"};
+// 	int fd[2];
+// 	int pid;
+// 	int file;
+// 	char **arg;
+// 	// std::string path = getCgiPath();
+// 	if (pipe(fd) < 0){
+// 		exit (1);
+// 		//err = "500";
+// 	}
+// 	pid = fork();
+// 	if (pid < 0){
+// 		exit(1); // err = "500"; errorRes();
+// 	} else if (pid == 0){
+// 		dup2(fd[1], STDOUT_FILENO);
+// 		// execve(path.data(), arg, env);
+// 		close(fd[1]);
+// 	} else{
+// 		char *buff[BUFFER_SIZE];
+// 		close(fd[0]);
+// 		read(fd[0], buff, BUFFER_SIZE);
+// 	}
+// }

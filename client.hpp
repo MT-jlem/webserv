@@ -29,7 +29,7 @@ public:
     int fd_socket;
     std::string req;
     std::string resp;
-    int a_lire ;
+    int debut_a_lire;
     int valeur_content_len;
     bool ischenked;
     bool first_requset;
@@ -37,7 +37,7 @@ public:
     std::string servername;
     bool traiter;
 public:
-    void find_content();
+    void find_content(char const *req,int count_read);
     void take_servername();
     client();
     ~client();    
@@ -64,7 +64,7 @@ void    client::take_servername()
 client::client(int fd)
 {
     this->fd_socket = fd;
-    first_requset = true;
+    first_requset = false;
     req = "";
     valeur_content_len = -1;
     not_cont_chunked = false;
@@ -77,30 +77,29 @@ client::~client()
 
 }
 
-void    client::find_content()
+void    client::find_content(char const *req,int count_read)
 {
-    size_t start = 0;
-    size_t chunked = 0;
-    std::cout << req << std::endl;
-    start = req.find("Content-Length:");
-    chunked = req.find("Transfer-Encoding:");
-    if(chunked != std::string::npos)
-    {
-        ischenked = true;
-        first_requset = false;
-    }
-    else if (start != std::string::npos)
-    {
 
-        valeur_content_len = std::stoi(req.substr(start + 16));
-        if (valeur_content_len == -1)
+    if (this->first_requset != true)
+    {
+        std::string s(req);
+        this->first_requset = true;
+        int index_content_len = s.find("Content-Length:");
+        if (index_content_len != (int)std::string::npos)
         {
-            not_cont_chunked = true;
+            int index_derniere_cara = s.find("\n", index_content_len);
+            this->debut_a_lire = (-1 *index_derniere_cara); 
+             std::string lent = s.substr(index_content_len + 15,index_derniere_cara - index_content_len);
+            if(lent.length())
+                this->valeur_content_len= std::atoi(lent.c_str());
+            this->ischenked= false;
         }
-        a_lire = (req.find("\r\n\r\n") + 4) *-1;
-        first_requset = false;
+        else if (s.find("Transfer-Encoding: chunked") !=  std::string::npos)
+        {
+            this->ischenked= true;
+        }
     }
-
+    this->req.append(req, count_read);
 }
 
 #endif

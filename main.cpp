@@ -16,7 +16,7 @@
 #include "request.hpp"
 #include <poll.h>
 #include "client.hpp"
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 10240
 // ❌❌❌❌❌ use multimap in req headers
 std::string err = "";
 std::map<std::string, std::string> statusCodes;
@@ -166,57 +166,60 @@ int main() {
                     tmp = "";
                     bzero(str, BUFFER_SIZE);
                     start = read(fd[i].fd, str, BUFFER_SIZE);
-    
-                    // std::cout << "la = " << str << " +==================================== "<< std::endl;
-                    if (start < 0)
-                        perror("read");
-                    //find content lenght  one more
-                    for (size_t j = 0; j < all_client.size(); j++)
+                    if (start == -1)
                     {
-                        if (fd[i].fd == all_client[j].fd_socket)
+                        for (size_t j = 0; j < all_client.size(); j++)
                         {
-                            all_client[j].req.append(str,BUFFER_SIZE);
-                            all_client[j].a_lire+=1024;
-                            if (all_client[j].first_requset == true)
+                            if (fd[i].fd == all_client[j].fd_socket)
                             {
-                                all_client[j].take_servername();
-                                all_client[j].find_content();
-                                // all_client[j].first_requset = false;
-                                std::cout << "may content = " << all_client[j].valeur_content_len << std::endl;
+                                close(fd[i].fd);
+                                fd.erase(fd.begin() + i);
+                                all_client.erase(all_client.begin() + j);
+                                break;
                             }
-                        }
 
+                        }
                     }
-            
-                    // std::cout << "|||||||||" << str  << "||||||||||"<< std::endl;
-                    bzero(str, BUFFER_SIZE);
-                  //    if /r/n/0/r/n  in request OR alire >= valeur_content_lenght
+                    // //find content lenght  one more
                     for (size_t j = 0; j < all_client.size(); j++)
                     {
                         if (fd[i].fd == all_client[j].fd_socket)
                         {
-                            if((all_client[j].req.length() && !all_client[j].ischenked && all_client[j].req.find("\r\n\r\n") != std::string::npos  &&  all_client[j].valeur_content_len <= all_client[j].a_lire) 
-                                || ( all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n\r\n") != std::string::npos) )
-                            // || (all_client[j].not_cont_chenke == true) || (all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n") !=  std::string::npos )
-                            // if ((all_client[j].a_lire >= all_client[j].valeur_content_len) || (all_client[j].not_cont_chunked == true) || (all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n") !=  std::string::npos ) )
+                            if (start == 0 && !all_client[j].first_requset)
                             {
-                                  std::ofstream outputFile("show.txt");
-                                if (!outputFile.is_open()) {
-                                    std::cerr << "Failed to open the file for writing." << std::endl;
-                                    return 1;
-                                }
-                                outputFile << all_client[j].req;
-                                outputFile.close();
+                                close(fd[i].fd);
+                                all_client.erase(all_client.begin() + j);
+                                fd.erase(fd.begin() + i);
+                                break;
+                            }
+                            // all_client[j].req.append(str,BUFFER_SIZE);
+                            // all_client[j].a_lire+=1024;
+                            all_client[j].take_servername();
+                            all_client[j].find_content(str,start);
+                            all_client[j].debut_a_lire = start;
+                                // all_client[j].first_requset = false;
+                                // std::cout << "may content = " << all_client[j].valeur_content_len << std::endl;
+                            if((all_client[j].req.length() && !all_client[j].ischenked && all_client[j].req.find("\r\n\r\n") != std::string::npos  &&  all_client[j].valeur_content_len <= all_client[j].debut_a_lire) 
+                                || ( all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n\r\n") != std::string::npos) )
+                            {
+                                //   std::ofstream outputFile("show.txt");
+                                // if (!outputFile.is_open()) {
+                                //     std::cerr << "Failed to open the file for writing." << std::endl;
+                                //     return 1;
+                                // }
+                                // outputFile << all_client[j].req;
+                                // outputFile.close();
                                 // std::cout << ""
                                 // tmp.append(all_client[j].req, BUFFER_SIZE);
                                 // std::cout << "tmp ||||||" << tmp << "|||||||" << std::endl;
                                 // all_client[j].req="";
                                 fd[i].events = POLLOUT;
 		                    }
-                           
                         }
 
-                    }  
+                    }
+        
+                    bzero(str, BUFFER_SIZE);
                 } 
             }
             
@@ -252,6 +255,7 @@ int main() {
                     fd.erase(fd.begin() + i);
                     all_client.erase(all_client.begin() + j);
                 }
+                continue;
                     
             
                 // err = "";
