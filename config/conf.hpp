@@ -11,6 +11,8 @@
 #include <sstream>
 #include <algorithm>
 #include <stack>
+#include <algorithm>
+#include <vector>
 // #include <utility
 #include "read_config.hpp"
 
@@ -27,7 +29,7 @@ class ServerLocation {
     	int methods[3];
     	std::pair<std::string, std::string> redir;
     	//cgi
-    	std::pair<std::string, std::set<std::string> > errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
+    	std::map<std::string, std::string> errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
     	std::string upload;
     	ServerLocation(){};
     	~ServerLocation(){};
@@ -37,20 +39,24 @@ class Conf : public ReadConfig
 {
     private:
 		int listenIndx;
+		std::string default_ip;
     public:
+	    std::vector<std::pair<std::string, std::string> > listen;
         std::string root;
 	    std::string index;
-	    std::set<std::string> serverName;
-	    std::vector<std::pair<std::string, std::string> > listen;
-	    size_t maxBodySize;
-	    std::pair<std::string, std::set<std::string> > errorPage; //maybe a vector
+	    std::string serverName;
+	    size_t		maxBodySize;
+	    std::map<std::string, std::string> errorPage; //maybe a vector
 	    std::vector<ServerLocation> loc;
 
         Conf(int ac, char *av);
         ~Conf();
-        void    fill_Directives_Locations();
-        void    checkIsServer(int serverIndex);
-		void	parseListen(std::string listen);
+        void    	fill_Directives_Locations();
+        void    	checkIsServer(int serverIndex);
+		void		parseListen(std::string listen, std::vector<std::string> &listenDup);
+		std::string	parseIp(std::string ip);
+		bool listenCharIsValid(const std::string &str);
+
 };
 
 #endif
