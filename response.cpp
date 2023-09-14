@@ -520,7 +520,7 @@ std::string Response::generateErrHtml(){
 	return str;
 }
 
-void Response::initializeEnv(Server &serv, request &req){
+void Response::initializeEnv(request &req){
 	std::string var[] = {"PATH_INFO=", "REQUEST_METHOD=", "QUERY_STRING=",
 	"CONTENT_TYPE=", "CONTENT_LENGTH=","HTTP_COOKIE=", "SCRIPT_NAME=",
 	"HTTP_USER_AGENT=", "SCRIPT_FILENAME=", "REDIRECT_STATUS="};
@@ -552,7 +552,7 @@ void Response::initializeEnv(Server &serv, request &req){
 
 std::string Response::execCgi(Server &serv, request &req){
 
-	initializeEnv(serv, req);
+	initializeEnv(req);
 	int status;
 	int fd[2];
 	int pid;

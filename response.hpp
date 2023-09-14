@@ -44,7 +44,7 @@ public:
 	int			getLocation(request &req, Server &serv);
 	void		reDirRes(Server &serv, request &req);
 	std::string	execCgi(Server &serv, request &req);
-	void		initializeEnv(Server &serv, request &req);
+	void		initializeEnv(request &req);
 };
 
 #endif
