@@ -16,7 +16,7 @@
 #include "request.hpp"
 #include <poll.h>
 #include "client.hpp"
-#define BUFFER_SIZE 10240
+#define BUFFER_SIZE 1024
 // ❌❌❌❌❌ use multimap in req headers
 std::string err = "";
 std::map<std::string, std::string> statusCodes;
@@ -123,7 +123,7 @@ int main() {
     statusCodesInitialize();
     while (1) 
     {
-        // std::cout<<"dfdsfdsf"<<std::endl;
+        std::cout<<"dfdsfdsf"<<std::endl;
         int rev = poll(fd.data(), fd.size(), -1);
 
         if (rev == -1) 
@@ -131,7 +131,7 @@ int main() {
             std::cout << "problem in time poll" << std::endl;
             return 1;
         }
-
+        std::cout<<"dfdsfdsf"<<std::endl;
         for (size_t i = 0; i < fd.size(); i++) 
         {
 			server serv;
@@ -153,7 +153,7 @@ int main() {
                     struct pollfd fds;
                     fds.fd = new_fd_socket;
                     fds.events = POLLIN;
-
+                    std::cout << "accepte dazt\n";
                     fd.push_back(fds);
                     client_.push_back(new_fd_socket);
                     all_client.push_back(client(new_fd_socket));
@@ -165,7 +165,9 @@ int main() {
                     long long start;
                     tmp = "";
                     bzero(str, BUFFER_SIZE);
+                    std::cout << "before" << std::endl;
                     start = read(fd[i].fd, str, BUFFER_SIZE);
+                    std::cout << "start === " << start << std::endl;
                     if (start == -1)
                     {
                         for (size_t j = 0; j < all_client.size(); j++)
@@ -175,6 +177,7 @@ int main() {
                                 close(fd[i].fd);
                                 fd.erase(fd.begin() + i);
                                 all_client.erase(all_client.begin() + j);
+                                std::cout << "delete client\n";
                                 break;
                             }
 
@@ -202,6 +205,7 @@ int main() {
                             if((all_client[j].req.length() && !all_client[j].ischenked && all_client[j].req.find("\r\n\r\n") != std::string::npos  &&  all_client[j].valeur_content_len <= all_client[j].debut_a_lire) 
                                 || ( all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n\r\n") != std::string::npos) )
                             {
+                                std::cout << "hey\n";
                                 //   std::ofstream outputFile("show.txt");
                                 // if (!outputFile.is_open()) {
                                 //     std::cerr << "Failed to open the file for writing." << std::endl;
@@ -233,6 +237,7 @@ int main() {
                     {
                         break;
                     }
+                    j++;
                 }
               
                 if (all_client[j].traiter != true)
@@ -243,6 +248,7 @@ int main() {
                     Response resp(req, serv);
                     std::string buff;
                     buff = resp.res;
+                    std::cout << "poolout\n";
                     write(fd[i].fd, (char *)(buff.data()) , buff.length());
                     all_client[j].traiter = true;
                     // close(fd[i].fd);
@@ -258,32 +264,12 @@ int main() {
                     all_client.erase(all_client.begin() + j);
                     puts("il est traite donc je supprime le client");
                 }
-                continue;
                     
             
                 // err = "";
                 // request req(all_client[j].);
 
-                // req.parse(serv);
-                // Response resp(req, serv);
-				// std::string buff;
-				// buff = resp.res;
-                // std::cout << buff;
-// std::string str = "HTTP/1.1 200  OK\r\n";
-// str +=  "Content-Length: 5\r\n";
-// str +=  "Content-Type: text/html\r\n";
-// str +=  "\r\n";
-// str += "helor\r\n";
-
-
-
-
-                // write(fd[i].fd, (char *)(buff.data()) , buff.length());
-                // // send(fd[i].fd,(char *)(buff.data()), buff.size(),0);
-                // // puts("|||||||||||||||||");
-                // close(fd[i].fd);
-
-                // fd.erase(fd.begin() + i);
+                // req.pars                 
 
 
       
