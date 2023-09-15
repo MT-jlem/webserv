@@ -55,7 +55,11 @@ class Conf : public ReadConfig
         void    	checkIsServer(int serverIndex);
 		void		parseListen(std::string listen, std::vector<std::string> &listenDup);
 		std::string	parseIp(std::string ip);
-		bool listenCharIsValid(const std::string &str);
+		bool 		listenCharIsValid(const std::string &str);
+		void		parsMaxBodySize(std::string &str);
+		void    	parsServerName(std::string value);
+		void    	parsRootIndex(std::string value, std::string key);
+
 
 };
 

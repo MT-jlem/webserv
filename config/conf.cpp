@@ -159,7 +159,110 @@ void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listen
         exit(1);
     }
 }
-   
+
+
+bool checkMaxBodySize(std::string &str)
+{
+    bool check = true;
+    int count = 0;
+    if (str[str.size()-2] != 'M' && str[str.size()-2] != 'K')
+    {
+        count++;
+        check = false;
+    }
+    for (int i = 0; i < (int)str.size() -1; i++)
+    {
+        if ((str[i] >= 'a' && str[i]<='z') || (str[i] >= 'A' && str[i] <= 'Z'))
+            count++;
+        else if (str[i] >= '0' && str[i] <= '9')
+            continue;
+        else
+        {
+            check = false;
+        }
+        if (count == 2)
+            check = false;
+    }
+    return check;
+}
+
+
+void    Conf::parsMaxBodySize(std::string &str)
+{
+    if (str[str.size()-1] == ';')
+    {
+        if (checkMaxBodySize(str) == true)
+        {
+            str = str.substr(0, str.size()-1);
+            maxBodySize = atoi(str.c_str());
+        }
+        else
+        {
+            std::cout << "Megabytes, M, and Kilobytes, K, are the accepted units \
+in client_max_body_size.\n";
+            exit(1);
+        }
+    }
+    else
+    {
+        std::cout << "Error: simple directive must end with a semicolon\n";
+        exit(1);
+    }
+}
+
+
+void    Conf::parsServerName(std::string value)
+{
+    if (value.find(' ') == std::string::npos)
+    {
+        if (value[value.size()-1] == ';')
+        {
+            value = value.substr(0, value.size()-1);
+            serverName = value;
+        }
+        else
+        {
+            std::cout << "Error: simple directive must end with a semicolon\n";
+            exit(1);
+        }
+    }
+    else
+    {
+        std::cout << "Error: server_name accept only one value \n";
+        exit(1);
+    }
+}
+
+void    Conf::parsRootIndex(std::string value, std::string key)
+{
+    if (key == "index")
+    {
+        if (value[value.size()-1] == ';')
+        {
+            value = value.substr(0, value.size()-1);
+            index = value;
+        }
+        else
+        {
+            std::cout << "Error: simple directive must end with a semicolon\n";
+            exit(1);
+        }
+    }
+    else if (key == "root")
+    {
+        if (value[value.size()-1] == ';')
+        {
+            value = value.substr(0, value.size()-1);
+            root = value;
+        }
+        else
+        {
+            std::cout << "Error: simple directive must end with a semicolon\n";
+            exit(1);
+        }
+    }
+}
+
 
 void    Conf::fill_Directives_Locations()
 {
@@ -188,6 +291,7 @@ void    Conf::fill_Directives_Locations()
     for (int i = 0; i < (int)_serverBlocks.size(); i++)
     {
         checkIsServer(i);
+        // std::cout << _serverBlocks[i] << std::endl;
         while (isServer == true && (int)_serverBlocks[i].size() > 1)
         {
             std::string key;
@@ -212,95 +316,45 @@ void    Conf::fill_Directives_Locations()
             }
             
             if (key == "listen")
-            {
                 parseListen(value, listenDup);
-            }
             else if (key == "server_name")
+                parsServerName(value);
+            else if (key == "index" || key == "root")
             {
-                if (value.find(' ') == std::string::npos)
-                {
-                    if (value[value.size()-1] == ';')
-                    {
-                        value = value.substr(0, value.size()-1);
-                        // value = value.substr(value.find_first_not_of(" "), value.find_first_of(" ;\n"));
-                        serverName = value;
-                    }
-                    else
-                    {
-                        std::cout << "Error: simple directive must end with a semicolon\n";
-                        exit(1);
-                    }
-                }
-                else
-                {
-                    std::cout << "Error: server_name accept only one value \n";
-                    exit(1);
-                }
+                parsRootIndex(value, key);
             }
-            else if (key == "index")
-            {
-                if (value[value.size()-1] == ';')
-                {
-                    value = value.substr(0, value.size()-1);
-                    index = value;
-                }
-                else
-                {
-                    std::cout << "Error: simple directive must end with a semicolon\n";
-                    exit(1);
-                }
-            }
-            else if (key == "root")
-            {
-                if (value[value.size()-1] == ';')
-                {
-                    value = value.substr(0, value.size()-1);
-                    root = value;
-                }
-                else
-                {
-                    std::cout << "Error: simple directive must end with a semicolon\n";
-                    exit(1);
-                }
-            }
-            // else if (key == "max_body_size")
-            // {
-            //     if (value[value.size()-1] == ';')
-            //     {
-            //         value = value.substr(0, value.size()-1);
-            //         maxBodySize = atoi(value.c_str());
-            //     }
-            //     else
-            //     {
-            //         std::cout << "Error: simple directive must end with a semicolon\n";
-            //         exit(1);
-            //     }
-            // }
-            // else if (key == "error_page")
-            // {
-            //     if (value[value.size()-1] == ';')
-            //     {
-            //         value = value
+            else if (key == "client_max_body_size")
+                parsMaxBodySize(value);
+            std::cout << key << "<-->" << value << std::endl;
+            // std::cout << "value = " << value << std::endl;
+            
+        }
 
-        }
+
+
+
+
+
+
+
         // print listen
-        for (int i = 0; i < (int)listen.size(); i++)
-        {
-            std::cout << "listen = " << listen[i].first << ":" << listen[i].second << std::endl;
-        }
-        std::cout << "--------------------------------\n";
-        // print serverName
-        std::cout << "serverName = " << serverName << std::endl;
-        std::cout << "--------------------------------\n";
-        // print root
-        std::cout << "root = " << root << std::endl;
-        std::cout << "--------------------------------\n";
-        // print index
-        std::cout << "index = " << index << std::endl;
-        std::cout << "--------------------------------\n";
-        // print maxBodySize
-        std::cout << "maxBodySize = " << maxBodySize << std::endl;
-        std::cout << "--------------------------------\n";
+        // for (int i = 0; i < (int)listen.size(); i++)
+        // {
+        //     std::cout << "listen = " << listen[i].first << ":" << listen[i].second << std::endl;
+        // }
+        // std::cout << "--------------------------------\n";
+        // // print serverName
+        // std::cout << "serverName = " << serverName << std::endl;
+        // std::cout << "--------------------------------\n";
+        // // print root
+        // std::cout << "root = " << root << std::endl;
+        // std::cout << "--------------------------------\n";
+        // // print index
+        // std::cout << "index = " << index << std::endl;
+        // std::cout << "--------------------------------\n";
+        // // print maxBodySize
+        // std::cout << "maxBodySize = " << maxBodySize << std::endl;
+        // std::cout << "--------------------------------\n";
 
     }     
 }
