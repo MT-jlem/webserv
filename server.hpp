@@ -19,9 +19,10 @@ public:
 	bool autoIndex;
 	int methods[3];
 	std::pair<std::string, std::string> redir;
-	//cgi
-	std::pair<std::string, std::set<std::string> > errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
+	bool cgi;
+	std::map<std::string, std::string> errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
 	std::string upload;
+	std::map<std::string, std::string> cgiPath;
 	Location();
 	~Location();
 
