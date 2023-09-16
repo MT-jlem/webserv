@@ -176,13 +176,13 @@ int main() {
                 {
 
                     
-                    std::cout << "yup" << std::endl;
+                    // std::cout << "yup" << std::endl;
                     int start = 0;
                     tmp = "";
                     bzero(str, BUFFER_SIZE);
                     // std::cout << "before" << std::endl;
                     //error in this part , fach kan send file LICENSE.txt lideja fih boundry kikhedam kay tsenda 3adi ms file akhur katwe9a3 segfault o ta str kikun khawi
-                    start = read(fd[i].fd, str, BUFFER_SIZE);
+                    start = read(fd[i].fd, str, BUFFER_SIZE - 1);
                     
                     if (start == -1)
                     {
@@ -216,7 +216,7 @@ int main() {
                             // all_client[j].req.append(str,BUFFER_SIZE);
                             // all_client[j].a_lire+=1024;
                             all_client[j].take_servername();
-                            std::cout << "here = " << str << std::endl;
+                            // std::cout << "here = " << str << std::endl;
                             all_client[j].find_content(str,start);
                             all_client[j].debut_a_lire = start;
                                 // all_client[j].first_requset = false;
