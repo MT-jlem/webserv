@@ -23,5 +23,5 @@ fclean : clean
 
 re : fclean all
 
-b : re
+b : re clean
 	clear && ./$(NAME)

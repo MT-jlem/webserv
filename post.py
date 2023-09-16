@@ -13,7 +13,7 @@ post_data = sys.stdin.read(content_length)
 
 print "<html>"
 print "<body>"
-print "<h1>POST Data Received</h1>"
+print "<h1>POST Data Received(CGI TEST)</h1>"
 print "<p>Data:</p>"
 print "<pre>%s</pre>" % post_data
 print "</body>"

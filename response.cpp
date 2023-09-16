@@ -3,6 +3,7 @@
 #include <map>
 #include <regex>
 #include <stdexcept>
+#include <strings.h>
 #include <sys/_types/_s_ifmt.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
@@ -247,7 +248,8 @@ void Response::postM(Server &serv, request &req){
 		// for (size_t i = 0; i < data.size(); ++i)
 		// 	std::cout << data[i] << "<<line\n";
 		res += getHeaders();
-		res += "\r\n\r\n";
+		res += "\r\n";
+		res += body; res += "\r\n";
 	}
 	else {
 		getM(serv, req);
@@ -592,11 +594,22 @@ std::string Response::execCgi(Server &serv, request &req){
 		char buff[BUFFER_SIZE];
 		waitpid(pid, &status, 0);
 		close(fd[1]);
-		read(fd[0], buff, BUFFER_SIZE -1);
+		while (true) {
+			long long r = read(fd[0], buff, BUFFER_SIZE -1);
+			if (r == 0){
+				break;
+			}
+			else if (r < 0) {
+				err = "500";
+				return  "";
+			}
+			buff[r - 1] = '\0';
+			str.append(buff, r);
+			bzero(buff, r);
+		
+		}
 		close(fd[0]);
-		buff[BUFFER_SIZE - 1] = '\0';
-		str = buff;
-		// std::cout << buff << '\n';
+		std::cout << str << '\n';
 	}
 	close(cgiFile);
 	close(cgiRes);

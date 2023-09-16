@@ -214,11 +214,13 @@ int main(){
 			err = "";
 			std::cout << tmp << '\n';
 			request req(tmp);
+
 			req.parse(serv);
 			Response resp(req, serv);
+
 		std::string buff;
 		buff = resp.res;
-		// std::cout << resp.res;
+		std::cout << resp.res;
 		send(host,(char *)(buff.data()), buff.size(),0);
 		close(host);
 		}
