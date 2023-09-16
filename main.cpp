@@ -52,27 +52,42 @@ std::map<std::string, std::string> statusCodes;
           | "307"  ; Section 10.3.8: Temporary Redirect
 */
 void statusCodesInitialize(){
-	statusCodes["200"] = " OK\r\n";
-	statusCodes["204"] = " No Content\r\n";
-	statusCodes["201"] = " Created\r\n";
-	statusCodes["300"] = " Multiple Choices\r\n";
-	statusCodes["301"] = " Moved Permanently\r\n";
-	statusCodes["302"] = " Found\r\n";
-	statusCodes["303"] = " See Other\r\n";
-	statusCodes["304"] = " Not Modified\r\n";
-	statusCodes["305"] = " Use Proxy\r\n";
-	statusCodes["306"] = " Switch Proxy\r\n";
-	statusCodes["307"] = " Temporary Redirect\r\n";
-	statusCodes["400"] = " Bad Request\r\n";
-	statusCodes["403"] = " Forbidden\r\n";
-	statusCodes["404"] = " Not Found\r\n";
-	statusCodes["405"] = " Method Not Allowed\r\n";
-	statusCodes["409"] = " Conflict\r\n";
-	statusCodes["413"] = " Request Entity Too Large\r\n";
-	statusCodes["414"] = " Request-URI Too Long\r\n";
-	statusCodes["500"] = " Internal server Error\r\n";
-	statusCodes["501"] = " Not Implemented\r\n";
-	statusCodes["505"] = " HTTP Version Not Supported\r\n";
+    statusCodes["200"] = " OK\r\n";
+    statusCodes["201"] = " Created\r\n";
+    statusCodes["202"] = " Accepted\r\n";
+    statusCodes["203"] = " Non-Authoritative Information\r\n";
+    statusCodes["204"] = " No Content\r\n";
+    statusCodes["205"] = " Reset Content\r\n";
+    statusCodes["206"] = " Partial Content\r\n";
+    statusCodes["300"] = " Multiple Choices\r\n";
+    statusCodes["301"] = " Moved Permanently\r\n";
+    statusCodes["302"] = " Found\r\n";
+    statusCodes["303"] = " See Other\r\n";
+    statusCodes["304"] = " Not Modified\r\n";
+    statusCodes["305"] = " Use Proxy\r\n";
+    statusCodes["306"] = " Switch Proxy\r\n";
+    statusCodes["307"] = " Temporary Redirect\r\n";
+    statusCodes["400"] = " Bad Request\r\n";
+    statusCodes["401"] = " Unauthorized\r\n";
+    statusCodes["402"] = " Payment Required\r\n";
+    statusCodes["403"] = " Forbidden\r\n";
+    statusCodes["404"] = " Not Found\r\n";
+    statusCodes["405"] = " Method Not Allowed\r\n";
+    statusCodes["406"] = " Not Acceptable\r\n";
+    statusCodes["407"] = " Proxy Authentication Required\r\n";
+    statusCodes["408"] = " Request Time-out\r\n";
+    statusCodes["409"] = " Conflict\r\n";
+    statusCodes["410"] = " Gone\r\n";
+    statusCodes["411"] = " Length Required\r\n";
+    statusCodes["412"] = " Precondition Failed\r\n";
+    statusCodes["413"] = " Request Entity Too Large\r\n";
+    statusCodes["414"] = " Request-URI Too Long\r\n";
+    statusCodes["415"] = " Unsupported Media Type\r\n";
+    statusCodes["416"] = " Requested range not satisfiable\r\n";
+    statusCodes["417"] = " Expectation Failed\r\n";
+    statusCodes["500"] = " Internal Server Error\r\n";
+    statusCodes["501"] = " Not Implemented\r\n";
+    statusCodes["505"] = " HTTP Version Not Supported\r\n";
 }
 
 void initializeServ(server &serv){
@@ -123,15 +138,13 @@ int main() {
     statusCodesInitialize();
     while (1) 
     {
-        std::cout<<"dfdsfdsf"<<std::endl;
+        std::cout<<"au boucle1"<<std::endl;
         int rev = poll(fd.data(), fd.size(), -1);
-
-        if (rev == -1) 
+        if (rev == -1)
         {
             std::cout << "problem in time poll" << std::endl;
             return 1;
         }
-        std::cout<<"dfdsfdsf"<<std::endl;
         for (size_t i = 0; i < fd.size(); i++) 
         {
 			server serv;
@@ -143,10 +156,10 @@ int main() {
                 {
                     int new_fd_socket;
                     new_fd_socket = accept(fd[i].fd, (struct sockaddr *)&all_server[std::distance(server_fd.begin(),it)].client_address , (socklen_t *)&all_server[std::distance(server_fd.begin(),it)].adresslen);
-                    if (new_fd_socket < 0) 
+                    if (new_fd_socket == -1) 
                     {
                         std::cout << "erreur acceptation" << std::endl;
-                        
+                        close(fd[i].fd);
                         break;
                     }
                     fcntl(new_fd_socket, F_SETFL, O_NONBLOCK);
@@ -157,17 +170,20 @@ int main() {
                     fd.push_back(fds);
                     client_.push_back(new_fd_socket);
                     all_client.push_back(client(new_fd_socket));
+                    
                 } 
                 else 
                 {
 
-
-                    long long start;
+                    
+                    std::cout << "yup" << std::endl;
+                    int start = 0;
                     tmp = "";
                     bzero(str, BUFFER_SIZE);
-                    std::cout << "before" << std::endl;
+                    // std::cout << "before" << std::endl;
+                    //error in this part , fach kan send file LICENSE.txt lideja fih boundry kikhedam kay tsenda 3adi ms file akhur katwe9a3 segfault o ta str kikun khawi
                     start = read(fd[i].fd, str, BUFFER_SIZE);
-                    std::cout << "start === " << start << std::endl;
+                    
                     if (start == -1)
                     {
                         for (size_t j = 0; j < all_client.size(); j++)
@@ -183,6 +199,7 @@ int main() {
 
                         }
                     }
+                    // std::cout << "teeeee" << std::endl;
                     // //find content lenght  one more
                     for (size_t j = 0; j < all_client.size(); j++)
                     {
@@ -190,6 +207,7 @@ int main() {
                         {
                             if (start == 0 && !all_client[j].first_requset)
                             {
+                                puts("||");
                                 close(fd[i].fd);
                                 all_client.erase(all_client.begin() + j);
                                 fd.erase(fd.begin() + i);
@@ -198,6 +216,7 @@ int main() {
                             // all_client[j].req.append(str,BUFFER_SIZE);
                             // all_client[j].a_lire+=1024;
                             all_client[j].take_servername();
+                            std::cout << "here = " << str << std::endl;
                             all_client[j].find_content(str,start);
                             all_client[j].debut_a_lire = start;
                                 // all_client[j].first_requset = false;
@@ -205,7 +224,7 @@ int main() {
                             if((all_client[j].req.length() && !all_client[j].ischenked && all_client[j].req.find("\r\n\r\n") != std::string::npos  &&  all_client[j].valeur_content_len <= all_client[j].debut_a_lire) 
                                 || ( all_client[j].ischenked && all_client[j].req.find("\r\n0\r\n\r\n") != std::string::npos) )
                             {
-                                std::cout << "hey\n";
+                                // std::cout << "hey\n";
                                 //   std::ofstream outputFile("show.txt");
                                 // if (!outputFile.is_open()) {
                                 //     std::cerr << "Failed to open the file for writing." << std::endl;
@@ -229,6 +248,7 @@ int main() {
             
             else if (fd[i].revents & POLLOUT) 
             {
+                // std::cout << "ici" << std::endl;
                 //socket pret a ecriture
                 size_t j = 0;
                 while (j < all_client.size())
@@ -248,22 +268,22 @@ int main() {
                     Response resp(req, serv);
                     std::string buff;
                     buff = resp.res;
-                    std::cout << "poolout\n";
+                    // std::cout << "poolout\n";
                     write(fd[i].fd, (char *)(buff.data()) , buff.length());
                     all_client[j].traiter = true;
-                    // close(fd[i].fd);
-                    puts("la");
-                    // fd.erase(fd.begin() + i);
-                    // all_client.erase(all_client.begin() + j);
-                    // all_client.erase(fd.begin() + j);
-                }
-                else if (all_client[j].traiter == true)
-                {
                     close(fd[i].fd);
+                    // puts("la");
                     fd.erase(fd.begin() + i);
                     all_client.erase(all_client.begin() + j);
-                    puts("il est traite donc je supprime le client");
+                    // all_client.erase(all_client.begin() + j);
                 }
+                // else if (all_client[j].traiter == true)
+                // {
+                //     close(fd[i].fd);
+                //     fd.erase(fd.begin() + i);
+                //     all_client.erase(all_client.begin() + j);
+                //     puts("il est traite donc je supprime le client");
+                // }
                     
             
                 // err = "";
@@ -286,11 +306,17 @@ int main() {
             }
             else if (fd[i].revents & POLLHUP)
             {
-                std::cout << "Hang up on socket " << fd[i].fd << std::endl;
-                close(fd[i].fd);
- 
-                fd.erase(fd.begin() + i);
-                
+                for(size_t j = 0; j < all_client.size();j++)
+                {
+                    if (fd[i].fd == all_client[j].fd_socket)
+                    {
+                        std::cout << "Hang up on socket " << fd[i].fd << std::endl;
+                        close(fd[i].fd);
+                        fd.erase(fd.begin() + i);
+                        all_client.erase(all_client.begin() + j);
+                        break;
+                    }
+                }
             }
             else if (fd[i].revents  & POLLNVAL) 
             {

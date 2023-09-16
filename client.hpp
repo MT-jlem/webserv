@@ -64,12 +64,12 @@ void    client::take_servername()
 client::client(int fd)
 {
     this->fd_socket = fd;
-    first_requset = false;
-    req = "";
-    valeur_content_len = -1;
-    not_cont_chunked = false;
-    ischenked = false;
-    traiter = false;
+    this->first_requset = false;
+    this->req = "";
+    this->valeur_content_len = -1;
+    this->not_cont_chunked = false;
+    this->ischenked = false;
+    this->traiter = false;
 }
 
 client::~client()
@@ -80,6 +80,7 @@ client::~client()
 void    client::find_content(char const *req,int count_read)
 {
 
+    std::cout << "req = " << req << std::endl;
     if (this->first_requset != true)
     {
         std::string s(req);
@@ -100,7 +101,7 @@ void    client::find_content(char const *req,int count_read)
         }
     }
     this->req.append(req, count_read);
-    std::cout << "||||||||debut \n " << req << "\nfin|||||||||||||||||" << std::endl;
+    // std::cout << "||||||||debut \n " << req << "\nfin|||||||||||||||||" << std::endl;
 }
 
 #endif

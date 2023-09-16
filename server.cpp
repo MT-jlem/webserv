@@ -45,18 +45,20 @@ void server::binding_socket(int fd_socket)
         std::cout << "Failed to set socket option" << std::endl;
         return ;
     }
-    if (bind(fd_socket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) <= -1)
+    if (bind(fd_socket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)
     {
         std::cout << "serveur: erreur d'affecter l'adresse ip ou port" << std::endl;
+        close(fd_socket);
         exit(1);
     }
 }
 
 void server::listening_socket(int fd_socket)
 {
-    if (listen(fd_socket, 10000) == -1)
+    if (listen(fd_socket, 100000) == -1)
     {
         std::cout << "erreur au ecoute!!!" << std::endl;
+        close(fd_socket);
         exit(1);
     }
 }
