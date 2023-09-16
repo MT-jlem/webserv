@@ -68,15 +68,8 @@ int main(int ac, char *av[]) // main for config
 	//send || //recv
 	//PS: fcntl(sock, F_SETFL, O_NONBLOCK);//should be used with poll() for non-blocking i/o operations
 /*
-			"300"  ; Section 10.3.1: Multiple Choices
-          | "301"  ; Section 10.3.2: Moved Permanently
-          | "302"  ; Section 10.3.3: Found
-          | "303"  ; Section 10.3.4: See Other
-          | "304"  ; Section 10.3.5: Not Modified
-          | "305"  ; Section 10.3.6: Use Proxy
-          | "307"  ; Section 10.3.8: Temporary Redirect
-*/
 
+*/
 
 
 // void statusCodesInitialize(){

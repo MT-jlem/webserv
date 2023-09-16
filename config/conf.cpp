@@ -11,22 +11,20 @@ Conf::~Conf()
 }
 
 
-// void Conf::readCo()
-// {
-//     // print the vector of server blocks
-    // std::cout << "size of _serverBlocks = " << this->_serverBlocks.size() << std::endl;
-    // for(int i = 0; i < (int)this->_serverBlocks.size(); i++) 
-    // {
-    //     std::cout << "-------------------------------------\n";
-    //         std::cout << this->_serverBlocks[i] << std::endl;
-    // }
-    // for(int i = 0; i < (int)this->_serverBlocks.size(); i++)
-    // {
-
-    // }
-    
-//     // print the vector of server blocks
-// }
+ 
+std::string left(const std::string &s)
+{
+    size_t start = s.find_first_not_of(" \n;");
+    return (start == std::string::npos) ? "" : s.substr(start);
+}
+std::string right(const std::string &s)
+{
+    size_t end = s.find_last_not_of(" \n;");
+    return (end == std::string::npos) ? "" : s.substr(0, end + 1);
+}
+std::string trim(const std::string &s) {
+    return right(left(s));
+}
 
 
 
@@ -233,6 +231,8 @@ void    Conf::parsServerName(std::string value)
     }
 }
 
+
+
 void    Conf::parsRootIndex(std::string value, std::string key)
 {
     if (key == "index")
@@ -262,6 +262,82 @@ void    Conf::parsRootIndex(std::string value, std::string key)
         }
     }
 }
+
+bool    checkErrorPagesCode(const std::string key)
+{ 
+    // 100 101 102 200 201 202 203 204 205 206 207 300 301 302 303 304 305 307 308 400 401 402 403 404 405 406 407 408 409 410 411 412 413 414 415 416 417 418 419 420 421 422 423 424 428 429 431 451 500 501 502 503 504 505 507 511
+    if (key == "100" || key == "101" || key == "102" || key == "200" || key == "201" || key == "511" \
+         || key == "202" || key == "203" || key == "204" || key == "205" || key == "206" \
+         || key == "207" || key == "300" || key == "301" || key == "302" || key == "303" \
+         || key == "304" || key == "305" || key == "307" || key == "308" || key == "400" \
+         || key == "401" || key == "402" || key == "403" || key == "404" || key == "405" \
+         || key == "406" || key == "407" || key == "408" || key == "409" || key == "410" \
+         || key == "411" || key == "412" || key == "413" || key == "414" || key == "415" \
+         || key == "416" || key == "417" || key == "418" || key == "419" || key == "420" \
+         || key == "421" || key == "422" || key == "423" || key == "424" || key == "428" \
+         || key == "429" || key == "431" || key == "451" || key == "500" || key == "501" \
+         || key == "502" || key == "503" || key == "504" || key == "505" || key == "507")
+        return true;
+    return false;
+}
+
+void    Conf::parsError_page(std::string value, bool check)
+{
+    std::vector<std::string> val;
+    bool checkKey = false;
+    if (!check)
+    {
+        if (value[value.size()-1] == ';')
+        {
+            value = value.substr(0, value.size()-1);
+            for (int i = 0; i < (int)value.size(); i++)
+            {
+                int pos = value.find(' ');
+                value = trim(value);
+                if (pos == -1)
+                {
+                    val.push_back(value);
+                    break;
+                }
+                else
+                {
+                    std::string key = value.substr(0, pos);
+
+                    value = value.substr(pos, value.size());
+                    key = trim(key);
+                    value = trim(value);
+                    if (checkErrorPagesCode(key) == true)
+                    {
+                        checkKey = true;
+                        val.push_back(key);
+                    }
+                    else
+                    {
+                        std::cout << "Error: invalid error_page key "<< key << std::endl;
+                        exit(1);
+                    }
+                }
+            }
+        }
+        else
+        {
+            std::cout << "Error: simple directive must end with a semicolon\n";
+            exit(1);
+        }
+        for (int j = 0; j < (int)val.size()-1; j++)
+        {
+            errorPage[val[j]] = val[val.size()-1];
+        }
+    }
+
+
+}
+
+void    Conf::parsLocation(std::string value)
+{
+    // there is two cases for location block lac /{ and loc / \n {
+}
+
 
 
 void    Conf::fill_Directives_Locations()
@@ -320,13 +396,15 @@ void    Conf::fill_Directives_Locations()
             else if (key == "server_name")
                 parsServerName(value);
             else if (key == "index" || key == "root")
-            {
                 parsRootIndex(value, key);
-            }
             else if (key == "client_max_body_size")
                 parsMaxBodySize(value);
+            else if (key == "error_page")
+                parsError_page(value, false);
+            else if (key == "location")
+                parsLocation(value);
+            
             std::cout << key << "<-->" << value << std::endl;
-            // std::cout << "value = " << value << std::endl;
             
         }
 
@@ -337,7 +415,7 @@ void    Conf::fill_Directives_Locations()
 
 
 
-        // print listen
+        // // print listen
         // for (int i = 0; i < (int)listen.size(); i++)
         // {
         //     std::cout << "listen = " << listen[i].first << ":" << listen[i].second << std::endl;
@@ -354,6 +432,13 @@ void    Conf::fill_Directives_Locations()
         // std::cout << "--------------------------------\n";
         // // print maxBodySize
         // std::cout << "maxBodySize = " << maxBodySize << std::endl;
+        // std::cout << "--------------------------------\n";
+        // // print errorPage
+        // std::map<std::string, std::string>::iterator it;
+        // for (it = errorPage.begin(); it != errorPage.end(); it++)
+        // {
+        //     std::cout << "errorPage = " << it->first << " " << it->second << std::endl;
+        // }
         // std::cout << "--------------------------------\n";
 
     }     

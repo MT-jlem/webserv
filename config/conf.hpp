@@ -2,14 +2,12 @@
 #define CONF_HPP
 
 
-#include <string>
 #include <map>
+#include <string>
 #include <set>
-#include <vector>
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <algorithm>
 #include <stack>
 #include <algorithm>
 #include <vector>
@@ -21,17 +19,18 @@
 #define DELETE 2
 class ServerLocation {
     protected:
+		std::string path;
+		std::string root;
+		std::string index;
+		bool autoIndex;
+		int methods[3];
+		std::pair<std::string, std::string> redir;
+		bool cgi;
+		std::map<std::string, std::string> errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
+		std::string upload;
+		std::map<std::string, std::string> cgiPath;
     public:
-    	std::string path;
-    	std::string root;
-    	std::string index;
-    	bool autoIndex;
-    	int methods[3];
-    	std::pair<std::string, std::string> redir;
-    	//cgi
-    	std::map<std::string, std::string> errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
-    	std::string upload;
-    	ServerLocation(){};
+		ServerLocation(){};
     	~ServerLocation(){};
 };
 
@@ -46,7 +45,7 @@ class Conf : public ReadConfig
 	    std::string index;
 	    std::string serverName;
 	    size_t		maxBodySize;
-	    std::map<std::string, std::string> errorPage; //maybe a vector
+	    std::map<std::string, std::string> errorPage;
 	    std::vector<ServerLocation> loc;
 
         Conf(int ac, char *av);
@@ -59,6 +58,8 @@ class Conf : public ReadConfig
 		void		parsMaxBodySize(std::string &str);
 		void    	parsServerName(std::string value);
 		void    	parsRootIndex(std::string value, std::string key);
+		void		parsError_page(std::string value, bool check);
+		void		parsLocation(std::string value);
 
 
 };
