@@ -12,18 +12,18 @@ Conf::~Conf()
 
 
  
-std::string left(const std::string &s)
+std::string left(const std::string &s, std::string str)
 {
-    size_t start = s.find_first_not_of(" \n;");
+    size_t start = s.find_first_not_of(str);
     return (start == std::string::npos) ? "" : s.substr(start);
 }
-std::string right(const std::string &s)
+std::string right(const std::string &s, std::string str)
 {
-    size_t end = s.find_last_not_of(" \n;");
+    size_t end = s.find_last_not_of(str);
     return (end == std::string::npos) ? "" : s.substr(0, end + 1);
 }
-std::string trim(const std::string &s) {
-    return right(left(s));
+std::string trim(const std::string &s, std::string str) {
+    return right(left(s, str), str);
 }
 
 
@@ -293,7 +293,7 @@ void    Conf::parsError_page(std::string value, bool check)
             for (int i = 0; i < (int)value.size(); i++)
             {
                 int pos = value.find(' ');
-                value = trim(value);
+                value = trim(value, " \n;");
                 if (pos == -1)
                 {
                     val.push_back(value);
@@ -304,8 +304,8 @@ void    Conf::parsError_page(std::string value, bool check)
                     std::string key = value.substr(0, pos);
 
                     value = value.substr(pos, value.size());
-                    key = trim(key);
-                    value = trim(value);
+                    key = trim(key, " \n;");
+                    value = trim(value, " \n;");
                     if (checkErrorPagesCode(key) == true)
                     {
                         checkKey = true;
@@ -343,22 +343,60 @@ void    Conf::parsLocation(std::string value)
 void    Conf::fill_Directives_Locations()
 {
     default_ip = "127.0.0.1";
+    std::string serv;
+    std::string serv_push;
     for (int i = 0; i < (int)_serverBlocks.size(); i++)
     {
-        size_t lindx = _serverBlocks[i].find_first_not_of(" \n\r\t\f\v");
-        size_t rindx = _serverBlocks[i].find_last_not_of(" \n\r\t\f\v");
-        _serverBlocks[i] = _serverBlocks[i].substr(lindx, rindx+1);
-        for (int j = 0; j < (int)_serverBlocks[i].size(); j++)
+        _serverBlocks[i] = trim(_serverBlocks[i], " \n;");
+        // std::cout << _serverBlocks[i] << std::endl;
+        int indx = 0;
+        while (indx < (int)_serverBlocks[i].size())
         {
-            if (_serverBlocks[i][j] == '#')
+            if (_serverBlocks[i][indx] == '#')
             {
-                int pos = _serverBlocks[i].find('\n', j);
-                _serverBlocks[i] = _serverBlocks[i].erase(j, pos-j);
+                indx = _serverBlocks[i].find('\n', indx);
             }
-            if (_serverBlocks[i][j] == ';' || _serverBlocks[i][j] == '{')
-                if (_serverBlocks[i][j+1] != '\n')
-                    _serverBlocks[i] = _serverBlocks[i].insert(j+1, "\n");
+            else if (_serverBlocks[i][indx] == '{' || _serverBlocks[i][indx] == '}')
+            {
+                serv += '\n';
+                serv += _serverBlocks[i][indx];
+                serv += '\n';
+            }
+            else if (_serverBlocks[i][indx] == ';')
+            {
+                serv += _serverBlocks[i][indx];
+                serv += '\n';
+                serv = trim(serv, " ");
+                serv_push += serv;
+                serv = "";
+
+            }
+            else if (_serverBlocks[i][indx] == '\n')
+            {
+                indx++;
+                continue;
+            }
+                
+            else
+                serv += _serverBlocks[i][indx];
+
+            indx++;
         }
+        _serverBlocks[i] = serv_push;
+
+
+
+        // for (int j = 0; j < (int)_serverBlocks[i].size(); j++)
+        // {
+        //     if (_serverBlocks[i][j] == '#')
+        //     {
+        //         int pos = _serverBlocks[i].find('\n', j);
+        //         _serverBlocks[i] = _serverBlocks[i].erase(j, pos-j);
+        //     }
+        //     if (_serverBlocks[i][j] == ';' || _serverBlocks[i][j] == '{')
+        //         if (_serverBlocks[i][j+1] != '\n')
+        //             _serverBlocks[i] = _serverBlocks[i].insert(j+1, "\n");
+        // }
     }
     
 
@@ -366,8 +404,8 @@ void    Conf::fill_Directives_Locations()
     std::vector<std::string> listenDup;
     for (int i = 0; i < (int)_serverBlocks.size(); i++)
     {
+        std::cout << _serverBlocks[i] << std::endl;
         checkIsServer(i);
-        // std::cout << _serverBlocks[i] << std::endl;
         while (isServer == true && (int)_serverBlocks[i].size() > 1)
         {
             std::string key;
@@ -404,7 +442,7 @@ void    Conf::fill_Directives_Locations()
             else if (key == "location")
                 parsLocation(value);
             
-            std::cout << key << "<-->" << value << std::endl;
+            // std::cout << key << "<-->" << value << std::endl;
             
         }
 
