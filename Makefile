@@ -9,8 +9,7 @@ SRC =	main.cpp request.cpp server.cpp response.cpp \
 
 OBJ = $(SRC:%.cpp=%.o)
 
-HEADERS =	request.hpp response.hpp server.hpp \
-			config/read_config.hpp config/conf.hpp
+HEADERS =	config/read_config.hpp config/conf.hpp
 
 all : $(NAME)
 
