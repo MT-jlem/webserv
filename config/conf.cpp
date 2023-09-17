@@ -1,5 +1,4 @@
 #include "conf.hpp"
-#include "../server.hpp"
 
 Conf::Conf(int ac, char *av) : ReadConfig(ac, av)
 {
