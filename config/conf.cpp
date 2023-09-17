@@ -3,7 +3,9 @@
 
 Conf::Conf(int ac, char *av) : ReadConfig(ac, av)
 {
-
+    isLocation = false;
+    listenIndx = 0;
+    default_ip = "127.0.0.1";
 }
 
 Conf::~Conf()
@@ -61,7 +63,7 @@ std::string Conf::parseIp(std::string ip)
     }
     int numInt;
     int j = 0;
-    for (int i = 0; i <= 3; i++) // check if the ip is valid 255.255.255.255
+    for (int i = 0; i <= 3; i++)
     {
         std::stringstream num;
         int pos = ip.find('.', j);
@@ -235,32 +237,51 @@ void    Conf::parsServerName(std::string value)
 
 void    Conf::parsRootIndex(std::string value, std::string key)
 {
-    if (key == "index")
+    if (isLocation == false)
     {
-        if (value[value.size()-1] == ';')
+        if (key == "index")
         {
-            value = value.substr(0, value.size()-1);
-            index = value;
+            if (value[value.size()-1] == ';')
+            {
+                value = value.substr(0, value.size()-1);
+                index = value;
+                return;
+            }
         }
-        else
+        else if (key == "root")
         {
-            std::cout << "Error: simple directive must end with a semicolon\n";
-            exit(1);
+            if (value[value.size()-1] == ';')
+            {
+                value = value.substr(0, value.size()-1);
+                root = value;
+                return;
+            }
         }
     }
-    else if (key == "root")
+    else
     {
-        if (value[value.size()-1] == ';')
+        if (key == "index")
         {
-            value = value.substr(0, value.size()-1);
-            root = value;
+            if (value[value.size()-1] == ';')
+            {
+                value = value.substr(0, value.size()-1);
+                loc.index = value;
+                return;
+            }
         }
-        else
+        else if (key == "root")
         {
-            std::cout << "Error: simple directive must end with a semicolon\n";
-            exit(1);
+            if (value[value.size()-1] == ';')
+            {
+                value = value.substr(0, value.size()-1);
+                loc.root = value;
+                return;
+            }
         }
+
     }
+    std::cout << "Error: simple directive must end with a semicolon\n";
+    exit(1);
 }
 
 bool    checkErrorPagesCode(const std::string key)
@@ -333,22 +354,22 @@ void    Conf::parsError_page(std::string value, bool check)
 
 }
 
-void    Conf::parsLocation(std::string value)
+void    Conf::parsLocation(std::string value, int indx)
 {
     // there is two cases for location block lac /{ and loc / \n {
+    std::cout << indx << " = " << value << std::endl;
+
 }
 
 
 
 void    Conf::fill_Directives_Locations()
 {
-    default_ip = "127.0.0.1";
     std::string serv;
     std::string serv_push;
     for (int i = 0; i < (int)_serverBlocks.size(); i++)
     {
-        _serverBlocks[i] = trim(_serverBlocks[i], " \n;");
-        // std::cout << _serverBlocks[i] << std::endl;
+        _serverBlocks[i] = trim(_serverBlocks[i], " \n");
         int indx = 0;
         while (indx < (int)_serverBlocks[i].size())
         {
@@ -383,28 +404,15 @@ void    Conf::fill_Directives_Locations()
             indx++;
         }
         _serverBlocks[i] = serv_push;
-
-
-
-        // for (int j = 0; j < (int)_serverBlocks[i].size(); j++)
-        // {
-        //     if (_serverBlocks[i][j] == '#')
-        //     {
-        //         int pos = _serverBlocks[i].find('\n', j);
-        //         _serverBlocks[i] = _serverBlocks[i].erase(j, pos-j);
-        //     }
-        //     if (_serverBlocks[i][j] == ';' || _serverBlocks[i][j] == '{')
-        //         if (_serverBlocks[i][j+1] != '\n')
-        //             _serverBlocks[i] = _serverBlocks[i].insert(j+1, "\n");
-        // }
     }
     
 
-    listenIndx = 0;
+    // listenIndx = 0;
+    int locIndx = 0;
     std::vector<std::string> listenDup;
     for (int i = 0; i < (int)_serverBlocks.size(); i++)
     {
-        std::cout << _serverBlocks[i] << std::endl;
+        // std::cout << _serverBlocks[i] << std::endl;
         checkIsServer(i);
         while (isServer == true && (int)_serverBlocks[i].size() > 1)
         {
@@ -413,6 +421,7 @@ void    Conf::fill_Directives_Locations()
             int pos = _serverBlocks[i].find('\n', 0);
             std::string keyWord = _serverBlocks[i].substr(0, pos);
             _serverBlocks[i] = _serverBlocks[i].substr(pos+1, _serverBlocks[i].size()-pos - 1);
+            
             size_t lindx = keyWord.find_first_not_of(" \n");
             size_t rindx = keyWord.find_last_not_of(" \n");
             if (lindx == std::string::npos || rindx == std::string::npos)
@@ -428,21 +437,54 @@ void    Conf::fill_Directives_Locations()
             {
                 // std::cerr << e.what() << '\n';
             }
+            if (value.size() > 0 || (value != "{" || value != "}"))
+            {
+                if (key == "listen" && isLocation == false)
+                    parseListen(value, listenDup);
+                else if (key == "server_name" && isLocation == false)
+                    parsServerName(value);
+                else if ((key == "index" || key == "root") && isLocation == false)
+                    parsRootIndex(value, key);
+                else if (key == "client_max_body_size" && isLocation == false)
+                    parsMaxBodySize(value);
+                else if (key == "error_page" && isLocation == false)
+                    parsError_page(value, false);
+                else if (key == "location" && isLocation == false)
+                {
+                    isLocation = true;
+                    pos = _serverBlocks[i].find('\n', 0);
+                    _serverBlocks[i] = _serverBlocks[i].substr(pos+1, _serverBlocks[i].size()-pos - 1);
+                    parsLocation(value, locIndx);
+                }
+                else if (key == "}")
+                {
+                    isLocation = false;
+                    locIndx++;
+                }
+                else if (isLocation == true)
+                {
+                    if (key == "{")
+                    {
+                        std::cout << key <<"Error: invalid directive\n";
+                        exit(1);
+                    }
+                    parsLocation(value, locIndx);
+                }
+
+                else
+                {
+                    std::cout << "Error: invalid directive\n";
+                    exit(1);
+                }
+                
+            }
+            else
+            {
+                std::cout << "key =-" << key << "-Error: invalid directive\n";
+                exit(1);
+            }
             
-            if (key == "listen")
-                parseListen(value, listenDup);
-            else if (key == "server_name")
-                parsServerName(value);
-            else if (key == "index" || key == "root")
-                parsRootIndex(value, key);
-            else if (key == "client_max_body_size")
-                parsMaxBodySize(value);
-            else if (key == "error_page")
-                parsError_page(value, false);
-            else if (key == "location")
-                parsLocation(value);
-            
-            // std::cout << key << "<-->" << value << std::endl;
+            // std::cout <<  key << "<-->" << value << std::endl;
             
         }
 

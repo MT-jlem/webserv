@@ -19,6 +19,7 @@
 #define DELETE 2
 class ServerLocation {
     protected:
+    public:
 		std::string path;
 		std::string root;
 		std::string index;
@@ -29,7 +30,6 @@ class ServerLocation {
 		std::map<std::string, std::string> errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
 		std::string upload;
 		std::map<std::string, std::string> cgiPath;
-    public:
 		ServerLocation(){};
     	~ServerLocation(){};
 };
@@ -37,6 +37,7 @@ class ServerLocation {
 class Conf : public ReadConfig
 {
     private:
+		bool isLocation;
 		int listenIndx;
 		std::string default_ip;
     public:
@@ -46,20 +47,21 @@ class Conf : public ReadConfig
 	    std::string serverName;
 	    size_t		maxBodySize;
 	    std::map<std::string, std::string> errorPage;
-	    std::vector<ServerLocation> loc;
+	    ServerLocation loc;
+	    std::vector<ServerLocation> servLoc;
 
         Conf(int ac, char *av);
         ~Conf();
-        void    	fill_Directives_Locations();
-        void    	checkIsServer(int serverIndex);
-		void		parseListen(std::string listen, std::vector<std::string> &listenDup);
-		std::string	parseIp(std::string ip);
-		bool 		listenCharIsValid(const std::string &str);
-		void		parsMaxBodySize(std::string &str);
-		void    	parsServerName(std::string value);
-		void    	parsRootIndex(std::string value, std::string key);
-		void		parsError_page(std::string value, bool check);
-		void		parsLocation(std::string value);
+        void    		fill_Directives_Locations();
+        void    		checkIsServer(int serverIndex);
+		void			parseListen(std::string listen, std::vector<std::string> &listenDup);
+		std::string		parseIp(std::string ip);
+		bool 			listenCharIsValid(const std::string &str);
+		void			parsMaxBodySize(std::string &str);
+		void    		parsServerName(std::string value);
+		void    		parsRootIndex(std::string value, std::string key);
+		void			parsError_page(std::string value, bool check);
+		void			parsLocation(std::string value, int locIndex);
 
 
 };
