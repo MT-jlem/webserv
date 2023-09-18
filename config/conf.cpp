@@ -5,12 +5,25 @@ Conf::Conf(int ac, char *av) : ReadConfig(ac, av)
     isLocation = false;
     listenIndx = 0;
     default_ip = "127.0.0.1";
+
 }
 
 Conf::~Conf()
 {
 }
 
+Location::Location()
+{
+    path = "";
+    root = "";
+    index = "";
+    autoIndex = false;
+    methods[0] = 0;
+    methods[1] = 0;
+    methods[2] = 0;
+    redir = std::make_pair("", "");
+    upload = "";
+}
 
  
 std::string left(const std::string &s, std::string str)
@@ -112,7 +125,7 @@ void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listen
                 if (std::count(listenDup.begin(), listenDup.end(), listenValue) == 0)
                 {
                     listenDup.push_back(listenValue);
-                    listen.push_back(std::make_pair(default_ip, port));
+                    singleServer.listen.push_back(std::make_pair(default_ip, port));
                 }
                 else
                 {
@@ -137,7 +150,7 @@ void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listen
                 if (std::count(listenDup.begin(), listenDup.end(), listenValue) == 0)
                 {
                     listenDup.push_back(listenValue);
-                    listen.push_back(std::make_pair(ip, port));
+                    singleServer.listen.push_back(std::make_pair(ip, port));
                 }
                 else
                 {
@@ -193,7 +206,7 @@ void    Conf::parsMaxBodySize(std::string &str)
         if (checkMaxBodySize(str) == true)
         {
             str = str.substr(0, str.size()-1);
-            maxBodySize = atoi(str.c_str());
+            singleServer.maxBodySize = atoi(str.c_str());
         }
         else
         {
@@ -217,7 +230,7 @@ void    Conf::parsServerName(std::string value)
         if (value[value.size()-1] == ';')
         {
             value = value.substr(0, value.size()-1);
-            serverName = value;
+            singleServer.serverName = value;
         }
         else
         {
@@ -243,7 +256,7 @@ void    Conf::parsRootIndex(std::string value, std::string key)
             if (value[value.size()-1] == ';')
             {
                 value = value.substr(0, value.size()-1);
-                index = value;
+                singleServer.index = value;
                 return;
             }
         }
@@ -252,7 +265,7 @@ void    Conf::parsRootIndex(std::string value, std::string key)
             if (value[value.size()-1] == ';')
             {
                 value = value.substr(0, value.size()-1);
-                root = value;
+                singleServer.root = value;
                 return;
             }
         }
@@ -264,7 +277,7 @@ void    Conf::parsRootIndex(std::string value, std::string key)
             if (value[value.size()-1] == ';')
             {
                 value = value.substr(0, value.size()-1);
-                loc.index = value;
+                singleServer.loc.index = value;
                 return;
             }
         }
@@ -273,11 +286,10 @@ void    Conf::parsRootIndex(std::string value, std::string key)
             if (value[value.size()-1] == ';')
             {
                 value = value.substr(0, value.size()-1);
-                loc.root = value;
+                singleServer.loc.root = value;
                 return;
             }
         }
-
     }
     std::cout << "Error: simple directive must end with a semicolon\n";
     exit(1);
@@ -301,63 +313,188 @@ bool    checkErrorPagesCode(const std::string key)
     return false;
 }
 
-void    Conf::parsError_page(std::string value, bool check)
+void    Conf::parsError_page(std::string value)
 {
     std::vector<std::string> val;
     bool checkKey = false;
-    if (!check)
+    if (value[value.size()-1] == ';')
     {
-        if (value[value.size()-1] == ';')
+        value = value.substr(0, value.size()-1);
+        for (int i = 0; i < (int)value.size(); i++)
         {
-            value = value.substr(0, value.size()-1);
-            for (int i = 0; i < (int)value.size(); i++)
+            int pos = value.find(' ');
+            value = trim(value, " \n;");
+            if (pos == -1)
             {
-                int pos = value.find(' ');
+                val.push_back(value);
+                break;
+            }
+            else
+            {
+                std::string key = value.substr(0, pos);
+                value = value.substr(pos, value.size());
+                key = trim(key, " \n;");
                 value = trim(value, " \n;");
-                if (pos == -1)
+                if (checkErrorPagesCode(key) == true)
                 {
-                    val.push_back(value);
-                    break;
+                    checkKey = true;
+                    val.push_back(key);
                 }
                 else
                 {
-                    std::string key = value.substr(0, pos);
+                    std::cout << "Error: invalid error_page key "<< key << std::endl;
+                    exit(1);
+                }
+            }
+        }
+    }
+    else
+    {
+        std::cout << "Error: simple directive must end with a semicolon\n";
+        exit(1);
+    }
+    for (int j = 0; !isLocation && j < (int)val.size()-1; j++)
+    {
+        singleServer.errorPage[val[j]] = val[val.size()-1];
+    }
+    for (int j = 0; isLocation && j < (int)val.size()-1; j++)
+    {
+        singleServer.loc.errorPage[val[j]] = val[val.size()-1];
+    }
+}
 
-                    value = value.substr(pos, value.size());
-                    key = trim(key, " \n;");
-                    value = trim(value, " \n;");
-                    if (checkErrorPagesCode(key) == true)
-                    {
-                        checkKey = true;
-                        val.push_back(key);
-                    }
-                    else
-                    {
-                        std::cout << "Error: invalid error_page key "<< key << std::endl;
-                        exit(1);
-                    }
+void   Conf::parsAutoindex(std::string value)
+{
+    if (value[value.size()-1] == ';')
+    {
+        value = value.substr(0, value.size()-1);
+        if (value == "on")
+            singleServer.loc.autoIndex = true;
+        else if (value == "off")
+            singleServer.loc.autoIndex = false;
+        else
+        {
+            std::cout << "Error: invalid autoindex value\n";
+            exit(1);
+        }
+    }
+    else
+    {
+        std::cout << "Error: simple directive must end with a semicolon\n";
+        exit(1);
+    }
+}
+
+
+void    Conf::parsReturn(std::string value)
+{
+    if (value[value.size()-1] == ';')
+    {
+        value = value.substr(0, value.size()-1);
+        int pos = value.find(' ');
+        if (pos != -1)
+        {
+            std::string key = value.substr(0, pos);
+            value = value.substr(pos, value.size());
+            key = trim(key, " \n;");
+            value = trim(value, " \n;");
+            singleServer.loc.redir = std::make_pair(key, value);
+        }
+        else
+        {
+            std::cout << "Error: invalid return value\n";
+            exit(1);
+        }
+    }
+    else
+    {
+        std::cout << "Error: simple directive must end with a semicolon\n";
+        exit(1);
+    }
+}
+
+void    Conf::parsMethods(std::string value)
+{
+    if (value[value.size()-1] == ';')
+    {
+        value = value.substr(0, value.size()-1);
+        if (value.size())
+        {
+            while (value.size())
+            {
+                int pos = value.find(' ');
+                if (pos == -1)
+                    pos = value.size();
+                std::string key = value.substr(0, pos);
+                value = value.substr(pos, value.size());
+                key = trim(key, " \n;");
+                value = trim(value, " \n;");
+                if (key == "GET")
+                    singleServer.loc.methods[0] = 1;
+                else if (key == "POST")
+                    singleServer.loc.methods[1] = 1;
+                else if (key == "DELETE")
+                    singleServer.loc.methods[2] = 1;
+                else
+                {
+                    std::cout << key << " Error: invalid methods value\n";
+                    exit(1);
                 }
             }
         }
         else
         {
-            std::cout << "Error: simple directive must end with a semicolon\n";
+            std::cout << "Error: invalid methods value\n";
             exit(1);
         }
-        for (int j = 0; j < (int)val.size()-1; j++)
+    }
+    else
+    {
+        std::cout << "Error: simple directive must end with a semicolon\n";
+        exit(1);
+    }
+}
+void	Conf::parsCgi(std::string value)
+{
+    if (value[value.size()-1] == ';')
+    {
+        value = value.substr(0, value.size()-1);
+        int pos = value.find(' ');
+        if (pos != -1)
         {
-            errorPage[val[j]] = val[val.size()-1];
+            std::string key = value.substr(0, pos);
+            value = value.substr(pos, value.size());
+            key = trim(key, " \n;");
+            value = trim(value, " \n;");
+            singleServer.loc.cgiPath[key] = value;
+        }
+        else
+        {
+            std::cout << "Error: invalid cgi_pass value\n";
+            exit(1);
         }
     }
-
-
 }
 
-void    Conf::parsLocation(std::string value, int indx)
+void    Conf::parsLocation(std::string key, std::string value)
 {
-    // there is two cases for location block lac /{ and loc / \n {
-    std::cout << indx << " = " << value << std::endl;
-
+    if (key == "root" || key == "index" || key == "path")
+        parsRootIndex(value, key);
+    else if (key == "error_page")
+        parsError_page(value);
+    else if (key == "autoindex")
+        parsAutoindex(value);
+    else if (key == "return")
+        parsReturn(value);
+    else if (key == "allowed_methods")
+        parsMethods(value);
+    else if (key == "cgi_pass")
+        parsCgi(value);
+    else
+    {
+        std::cout << "11Error: invalid directive\n";
+        exit(1);
+    }
 }
 
 
@@ -366,6 +503,7 @@ void    Conf::fill_Directives_Locations()
 {
     std::string serv;
     std::string serv_push;
+
     for (int i = 0; i < (int)_serverBlocks.size(); i++)
     {
         _serverBlocks[i] = trim(_serverBlocks[i], " \n");
@@ -404,14 +542,10 @@ void    Conf::fill_Directives_Locations()
         }
         _serverBlocks[i] = serv_push;
     }
-    
-
-    // listenIndx = 0;
     int locIndx = 0;
     std::vector<std::string> listenDup;
     for (int i = 0; i < (int)_serverBlocks.size(); i++)
     {
-        // std::cout << _serverBlocks[i] << std::endl;
         checkIsServer(i);
         while (isServer == true && (int)_serverBlocks[i].size() > 1)
         {
@@ -447,45 +581,74 @@ void    Conf::fill_Directives_Locations()
                 else if (key == "client_max_body_size" && isLocation == false)
                     parsMaxBodySize(value);
                 else if (key == "error_page" && isLocation == false)
-                    parsError_page(value, false);
+                    parsError_page(value);
                 else if (key == "location" && isLocation == false)
                 {
                     isLocation = true;
                     pos = _serverBlocks[i].find('\n', 0);
                     _serverBlocks[i] = _serverBlocks[i].substr(pos+1, _serverBlocks[i].size()-pos - 1);
-                    parsLocation(value, locIndx);
+                    singleServer.loc.path = value;
                 }
                 else if (key == "}")
                 {
                     isLocation = false;
+                    singleServer.servLoc.push_back(singleServer.loc);
+                    singleServer.loc = Location();
                     locIndx++;
                 }
                 else if (isLocation == true)
                 {
                     if (key == "{")
                     {
-                        std::cout << key <<"Error: invalid directive\n";
+                        std::cout << key <<"1Error: invalid directive\n";
                         exit(1);
                     }
-                    parsLocation(value, locIndx);
+                    parsLocation(key, value);
                 }
-
                 else
                 {
-                    std::cout << "Error: invalid directive\n";
+                    std::cout << key << "2Error: invalid directive\n";
                     exit(1);
                 }
                 
             }
             else
             {
-                std::cout << "key =-" << key << "-Error: invalid directive\n";
+                std::cout << "3Error: invalid directive\n";
                 exit(1);
             }
-            
-            // std::cout <<  key << "<-->" << value << std::endl;
-            
         }
+        if (isServer == true)
+        {
+            servers.push_back(singleServer);
+            singleServer = Server();
+            listenDup.clear();
+        }
+    }
+
+    // print the vector of server blocks
+
+    for(int i = 0; i < (int)servers.size(); i++)
+    {
+        std::cout << "-------------------------------------\n";
+        std::cout << servers[i].root << std::endl;
+        std::cout << servers[i].servLoc[i].path << std::endl;
+        std::cout << servers[i].servLoc[i].root << std::endl;
+        std::cout << servers[i].servLoc[i].autoIndex << std::endl;
+        // std::cout << servers[i].servLoc[i].errorPage.begin() << std::endl;
+        std::cout << servers[i].servLoc[i].path << std::endl;
+        std::cout << servers[i].servLoc[i].path << std::endl;
+    }  
+    for (auto el: servers[0].servLoc[0].errorPage)
+    {
+        std::cout << el.first << " " << el.second << std::endl;
+    }
+
+
+
+}
+
+// do a check variable to check if a pass a location block pass the curly bracket
 
 
 
@@ -493,6 +656,20 @@ void    Conf::fill_Directives_Locations()
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*################### some printing stuff ###################*/
 
         // // print listen
         // for (int i = 0; i < (int)listen.size(); i++)
@@ -519,8 +696,13 @@ void    Conf::fill_Directives_Locations()
         //     std::cout << "errorPage = " << it->first << " " << it->second << std::endl;
         // }
         // std::cout << "--------------------------------\n";
-
-    }     
-}
-
-// do a check variable to check if a pass a location block pass the curly bracket
+        // // print location
+        // std::cout << "path = " << servLoc[0].path << std::endl;
+        // std::cout << "root = " << servLoc[0].root << std::endl;
+        // std::cout << "index = " << servLoc[0].index << std::endl;
+        // std::cout << "autoIndex = " << servLoc[0].autoIndex << std::endl;
+        // std::cout << "path = " << servLoc[1].path << std::endl;
+        // std::cout << "root = " << servLoc[1].root << std::endl;
+        // std::cout << "index = " << servLoc[1].index << std::endl;
+        // std::cout << "autoIndex = " << servLoc[1].autoIndex << std::endl;
+        // std::cout << "allowed_methods = " << servLoc[1].methods[0] << " " << servLoc[1].methods[1] << " " << servLoc[1].methods[2] << std::endl;
