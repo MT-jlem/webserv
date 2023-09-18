@@ -71,24 +71,5 @@ void ReadConfig::checkBraces()
 		std::cout << "Error: Braces are not well placed\n";
 		exit(1);
 	}
-	// std::cout << "_serverBlocks.size() = " << _serverBlocks.size() << std::endl;
-
-	// print the vector of server blocks
-
-	// for(int i = 0; i < (int)_serverBlocks.size(); i++) 
-	// {
-	//     std::cout << "-------------------------------------\n";
-	//     for(int j = 0; j < (int)_serverBlocks[i].size(); j++)
-	//     {
-	//         std::cout << _serverBlocks[i][j] << std::endl;
-	//     }\
-
-	// }
-
-	// print the vector of server blocks
 }
 
-void    ReadConfig::parseServerBlocks()
-{
-	
-}

@@ -2,9 +2,9 @@ NAME = webserv
 
 CC = c++
 
-CPPFLAGS = -Wall -Wextra -Werror -fsanitize=address -fno-omit-frame-pointer
+CPPFLAGS = -Wall -Wextra -Werror -std=c++98 -fsanitize=address -fno-omit-frame-pointer
 
-SRC =	main.cpp request.cpp server.cpp response.cpp \
+SRC =	main2.cpp request.cpp server.cpp response.cpp \
 		config/conf.cpp config/read_config.cpp
 
 OBJ = $(SRC:%.cpp=%.o)
@@ -14,7 +14,7 @@ HEADERS =	config/read_config.hpp config/conf.hpp
 all : $(NAME)
 
 $(NAME) : $(OBJ) $(HEADERS)
-	$(CC) $(CPPFLAGS) -DDPATH="/Users/mjlem/Desktop/upload/" $(OBJ) -o $(NAME)
+	$(CC) $(CPPFLAGS) $(OBJ) -o $(NAME)
 
 clean : 
 	-rm -rf $(OBJ)

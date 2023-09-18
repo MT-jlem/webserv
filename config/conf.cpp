@@ -12,18 +12,18 @@ Conf::~Conf()
 {
 }
 
-Location::Location()
-{
-    path = "";
-    root = "";
-    index = "";
-    autoIndex = false;
-    methods[0] = 0;
-    methods[1] = 0;
-    methods[2] = 0;
-    redir = std::make_pair("", "");
-    upload = "";
-}
+// Location::Location()
+// {
+//     path = "";
+//     root = "";
+//     index = "";
+//     autoIndex = false;
+//     methods[0] = 0;
+//     methods[1] = 0;
+//     methods[2] = 0;
+//     redir = std::make_pair("", "");
+//     upload = "";
+// }
 
  
 std::string left(const std::string &s, std::string str)
@@ -125,7 +125,7 @@ void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listen
                 if (std::count(listenDup.begin(), listenDup.end(), listenValue) == 0)
                 {
                     listenDup.push_back(listenValue);
-                    singleServer.listen.push_back(std::make_pair(default_ip, port));
+                    singleServer._listen.push_back(std::make_pair(default_ip, port));
                 }
                 else
                 {
@@ -150,7 +150,7 @@ void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listen
                 if (std::count(listenDup.begin(), listenDup.end(), listenValue) == 0)
                 {
                     listenDup.push_back(listenValue);
-                    singleServer.listen.push_back(std::make_pair(ip, port));
+                    singleServer._listen.push_back(std::make_pair(ip, port));
                 }
                 else
                 {
@@ -277,7 +277,7 @@ void    Conf::parsRootIndex(std::string value, std::string key)
             if (value[value.size()-1] == ';')
             {
                 value = value.substr(0, value.size()-1);
-                singleServer.loc.index = value;
+                singleServer.servLoc.index = value;
                 return;
             }
         }
@@ -286,7 +286,7 @@ void    Conf::parsRootIndex(std::string value, std::string key)
             if (value[value.size()-1] == ';')
             {
                 value = value.substr(0, value.size()-1);
-                singleServer.loc.root = value;
+                singleServer.servLoc.root = value;
                 return;
             }
         }
@@ -359,7 +359,7 @@ void    Conf::parsError_page(std::string value)
     }
     for (int j = 0; isLocation && j < (int)val.size()-1; j++)
     {
-        singleServer.loc.errorPage[val[j]] = val[val.size()-1];
+        singleServer.servLoc.errorPage[val[j]] = val[val.size()-1];
     }
 }
 
@@ -369,9 +369,9 @@ void   Conf::parsAutoindex(std::string value)
     {
         value = value.substr(0, value.size()-1);
         if (value == "on")
-            singleServer.loc.autoIndex = true;
+            singleServer.servLoc.autoIndex = true;
         else if (value == "off")
-            singleServer.loc.autoIndex = false;
+            singleServer.servLoc.autoIndex = false;
         else
         {
             std::cout << "Error: invalid autoindex value\n";
@@ -398,7 +398,7 @@ void    Conf::parsReturn(std::string value)
             value = value.substr(pos, value.size());
             key = trim(key, " \n;");
             value = trim(value, " \n;");
-            singleServer.loc.redir = std::make_pair(key, value);
+            singleServer.servLoc.redir = std::make_pair(key, value);
         }
         else
         {
@@ -430,11 +430,11 @@ void    Conf::parsMethods(std::string value)
                 key = trim(key, " \n;");
                 value = trim(value, " \n;");
                 if (key == "GET")
-                    singleServer.loc.methods[0] = 1;
+                    singleServer.servLoc.methods[0] = 1;
                 else if (key == "POST")
-                    singleServer.loc.methods[1] = 1;
+                    singleServer.servLoc.methods[1] = 1;
                 else if (key == "DELETE")
-                    singleServer.loc.methods[2] = 1;
+                    singleServer.servLoc.methods[2] = 1;
                 else
                 {
                     std::cout << key << " Error: invalid methods value\n";
@@ -466,7 +466,7 @@ void	Conf::parsCgi(std::string value)
             value = value.substr(pos, value.size());
             key = trim(key, " \n;");
             value = trim(value, " \n;");
-            singleServer.loc.cgiPath[key] = value;
+            singleServer.servLoc.cgiPath[key] = value;
         }
         else
         {
@@ -587,13 +587,13 @@ void    Conf::fill_Directives_Locations()
                     isLocation = true;
                     pos = _serverBlocks[i].find('\n', 0);
                     _serverBlocks[i] = _serverBlocks[i].substr(pos+1, _serverBlocks[i].size()-pos - 1);
-                    singleServer.loc.path = value;
+                    singleServer.servLoc.path = value;
                 }
                 else if (key == "}")
                 {
                     isLocation = false;
-                    singleServer.servLoc.push_back(singleServer.loc);
-                    singleServer.loc = Location();
+                    singleServer.loc.push_back(singleServer.servLoc);
+                    singleServer.servLoc = Location();
                     locIndx++;
                 }
                 else if (isLocation == true)
@@ -632,17 +632,17 @@ void    Conf::fill_Directives_Locations()
     {
         std::cout << "-------------------------------------\n";
         std::cout << servers[i].root << std::endl;
-        std::cout << servers[i].servLoc[i].path << std::endl;
-        std::cout << servers[i].servLoc[i].root << std::endl;
-        std::cout << servers[i].servLoc[i].autoIndex << std::endl;
-        // std::cout << servers[i].servLoc[i].errorPage.begin() << std::endl;
-        std::cout << servers[i].servLoc[i].path << std::endl;
-        std::cout << servers[i].servLoc[i].path << std::endl;
+        std::cout << servers[i].loc[i].path << std::endl;
+        std::cout << servers[i].loc[i].root << std::endl;
+        std::cout << servers[i].loc[i].autoIndex << std::endl;
+        // std::cout << servers[i].loc[i].errorPage.begin() << std::endl;
+        std::cout << servers[i].loc[i].path << std::endl;
+        std::cout << servers[i].loc[i].path << std::endl;
     }  
-    for (auto el: servers[0].servLoc[0].errorPage)
-    {
-        std::cout << el.first << " " << el.second << std::endl;
-    }
+    // for (auto el: servers[0].loc[0].errorPage)
+    // {
+    //     std::cout << el.first << " " << el.second << std::endl;
+    // }
 
 
 
@@ -697,12 +697,12 @@ void    Conf::fill_Directives_Locations()
         // }
         // std::cout << "--------------------------------\n";
         // // print location
-        // std::cout << "path = " << servLoc[0].path << std::endl;
-        // std::cout << "root = " << servLoc[0].root << std::endl;
-        // std::cout << "index = " << servLoc[0].index << std::endl;
-        // std::cout << "autoIndex = " << servLoc[0].autoIndex << std::endl;
-        // std::cout << "path = " << servLoc[1].path << std::endl;
-        // std::cout << "root = " << servLoc[1].root << std::endl;
-        // std::cout << "index = " << servLoc[1].index << std::endl;
-        // std::cout << "autoIndex = " << servLoc[1].autoIndex << std::endl;
-        // std::cout << "allowed_methods = " << servLoc[1].methods[0] << " " << servLoc[1].methods[1] << " " << servLoc[1].methods[2] << std::endl;
+        // std::cout << "path = " << loc[0].path << std::endl;
+        // std::cout << "root = " << loc[0].root << std::endl;
+        // std::cout << "index = " << loc[0].index << std::endl;
+        // std::cout << "autoIndex = " << loc[0].autoIndex << std::endl;
+        // std::cout << "path = " << loc[1].path << std::endl;
+        // std::cout << "root = " << loc[1].root << std::endl;
+        // std::cout << "index = " << loc[1].index << std::endl;
+        // std::cout << "autoIndex = " << loc[1].autoIndex << std::endl;
+        // std::cout << "allowed_methods = " << loc[1].methods[0] << " " << loc[1].methods[1] << " " << loc[1].methods[2] << std::endl;

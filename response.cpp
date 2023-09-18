@@ -24,6 +24,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <utility>
+#include "config/conf.hpp"
 extern std::string err;
 extern std::map<std::string, std::string> statusCodes;
 
@@ -198,7 +199,7 @@ void Response::postM(Server &serv, request &req){
 		}	else{
 			data.push_back(tmpData);
 		}
-		if (serv.loc[locIndex].cgi && (ext == ".py" || ext == ".php")){
+		if (!serv.loc[locIndex].cgiPath.empty() && (ext == ".py" || ext == ".php")){
 			body = execCgi(serv, req);
 			file = ".html";
 			res += "200";
@@ -446,7 +447,7 @@ std::string Response:: getBody(const std::string &path, Server &serv, request &r
 		err = "403";
 		return "";
 	}
-	if (serv.loc[locIndex].cgi && (ext == ".py" || ext == ".php")){
+	if (!serv.loc[locIndex].cgiPath.empty() && (ext == ".py" || ext == ".php")){
 		buff = execCgi(serv, req);
 		file = ".html";
 	}else {

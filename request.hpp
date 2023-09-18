@@ -5,6 +5,7 @@
 #include <map>
 #include <map>
 #include "server.hpp"
+#include "config/conf.hpp"
 class request
 {
 private:

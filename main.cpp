@@ -11,10 +11,12 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <vector>
 #include "request.hpp"
 #include "response.hpp"
 #include "server.hpp"
 #include "request.hpp"
+#include "config/conf.hpp"
 void initializeEncode();
 //  ❌❌❌❌❌ check for "connection" and "Host" headers in a req
 std::string err = "";
@@ -93,7 +95,7 @@ void initializeServ(Server &serv){
 	serv.loc[0].methods[POST] = 1;
 	serv.loc[0].methods[DELETE] = 1;
 	serv.loc[0].upload = "/Users/mjlem/Desktop/upload/";
-	serv.loc[0].cgi = true;
+	// serv.loc[0].cgi = true;
 	serv.loc[0].cgiPath[".py"] = "/usr/bin/python";
 	serv.loc[0].cgiPath[".php"] = "/usr/bin/php";
 	// serv.loc[0].redir.first = "301";
@@ -125,6 +127,7 @@ int main(){
 	statusCodesInitialize();
 	initializeEncode();
 	Server serv;
+
 	initializeServ(serv);
 	struct addrinfo *res, hints;
 

@@ -1,6 +1,8 @@
+#include <poll.h>
 #include <climits>
 #include <fcntl.h>
 #include <iostream>
+#include <sys/poll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -11,6 +13,7 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <vector>
 #include "request.hpp"
 #include "response.hpp"
 #include "server.hpp"
@@ -20,6 +23,7 @@
 
 std::string err = "";
 std::map<std::string, std::string> statusCodes;
+void initializeEncode();
 
 void statusCodesInitialize(){
 	statusCodes["200"] = " OK\r\n";
@@ -60,10 +64,6 @@ void statusCodesInitialize(){
 	statusCodes["505"] = " HTTP Version Not Supported\r\n";
 }
 
-void initializeServ(Server &serv){
-	// if root doesn't have "/" in the end add "/
-}
-
 //❌❌❌❌❌❌❌ close all the fds
 
 // void handler(int){
@@ -73,5 +73,22 @@ void initializeServ(Server &serv){
 // }
 
 int main(int ac, char *av[]){
-    
+
+	Conf config(ac, av[1]);
+	std::vector<pollfd> fds;
+	config.readingFile();
+	config.checkBraces();
+	config.fill_Directives_Locations();
+
+	for (int i = 0; i < config.servers.size(); ++i){
+		config.servers[i].createServer();
+		fds.insert(fds.end(), config.servers[i].fds.begin(), config.servers[i].fds.begin());
+	}
+	statusCodesInitialize();
+	initializeEncode();
+	int rv;
+	while (1) {
+		// rv = poll()
+	}
+
 }

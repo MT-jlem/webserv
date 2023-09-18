@@ -13,6 +13,7 @@
 #include <vector>
 // #include <utility
 #include "read_config.hpp"
+#include "../server.hpp"
 
 
 
@@ -46,47 +47,47 @@
 //     	~ServerLocation(){};
 // };
 
-class Location {
-private:
-public:
-	std::string path;
-	std::string root;
-	std::string index;
-	bool autoIndex;
-	int methods[3]; // GET 0 POST 1 DELETE 2
-	std::pair<std::string, std::string> redir; // return
-	std::map<std::string, std::string> errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
-	std::string upload; //
-	std::map<std::string, std::string> cgiPath;
-	Location();
-	~Location(){};
+// class Location {
+// private:
+// public:
+// 	std::string path;
+// 	std::string root;
+// 	std::string index;
+// 	bool autoIndex;
+// 	int methods[3]; // GET 0 POST 1 DELETE 2
+// 	std::pair<std::string, std::string> redir; // return
+// 	std::map<std::string, std::string> errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
+// 	std::string upload; //
+// 	std::map<std::string, std::string> cgiPath;
+// 	Location();
+// 	~Location(){};
 
-};
+// };
 
-class Server{
-private:
-public:
-	std::vector<std::pair<std::string, std::string> > listen;
-	std::string root;
-	std::string index;
-	std::string serverName;
-	size_t		maxBodySize;
-	std::map<std::string, std::string> errorPage;
-	Location loc;
-	std::vector<Location> servLoc;
+// class Server{
+// private:
+// public:
+// 	std::vector<std::pair<std::string, std::string> > listen;
+// 	std::string root;
+// 	std::string index;
+// 	std::string serverName;
+// 	size_t		maxBodySize;
+// 	std::map<std::string, std::string> errorPage;
+// 	Location servLoc;
+// 	std::vector<Location> loc;
 
 
-	// std::string root;
-	// std::string index;
-	// std::set<std::string> serverName;
-	// std::vector<std::pair<std::string, std::string> > listen;
-	// size_t maxBodySize;
-	// std::map<std::string, std::string> errorPage; //maybe a vector
-	// std::vector<Location> loc;
-	//vector  fd;
-	// Server();
-	// ~Server();
-};
+// 	// std::string root;
+// 	// std::string index;
+// 	// std::set<std::string> serverName;
+// 	// std::vector<std::pair<std::string, std::string> > listen;
+// 	// size_t maxBodySize;
+// 	// std::map<std::string, std::string> errorPage; //maybe a vector
+// 	// std::vector<Location> loc;
+// 	//vector  fd;
+// 	// Server();
+// 	// ~Server();
+// };
 
 class Conf : public ReadConfig
 {
@@ -113,6 +114,7 @@ class Conf : public ReadConfig
 		void			parsReturn(std::string value);
 		void			parsMethods(std::string value);
 		void			parsCgi(std::string value);
+		//parse();
 };
 
 #endif

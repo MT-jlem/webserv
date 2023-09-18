@@ -24,7 +24,6 @@ class ReadConfig
 
         void readingFile(); // read the config file and return a string
         void checkBraces(); // check if the braces are well placed
-        void parseServerBlocks(); // parse the string and return a vector of server blocks
 };
 
 
