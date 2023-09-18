@@ -69,44 +69,6 @@ Response::Response(request &req, Server &serv){
 	// std::cout << path << "<< path\n";
 	// std::cout << file << "<< file \n";
 	//❌ check if method is allowed in the location
-	if (err != "")
-		errorRes(serv, req);
-	else if(req.getMethod() == "GET" ){
-		if (serv.loc[locIndex].methods[GET]){
-			if (!serv.loc[locIndex].redir.first.empty())
-				reDirRes(serv, req);
-			else 
-				getM(serv, req);
-		}
-		else{
-			err = "405";
-			errorRes(serv, req);
-		}
-	}
-	else if (req.getMethod() == "POST"){
-		if (serv.loc[locIndex].methods[POST]){
-			if (!serv.loc[locIndex].redir.first.empty())
-				reDirRes(serv, req);
-			else
-				postM(serv, req);
-		}
-		else{
-			err = "405";
-			errorRes(serv, req);
-		}
-	}
-	else{
-		if (serv.loc[locIndex].methods[POST]){
-			if (!serv.loc[locIndex].redir.first.empty())
-				reDirRes(serv, req);
-			else
-				deleteM();
-		}
-		else{
-			err = "405";
-			errorRes(serv, req);
-		}
-	}
 }
 
 Response::~Response(){}
@@ -268,7 +230,47 @@ void Response::deleteM(){
 	res += "\r\n";
 }
 
-// void Response::resBuilder(request &req, Server &serv){}
+void Response::resBuilder(request &req, Server &serv){
+
+	if (err != "")
+		errorRes(serv, req);
+	else if(req.getMethod() == "GET" ){
+		if (serv.loc[locIndex].methods[GET]){
+			if (!serv.loc[locIndex].redir.first.empty())
+				reDirRes(serv, req);
+			else 
+				getM(serv, req);
+		}
+		else{
+			err = "405";
+			errorRes(serv, req);
+		}
+	}
+	else if (req.getMethod() == "POST"){
+		if (serv.loc[locIndex].methods[POST]){
+			if (!serv.loc[locIndex].redir.first.empty())
+				reDirRes(serv, req);
+			else
+				postM(serv, req);
+		}
+		else{
+			err = "405";
+			errorRes(serv, req);
+		}
+	}
+	else{
+		if (serv.loc[locIndex].methods[POST]){
+			if (!serv.loc[locIndex].redir.first.empty())
+				reDirRes(serv, req);
+			else
+				deleteM();
+		}
+		else{
+			err = "405";
+			errorRes(serv, req);
+		}
+	}
+}
 
 // std::string Response::getResLine(request &req, Server &serv){}
 

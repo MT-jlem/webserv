@@ -16,8 +16,7 @@
 #include "server.hpp"
 #include "request.hpp"
 void initializeEncode();
-// ❌❌❌❌❌ use multimap in req headers 
-// check for "connection" and "Host" headers in a req
+//  ❌❌❌❌❌ check for "connection" and "Host" headers in a req
 std::string err = "";
 std::map<std::string, std::string> statusCodes;
 extern std::map<std::string, std::string> encode;
@@ -217,6 +216,7 @@ int main(){
 
 			req.parse(serv);
 			Response resp(req, serv);
+			resp.resBuilder(req, serv);
 
 		std::string buff;
 		buff = resp.res;
