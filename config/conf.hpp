@@ -23,38 +23,7 @@
 
 // #define BUFFER_SIZE 8388608
 
-class Location {
-private:
-public:
-	std::string path;
-	std::string root;
-	std::string index;
-	bool autoIndex;
-	int methods[3];
-	std::pair<std::string, std::string> redir;
-	bool cgi;
-	std::map<std::string, std::string> errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
-	std::string upload;
-	std::map<std::string, std::string> cgiPath;
-	Location(){};
-	~Location(){};
 
-};
-
-// class Server{
-// private:
-// public:
-// 	std::string root;
-// 	std::string index;
-// 	std::set<std::string> serverName;
-// 	std::vector<std::pair<std::string, std::string> > listen;
-// 	size_t maxBodySize;
-// 	std::map<std::string, std::string> errorPage; //maybe a vector
-// 	std::vector<Location> loc;
-// 	//vector  fd;
-// 	Server();
-// 	~Server();
-// };
 
 
 // #define GET 0
@@ -77,6 +46,48 @@ public:
 //     	~ServerLocation(){};
 // };
 
+class Location {
+private:
+public:
+	std::string path;
+	std::string root;
+	std::string index;
+	bool autoIndex;
+	int methods[3]; // GET 0 POST 1 DELETE 2
+	std::pair<std::string, std::string> redir; // return
+	std::map<std::string, std::string> errorPage; // we can use "vector" instead of "set" && and use "int" instead of "string"
+	std::string upload; //
+	std::map<std::string, std::string> cgiPath;
+	Location();
+	~Location(){};
+
+};
+
+class Server{
+private:
+public:
+	std::vector<std::pair<std::string, std::string> > listen;
+	std::string root;
+	std::string index;
+	std::string serverName;
+	size_t		maxBodySize;
+	std::map<std::string, std::string> errorPage;
+	Location loc;
+	std::vector<Location> servLoc;
+
+
+	// std::string root;
+	// std::string index;
+	// std::set<std::string> serverName;
+	// std::vector<std::pair<std::string, std::string> > listen;
+	// size_t maxBodySize;
+	// std::map<std::string, std::string> errorPage; //maybe a vector
+	// std::vector<Location> loc;
+	//vector  fd;
+	// Server();
+	// ~Server();
+};
+
 class Conf : public ReadConfig
 {
     private:
@@ -84,15 +95,8 @@ class Conf : public ReadConfig
 		int listenIndx;
 		std::string default_ip;
     public:
-	    std::vector<std::pair<std::string, std::string> > listen;
-        std::string root;
-	    std::string index;
-	    std::string serverName;
-	    size_t		maxBodySize;
-	    std::map<std::string, std::string> errorPage;
-	    Location loc;
-	    std::vector<Location> servLoc;
-
+		Server singleServer;
+		std::vector<Server> servers;
         Conf(int ac, char *av);
         ~Conf();
         void    		fill_Directives_Locations();
@@ -103,10 +107,12 @@ class Conf : public ReadConfig
 		void			parsMaxBodySize(std::string &str);
 		void    		parsServerName(std::string value);
 		void    		parsRootIndex(std::string value, std::string key);
-		void			parsError_page(std::string value, bool check);
-		void			parsLocation(std::string value, int locIndex);
-
-
+		void			parsError_page(std::string value);
+		void			parsLocation(std::string key, std::string value);
+		void			parsAutoindex(std::string value);
+		void			parsReturn(std::string value);
+		void			parsMethods(std::string value);
+		void			parsCgi(std::string value);
 };
 
 #endif
