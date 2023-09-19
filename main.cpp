@@ -129,9 +129,9 @@ int main(){
 	Server serv;
 
 	initializeServ(serv);
+	signal(SIGINT, handler);
 	struct addrinfo *res, hints;
 
-	signal(SIGINT, handler);
 	std::memset(&hints, 0, sizeof(hints));
 	hints.ai_socktype = SOCK_STREAM;
 	if (getaddrinfo("127.0.0.1", "8080", &hints, &res) != 0){

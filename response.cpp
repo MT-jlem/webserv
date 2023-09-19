@@ -49,12 +49,12 @@ bool checkReDirPath(std::string path){
 
 Response::Response(){}
 Response::Response(request &req, Server &serv){
+	res = "HTTP/1.1 ";
 	if (err != ""){
 		errorRes(serv, req);
 		return;
 	}
 	pos = std::string::npos;
-	res = "HTTP/1.1 ";
 	locIndex = getLocation(req, serv);
 	if (locIndex == -1){
 		std::cout << "LOC not found\n";
@@ -63,8 +63,11 @@ Response::Response(request &req, Server &serv){
 		path = getPath(req, serv);
 		// std::cout << path << "\n";
 		file = getFile(serv);
-		if (file != "")
-			ext = file.substr(file.rfind("."), file.size()); // check for errors 🛑🛑🛑🛑🛑
+		if (file != ""){
+			size_t pos = file.rfind(".");
+			pos = pos != file.npos ? pos : 0;
+			ext = file.substr(pos, file.size()); // check for errors 🛑🛑🛑🛑🛑
+		}
 	}
 	// std::cout << serv.loc[locIndex].path << "<<\n";
 	// std::cout << path << "<< path\n";
@@ -232,15 +235,20 @@ void Response::deleteM(){
 }
 
 void Response::resBuilder(request &req, Server &serv){
-
-	if (err != "")
+	
+	if (err != ""){
+		puts("ach hada");
 		errorRes(serv, req);
+	}
 	else if(req.getMethod() == "GET" ){
 		if (serv.loc[locIndex].methods[GET]){
 			if (!serv.loc[locIndex].redir.first.empty())
 				reDirRes(serv, req);
 			else 
 				getM(serv, req);
+			if (err != ""){
+					errorRes(serv, req);
+				}
 		}
 		else{
 			err = "405";
@@ -468,6 +476,7 @@ std::string Response:: getBody(const std::string &path, Server &serv, request &r
 void	 Response::errorRes(Server &serv, request &req){
 	// if there's custom error page we should know which location the error occurred
 	body = "";
+	res = "HTTP/1.1 ";
 	std::string path;
 	if (locIndex > 0){
 		if (serv.loc[locIndex].errorPage[err] != "")
@@ -478,7 +487,7 @@ void	 Response::errorRes(Server &serv, request &req){
 	if (body == "")
 		body = generateErrHtml();
 	res += err; res += " ";
-	res += statusCodes[err]; res += " \r\n";
+	res += statusCodes[err];
 	res += getHeaders();
 	res += "\r\n";
 	res += body;
@@ -570,6 +579,7 @@ std::string Response::execCgi(Server &serv, request &req){
 		err = "404";
 		close(cgiFile);
 		close(cgiRes);
+		std::cout << "execCgi faild\n";
 		exit(1);
 		return "";
 	}

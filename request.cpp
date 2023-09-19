@@ -39,6 +39,8 @@ void initializeEncode(){
 	encode["%5D"] = "]";
 }
 request::request(const std::string &req){
+	if (err != "")
+		return;
 	rawReq = req;
 }
 
@@ -196,7 +198,8 @@ size_t	request::parseHeaders(size_t start){
 }
 
 void	request::parse(Server &serv){
-
+	if (err != "")
+		return;
 	size_t i = 0, start = 0;
 	std::string	tmp;
 
@@ -230,9 +233,7 @@ void	request::parse(Server &serv){
 		return;
 	if (checkPath())
 		return;
-	std::cout << path << " before \n";
 	urlDecoding();
-	std::cout << path << " after \n";
 	start = parseHeaders(i + 2);
 	if (checkHeaders())
 		return;

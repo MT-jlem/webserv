@@ -25,4 +25,4 @@ fclean : clean
 re : fclean all
 
 b : re clean
-	clear && ./$(NAME)
+	clear && ./$(NAME) .conf

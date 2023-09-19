@@ -587,6 +587,7 @@ void    Conf::fill_Directives_Locations()
                     isLocation = true;
                     pos = _serverBlocks[i].find('\n', 0);
                     _serverBlocks[i] = _serverBlocks[i].substr(pos+1, _serverBlocks[i].size()-pos - 1);
+                    value = trim(value, " ");
                     singleServer.servLoc.path = value;
                 }
                 else if (key == "}")
@@ -628,17 +629,17 @@ void    Conf::fill_Directives_Locations()
 
     // print the vector of server blocks
 
-    for(int i = 0; i < (int)servers.size(); i++)
-    {
-        std::cout << "-------------------------------------\n";
-        std::cout << servers[i].root << std::endl;
-        std::cout << servers[i].loc[i].path << std::endl;
-        std::cout << servers[i].loc[i].root << std::endl;
-        std::cout << servers[i].loc[i].autoIndex << std::endl;
-        // std::cout << servers[i].loc[i].errorPage.begin() << std::endl;
-        std::cout << servers[i].loc[i].path << std::endl;
-        std::cout << servers[i].loc[i].path << std::endl;
-    }  
+    // for(int i = 0; i < (int)servers.size(); i++)
+    // {
+    //     std::cout << "-------------------------------------\n";
+    //     std::cout << servers[i].root << std::endl;
+    //     std::cout << servers[i].loc[i].path << std::endl;
+    //     std::cout << servers[i].loc[i].root << std::endl;
+    //     std::cout << servers[i].loc[i].autoIndex << std::endl;
+    //     // std::cout << servers[i].loc[i].errorPage.begin() << std::endl;
+    //     std::cout << servers[i].loc[i].path << std::endl;
+    //     std::cout << servers[i].loc[i].path << std::endl;
+    // }  
     // for (auto el: servers[0].loc[0].errorPage)
     // {
     //     std::cout << el.first << " " << el.second << std::endl;
