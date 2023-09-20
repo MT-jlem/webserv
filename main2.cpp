@@ -11,6 +11,7 @@
 #include <strings.h>
 #include <sys/_types/_size_t.h>
 #include <sys/_types/_socklen_t.h>
+#include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/poll.h>
 #include <sys/types.h>
@@ -149,7 +150,11 @@ int main(int ac, char *av[]){
 	config.fill_Directives_Locations();
 
 	for (size_t i = 0; i < config.servers.size(); ++i){
-		config.servers[i].createServer();
+		if (config.servers[i].createServer()){
+			for (int j = i; j >= 0; --j)
+				config.servers[j].closeFd();
+			return -1;
+		}
 		fds.insert(fds.end(), config.servers[i].fds.begin(), config.servers[i].fds.end());
 		servers.insert(servers.end(), config.servers[i].fd.begin(), config.servers[i].fd.end());
 	}
@@ -158,7 +163,9 @@ int main(int ac, char *av[]){
 	initializeEncode();
 	int rv;
 	while (1) {
-		rv = poll(fds.data(), fds.size(), 100000);
+		// std::cout << "start polling\n";
+		rv = poll(fds.data(), fds.size(), -1);
+		// std::cout << "finish polling\n";
 		if (rv < 0){
 			std::cerr << "poll() failed\n";
 			exit(1);
@@ -172,6 +179,7 @@ int main(int ac, char *av[]){
 						cfd = accept(fds[i].fd, NULL, NULL);
 						if (cfd < 0){
 							std::cout << "accept() failed\n";
+							std::strerror(errno);
 							exit(1);
 						}
 						fcntl(cfd, F_SETFL, O_NONBLOCK);
@@ -182,8 +190,7 @@ int main(int ac, char *av[]){
 						clients.insert(std::make_pair(fds[i].fd, Client()));
 						clients[cfd].servIndex = find_server(config.servers, fds[i].fd);
 					} 
-					else 
-					{
+					else {
 						char buff[BUFFER_SIZE];
 						bzero(&buff, BUFFER_SIZE);
 						Client &client = clients[fds[i].fd];
@@ -191,15 +198,18 @@ int main(int ac, char *av[]){
 						long long recv = read(fds[i].fd, buff, BUFFER_SIZE);
 						if (recv == -1){
 								err = "500";
-								/* remove */ std::cout << "error\n";
+								std::cout << "read error\n";
+								std::strerror(errno);
 								exit(1);
 						}
 						else if (recv == 0){
+							std::cout << "read hanging\n";
 							clients.erase(fds[i].fd);
 							close(fds[i].fd);
 							fds.erase(fds.begin() + i);
 							continue;
 						}
+						// std::cout << buff << "-----------------------------------\n";
 						client.req.append(buff, recv);
 						client.read	+= recv;
 						if (client.firstTime)
@@ -217,11 +227,13 @@ int main(int ac, char *av[]){
 					// std::cout << ref.req << '\n';
 					Response res(req, config.servers[ref.servIndex]);
 					res.resBuilder(req,config.servers[ref.servIndex]);
-					// std::cout << "------------------------------------\n";
-					// std::cout << res.res << '\n';
 					long long rt = write(fds[i].fd, res.res.c_str(), res.res.size());
 					if (rt < 0){
 						std::cerr << "write \n";
+						exit(1);
+					}
+					if (rt == 0){
+						std::cout << "connection closed\n";
 						exit(1);
 					}
 					clients.erase(fds[i].fd);

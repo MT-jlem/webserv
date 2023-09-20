@@ -88,7 +88,8 @@ public:
     std::vector<int>    fd;
 	Server();
 	~Server();
-    void createServer();
+    int createServer();
+	void closeFd();
 };
 
 

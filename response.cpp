@@ -238,7 +238,6 @@ void Response::deleteM(){
 void Response::resBuilder(request &req, Server &serv){
 	
 	if (err != ""){
-		puts("ach hada");
 		errorRes(serv, req);
 	}
 	else if(req.getMethod() == "GET" ){

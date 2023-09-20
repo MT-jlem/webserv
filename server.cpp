@@ -3,11 +3,13 @@
 #include <cstring>
 #include <iostream>
 #include <netdb.h>
+#include <sys/errno.h>
 #include <sys/poll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <system_error>
+#include <unistd.h>
 
 Location::Location()
 {
@@ -31,38 +33,46 @@ Server::Server(){
 
 Server::~Server(){}
 
-void    Server::createServer(){
+int    Server::createServer(){
     hints.ai_socktype = SOCK_STREAM;
     for (size_t i = 0; i < _listen.size(); ++i){
         int rv = getaddrinfo(_listen[i].first.c_str(), _listen[i].second.c_str(), &hints, &servInfo);
         std::cout << "go to http://" << _listen[i].first.c_str() << ":" << _listen[i].second.c_str() << '\n';
         if (rv){
             std::cerr << gai_strerror(rv) << '\n';
-            exit(1); // close prev fd
+            return -1; // close prev fd
         }
         int sock;
         sock = socket(servInfo->ai_family, servInfo->ai_socktype, servInfo->ai_protocol);
         if (sock < 0){
             std::cerr << "socket() failed\n";
-            exit(1); // close prev fd
+            std::strerror(errno);
+            return -1; // close prev fd
         }
         int ov = 1;
         if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &ov, sizeof(int))){
+            std::strerror(errno);
             std::cerr << "setsockopt() failed\n";
-            exit(1); // close prev fd
+            close(sock);
+            return -1; // close prev fd
         }
         if (bind(sock, servInfo->ai_addr, servInfo->ai_addrlen) == -1){
             std::cerr << "bind() failed\n";
-            perror("bind:");
-            exit(1);
+            std::strerror(errno);
+            close(sock);
+            return -1;
         }
         if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1){
+            std::strerror(errno);
             std::cerr << "fcntl() failed\n";
-            exit(1);
+            close(sock);
+            return -1;
         }
         if (listen(sock, SOMAXCONN)){
+            std::strerror(errno);
             std::cerr << "listen() failed\n";
-            exit(1);
+            close(sock);
+            return -1;
         }
 
         fd.push_back(sock);
@@ -71,5 +81,12 @@ void    Server::createServer(){
         tmp.events = POLLIN;
         fds.push_back(tmp);
         freeaddrinfo(servInfo);
+    }
+    return 0;
+}
+
+void Server::closeFd(){
+    for (size_t i = 0; i < fd.size(); ++i){
+        close(fd[i]);
     }
 }
