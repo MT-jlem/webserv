@@ -502,13 +502,13 @@ void    Conf::parsLocation(std::string key, std::string value)
 void    Conf::fill_Directives_Locations()
 {
     std::string serv;
-    std::string serv_push;
 
     for (int i = 0; i < (int)_serverBlocks.size(); i++)
     {
+        std::string serv_push;
         _serverBlocks[i] = trim(_serverBlocks[i], " \n");
         int indx = 0;
-        while (indx < (int)_serverBlocks[i].size())
+        while (indx <= (int)_serverBlocks[i].size())
         {
             if (_serverBlocks[i][indx] == '#')
             {
@@ -525,9 +525,7 @@ void    Conf::fill_Directives_Locations()
                 serv += _serverBlocks[i][indx];
                 serv += '\n';
                 serv = trim(serv, " ");
-                serv_push += serv;
-                serv = "";
-
+                
             }
             else if (_serverBlocks[i][indx] == '\n')
             {
@@ -538,15 +536,26 @@ void    Conf::fill_Directives_Locations()
             else
                 serv += _serverBlocks[i][indx];
 
+            serv_push += serv;
+            serv = ""; 
             indx++;
         }
         _serverBlocks[i] = serv_push;
+        // std::cout << "==*==*==*==*==*==*==*==*==*==*==*==*==*==*==*==\n";
+        // std::cout << serv_push << std::endl;
+
     }
     int locIndx = 0;
+
+    
     std::vector<std::string> listenDup;
+
     for (int i = 0; i < (int)_serverBlocks.size(); i++)
     {
+        // std::cout << _serverBlocks[i] << std::endl;
+        // std::cout << "==*==*==*==*==*==*==*==*==*==*==*==*==*==*==*==\n";
         checkIsServer(i);
+
         while (isServer == true && (int)_serverBlocks[i].size() > 1)
         {
             std::string key;
@@ -587,6 +596,7 @@ void    Conf::fill_Directives_Locations()
                     isLocation = true;
                     pos = _serverBlocks[i].find('\n', 0);
                     _serverBlocks[i] = _serverBlocks[i].substr(pos+1, _serverBlocks[i].size()-pos - 1);
+                    value = trim(value, " ");
                     singleServer.servLoc.path = value;
                 }
                 else if (key == "}")
@@ -607,7 +617,8 @@ void    Conf::fill_Directives_Locations()
                 }
                 else
                 {
-                    std::cout << key << "2Error: invalid directive\n";
+                        std::cout << "=-=-=-=" << _serverBlocks.size() << std::endl;
+                    std::cout << key << "-2Error : invalid directive\n";
                     exit(1);
                 }
                 
@@ -626,83 +637,41 @@ void    Conf::fill_Directives_Locations()
         }
     }
 
-    // print the vector of server blocks
+    // // print the vector of server blocks
 
+    std::cout << servers.size() << std::endl;
     for(int i = 0; i < (int)servers.size(); i++)
     {
-        std::cout << "-------------------------------------\n";
-        std::cout << servers[i].root << std::endl;
-        std::cout << servers[i].loc[i].path << std::endl;
-        std::cout << servers[i].loc[i].root << std::endl;
-        std::cout << servers[i].loc[i].autoIndex << std::endl;
-        // std::cout << servers[i].loc[i].errorPage.begin() << std::endl;
-        std::cout << servers[i].loc[i].path << std::endl;
-        std::cout << servers[i].loc[i].path << std::endl;
-    }  
-    // for (auto el: servers[0].loc[0].errorPage)
-    // {
-    //     std::cout << el.first << " " << el.second << std::endl;
-    // }
+        std::cout << "--------********server = "<< i << "***********-----------\n";
+        for (int j = 0; j < (int)servers[i]._listen.size(); j++)
+        {
+            std::cout << "listen = " << servers[i]._listen[j].first << ":" << servers[i]._listen[j].second << std::endl;
+        }
+        std::cout << "root = " << servers[i].root << std::endl;
+        std::cout << "index = " << servers[i].index << std::endl;
+        std::cout << "serverName = " << servers[i].serverName << std::endl;
+        std::cout << "maxBodySize = " << servers[i].maxBodySize << std::endl;
+        std::cout << "----------location--------------\n";
+        for (int j = 0; j < (int)servers[i].loc.size(); j++)
+        {
+            std::cout << "path = " << servers[i].loc[j].path << "|" << std::endl;
+            std::cout << "root = " << servers[i].loc[j].root << "|" << std::endl;
+            std::cout << "index = " << servers[i].loc[j].index << "|" << std::endl;
+            std::cout << "autoIndex = " << servers[i].loc[j].autoIndex << "|" << std::endl;
+            std::cout << "allowed_methods = " << servers[i].loc[j].methods[0] << " " << servers[i].loc[j].methods[1] << " " << servers[i].loc[j].methods[2] << std::endl;
+            std::cout << "return = " << servers[i].loc[j].redir.first << " " << servers[i].loc[j].redir.second << std::endl;
+            for (auto el: servers[i].loc[j].errorPage)
+            {
+                std::cout << "errorPage = " << el.first << " " << el.second << std::endl;
+            }
+            for (auto el: servers[i].loc[j].cgiPath)
+            {
+                std::cout << "cgiPath = " << el.first << " " << el.second << std::endl;
+            }
+            std::cout << "-------------location-------------------\n";
+        }
 
-
-
+    }
 }
 
 // do a check variable to check if a pass a location block pass the curly bracket
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*################### some printing stuff ###################*/
-
-        // // print listen
-        // for (int i = 0; i < (int)listen.size(); i++)
-        // {
-        //     std::cout << "listen = " << listen[i].first << ":" << listen[i].second << std::endl;
-        // }
-        // std::cout << "--------------------------------\n";
-        // // print serverName
-        // std::cout << "serverName = " << serverName << std::endl;
-        // std::cout << "--------------------------------\n";
-        // // print root
-        // std::cout << "root = " << root << std::endl;
-        // std::cout << "--------------------------------\n";
-        // // print index
-        // std::cout << "index = " << index << std::endl;
-        // std::cout << "--------------------------------\n";
-        // // print maxBodySize
-        // std::cout << "maxBodySize = " << maxBodySize << std::endl;
-        // std::cout << "--------------------------------\n";
-        // // print errorPage
-        // std::map<std::string, std::string>::iterator it;
-        // for (it = errorPage.begin(); it != errorPage.end(); it++)
-        // {
-        //     std::cout << "errorPage = " << it->first << " " << it->second << std::endl;
-        // }
-        // std::cout << "--------------------------------\n";
-        // // print location
-        // std::cout << "path = " << loc[0].path << std::endl;
-        // std::cout << "root = " << loc[0].root << std::endl;
-        // std::cout << "index = " << loc[0].index << std::endl;
-        // std::cout << "autoIndex = " << loc[0].autoIndex << std::endl;
-        // std::cout << "path = " << loc[1].path << std::endl;
-        // std::cout << "root = " << loc[1].root << std::endl;
-        // std::cout << "index = " << loc[1].index << std::endl;
-        // std::cout << "autoIndex = " << loc[1].autoIndex << std::endl;
-        // std::cout << "allowed_methods = " << loc[1].methods[0] << " " << loc[1].methods[1] << " " << loc[1].methods[2] << std::endl;

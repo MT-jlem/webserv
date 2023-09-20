@@ -31,6 +31,8 @@ void ReadConfig::readingFile()
 		std::cout << "Wrong arg number\n";
 		exit (1);
 	}
+	// std::string::iterator it = _configFile.begin();
+	// std::cout << _configFile << std::endl;
 }
 
 void ReadConfig::checkBraces()
@@ -39,6 +41,7 @@ void ReadConfig::checkBraces()
 	int j = 0;
 	bool isBraces = false;
 	int vindx = 0;
+	// std::cout << _configFile.size() << std::endl;
 	for (int i = 0; i < (int)_configFile.size(); i++) 
 	{
 		char c = _configFile[i];
@@ -60,8 +63,11 @@ void ReadConfig::checkBraces()
 		{
 			isBraces = false;
 			// _configFile = _configFile + "}";
+			i++;
 			_serverBlocks.push_back(_configFile.substr(j, i));
-			_serverBlocks[vindx].append("}");
+			// _serverBlocks[vindx].append("}");
+			// std::cout << _serverBlocks[vindx] << std::endl;
+			// std::cout << "-------------************----------\n"; // wa7ed l '}' makatzadch f lprint lhih
 			vindx++;
 			j = i+1;
 		}
@@ -72,4 +78,3 @@ void ReadConfig::checkBraces()
 		exit(1);
 	}
 }
-
