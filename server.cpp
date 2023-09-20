@@ -41,31 +41,29 @@ void    Server::createServer(){
             exit(1); // close prev fd
         }
         int sock;
-
-
-            sock = socket(servInfo->ai_family, servInfo->ai_socktype, servInfo->ai_protocol);
-            if (sock < 0){
+        sock = socket(servInfo->ai_family, servInfo->ai_socktype, servInfo->ai_protocol);
+        if (sock < 0){
             std::cerr << "socket() failed\n";
             exit(1); // close prev fd
-            }
-            int ov = 1;
-            if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &ov, sizeof(int))){
-                std::cerr << "setsockopt() failed\n";
-                exit(1); // close prev fd
-            }
-            if (bind(sock, servInfo->ai_addr, servInfo->ai_addrlen) == -1){
-                std::cerr << "bind() failed\n";
-                perror("bind:");
-                exit(1);
-            }
-            if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1){
-                std::cerr << "fcntl() failed\n";
-                exit(1);
-            }
-            if (listen(sock, SOMAXCONN)){
-                std::cerr << "listen() failed\n";
-                exit(1);
-            }
+        }
+        int ov = 1;
+        if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &ov, sizeof(int))){
+            std::cerr << "setsockopt() failed\n";
+            exit(1); // close prev fd
+        }
+        if (bind(sock, servInfo->ai_addr, servInfo->ai_addrlen) == -1){
+            std::cerr << "bind() failed\n";
+            perror("bind:");
+            exit(1);
+        }
+        if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1){
+            std::cerr << "fcntl() failed\n";
+            exit(1);
+        }
+        if (listen(sock, SOMAXCONN)){
+            std::cerr << "listen() failed\n";
+            exit(1);
+        }
 
         fd.push_back(sock);
         pollfd tmp;

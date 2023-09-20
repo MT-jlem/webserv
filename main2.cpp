@@ -32,6 +32,8 @@
 #include "config/read_config.hpp"
 #include "config/conf.hpp"
 
+//host connection chunked in res 
+
 class Client {
 	public:
 		int fd;
@@ -156,7 +158,7 @@ int main(int ac, char *av[]){
 	initializeEncode();
 	int rv;
 	while (1) {
-		rv = poll(fds.data(), fds.size(), -1);
+		rv = poll(fds.data(), fds.size(), 100000);
 		if (rv < 0){
 			std::cerr << "poll() failed\n";
 			exit(1);
@@ -167,9 +169,6 @@ int main(int ac, char *av[]){
 					std::vector<int>::iterator it = std::find(servers.begin(), servers.end(), fds[i].fd);
 					if (it != servers.end()){
 						int cfd;
-						// struct sockaddr client_info;
-						// socklen_t len;
-						// cfd = accept(fds[i].fd, &client_info, &len);
 						cfd = accept(fds[i].fd, NULL, NULL);
 						if (cfd < 0){
 							std::cout << "accept() failed\n";
@@ -225,9 +224,10 @@ int main(int ac, char *av[]){
 						std::cerr << "write \n";
 						exit(1);
 					}
-					ref.clear();
+					clients.erase(fds[i].fd);
+					close(fds[i].fd);
+					fds.erase(fds.begin() + i);
 					err = "";
-					fds[i].events = POLLIN;
 				}
 			}
 		}

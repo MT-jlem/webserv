@@ -149,31 +149,13 @@ void	request::parseBody(){
 			return;
 		header = it->second;
 	std::cout << "===============================error ==============\n";
-		if (header.find("chunked") == std::string::npos){
-			// size_t bodyStart = 0;
-			// while (true)
-			// {				
-			// 	size_t headerStart = body.find(boundary , bodyStart) + boundary.size();
-			// 	size_t fileStart = body.find("\r\n\r\n", bodyStart) + 4;
-			// 	tmp = body.substr(headerStart, fileStart - headerStart);
-			// 	size_t filenameStart = tmp.find("filename") + 10;
-			// 	std::string filename = tmp.substr(filenameStart, tmp.find("\"", filenameStart) - filenameStart);
-			// 	std::ofstream file (filename);
-			// 	size_t fileSize = body.find(boundary, fileStart);
-			// 	if (body[fileSize + boundary.size()] == '-'){
-			// 		file << body.substr(fileStart, fileSize - fileStart - 4);
-			// 		break;
-			// 	}
-			// 	file << body.substr(fileStart, fileSize - fileStart - 4);
-			// 	bodyStart = fileSize;
-			// }
+		if (header.find("chunked") != std::string::npos){
+			
 		}
 		else{
 			//remove the hex;
 		}
 	}
-	// std::cout << "--------------------------------------------- BODY START\n";
-	// std::cout << body << "\n--------------------------------------------- BODY END\n";
 }
 
 size_t	request::parseHeaders(size_t start){

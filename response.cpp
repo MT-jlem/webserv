@@ -87,6 +87,7 @@ void Response::reDirRes(Server &serv, request &req){
 		res += statusCodes[tmp.first];
 		res += getDate();
 		res += "Server: webServ(liban lik)\r\n";
+		res += "Connection: close\r\n";
 		res += "Content-Length: 0\r\n";
 		res += "Location: "; res += tmp.second; res += "\r\n";
 		res += "\r\n";
@@ -423,6 +424,7 @@ std::string Response::getHeaders(){
 	std::string str;
 	str += getDate();
 	str += "Server: webServ(liban lik)\r\n";
+	str += "Connection: close\r\n";
 	str += getContentLength();
 	str += "Content-Type: ";
 	if (err != "")
@@ -622,7 +624,7 @@ std::string Response::execCgi(Server &serv, request &req){
 		
 		}
 		close(fd[0]);
-		std::cout << str << '\n';
+		// std::cout << str << '\n';
 	}
 	close(cgiFile);
 	close(cgiRes);
