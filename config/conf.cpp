@@ -175,27 +175,18 @@ void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listen
 
 bool checkMaxBodySize(std::string &str)
 {
-    bool check = true;
-    int count = 0;
-    if (str[str.size()-2] != 'M' && str[str.size()-2] != 'K')
+    bool checkRet = true;
+    if (str[str.size()-2] == 'm' || str[str.size()-2] == 'k' || isdigit(str[str.size()-2]))
     {
-        count++;
-        check = false;
-    }
-    for (int i = 0; i < (int)str.size() -1; i++)
-    {
-        if ((str[i] >= 'a' && str[i]<='z') || (str[i] >= 'A' && str[i] <= 'Z'))
-            count++;
-        else if (str[i] >= '0' && str[i] <= '9')
-            continue;
-        else
+        for (int i = 0; i < (int)str.size() - 2; i++)
         {
-            check = false;
+            if (!isdigit(str[i]))
+                return false;
         }
-        if (count == 2)
-            check = false;
     }
-    return check;
+    else
+        return false;
+    return checkRet;
 }
 
 
@@ -210,7 +201,7 @@ void    Conf::parsMaxBodySize(std::string &str)
         }
         else
         {
-            std::cout << "Megabytes, M, and Kilobytes, K, are the accepted units \
+            std::cout << "Error: Megabytes, M, and Kilobytes, K, are the accepted units \
 in client_max_body_size.\n";
             exit(1);
         }

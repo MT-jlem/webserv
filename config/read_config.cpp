@@ -39,7 +39,6 @@ void ReadConfig::checkBraces()
 	int j = 0;
 	bool isBraces = false;
 	int vindx = 0;
-	// std::cout << _configFile.size() << std::endl;
 	for (int i = 0; i < (int)_configFile.size(); i++) 
 	{
 		char c = _configFile[i];
