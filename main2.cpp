@@ -79,7 +79,6 @@ int main(int ac, char *av[]){
 	config.readingFile();
 	config.checkBraces();
 	config.fill_Directives_Locations();
-
 	// for (int i = 0; i < config.servers.size(); ++i){
 	// 	config.servers[i].createServer();
 	// 	fds.insert(fds.end(), config.servers[i].fds.begin(), config.servers[i].fds.begin());
