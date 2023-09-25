@@ -631,7 +631,6 @@ void    Conf::fill_Directives_Locations()
                     parsError_page(value);
                 if (key == "location")
                 {
-                    std::cout << checkLocationBrace << std::endl;
                     if (checkLocationBrace == 0)
                     {
                         isLocation = true;
@@ -665,20 +664,14 @@ void    Conf::fill_Directives_Locations()
                 {
                     parsLocation(key, value);
                 }
-                // else
-                // {
-                //     std::cout << "Error: invalid directive\n";
-                //     exit(1);
-                // }
-                
             }
             else
             {
                 std::cout << "3Error: invalid directive\n";
                 exit(1);
             }
-            std::cout << "key = " << key;
-            std::cout << " ----- value = " << value << std::endl;
+            // std::cout << "key = " << key;
+            // std::cout << " ----- value = " << value << std::endl;
         }
 
         // check if all directives of server are filled
@@ -720,41 +713,41 @@ void    Conf::fill_Directives_Locations()
 
 
 
-    // // print the vector of server blocks
+    // print the vector of server blocks
 
-    // std::cout << servers.size() << std::endl;
-    // for(int i = 0; i < (int)servers.size(); i++)
-    // {
-    //     std::cout << "\n--------********server = "<< i << "***********-----------\n\n";
-    //     for (int j = 0; j < (int)servers[i]._listen.size(); j++)
-    //     {
-    //         std::cout << "listen = " << servers[i]._listen[j].first << ":" << servers[i]._listen[j].second << std::endl;
-    //     }
-    //     std::cout << "root = " << servers[i].root << std::endl;
-    //     std::cout << "index = " << servers[i].index << std::endl;
-    //     std::cout << "serverName = " << servers[i].serverName << std::endl;
-    //     std::cout << "maxBodySize = " << servers[i].maxBodySize << std::endl;
-    //     std::cout << "----------location--------------\n";
-    //     for (int j = 0; j < (int)servers[i].loc.size(); j++)
-    //     {
-    //         std::cout << "path = " << servers[i].loc[j].path << "|" << std::endl;
-    //         std::cout << "root = " << servers[i].loc[j].root << "|" << std::endl;
-    //         std::cout << "index = " << servers[i].loc[j].index << "|" << std::endl;
-    //         std::cout << "autoIndex = " << servers[i].loc[j].autoIndex << "|" << std::endl;
-    //         std::cout << "allowed_methods = " << servers[i].loc[j].methods[0] << " " << servers[i].loc[j].methods[1] << " " << servers[i].loc[j].methods[2] << std::endl;
-    //         std::cout << "return = " << servers[i].loc[j].redir.first << " " << servers[i].loc[j].redir.second << std::endl;
-    //         for (auto el: servers[i].loc[j].errorPage)
-    //         {
-    //             std::cout << "errorPage = " << el.first << " " << el.second << std::endl;
-    //         }
-    //         for (auto el: servers[i].loc[j].cgiPath)
-    //         {
-    //             std::cout << "cgiPath = " << el.first << " " << el.second << std::endl;
-    //         }
-    //         std::cout << "-------------location-------------------\n";
-    //     }
+    std::cout << servers.size() << std::endl;
+    for(int i = 0; i < (int)servers.size(); i++)
+    {
+        std::cout << "\n--------********server = "<< i << "***********-----------\n\n";
+        for (int j = 0; j < (int)servers[i]._listen.size(); j++)
+        {
+            std::cout << "listen = " << servers[i]._listen[j].first << ":" << servers[i]._listen[j].second << std::endl;
+        }
+        std::cout << "root = " << servers[i].root << std::endl;
+        std::cout << "index = " << servers[i].index << std::endl;
+        std::cout << "serverName = " << servers[i].serverName << std::endl;
+        std::cout << "maxBodySize = " << servers[i].maxBodySize << std::endl;
+        std::cout << "----------location--------------\n";
+        for (int j = 0; j < (int)servers[i].loc.size(); j++)
+        {
+            std::cout << "path = " << servers[i].loc[j].path << "|" << std::endl;
+            std::cout << "root = " << servers[i].loc[j].root << "|" << std::endl;
+            std::cout << "index = " << servers[i].loc[j].index << "|" << std::endl;
+            std::cout << "autoIndex = " << servers[i].loc[j].autoIndex << "|" << std::endl;
+            std::cout << "allowed_methods = " << servers[i].loc[j].methods[0] << " " << servers[i].loc[j].methods[1] << " " << servers[i].loc[j].methods[2] << std::endl;
+            std::cout << "return = " << servers[i].loc[j].redir.first << " " << servers[i].loc[j].redir.second << std::endl;
+            for (auto el: servers[i].loc[j].errorPage)
+            {
+                std::cout << "errorPage = " << el.first << " " << el.second << std::endl;
+            }
+            for (auto el: servers[i].loc[j].cgiPath)
+            {
+                std::cout << "cgiPath = " << el.first << " " << el.second << std::endl;
+            }
+            std::cout << "-------------location-------------------\n";
+        }
 
-    // }
+    }
 }
 
 // do a check variable to check if a pass a location block pass the curly bracket
