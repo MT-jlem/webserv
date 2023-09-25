@@ -60,6 +60,11 @@ void    Conf::checkIsServer(int servIndex)
     }
     else if (keyWord == "server{")
         isServer = true;
+    else
+    {
+        std::cout << "Error: invalid server block\n";
+        exit(1);
+    }
 }
 
 
@@ -175,16 +180,24 @@ void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listen
 bool checkMaxBodySize(std::string &str)
 {
     bool checkRet = true;
-    if (str[str.size()-2] == 'm' || str[str.size()-2] == 'k' || isdigit(str[str.size()-2]))
+    if (str.find(' ') == std::string::npos)
     {
-        for (int i = 0; i < (int)str.size() - 2; i++)
+        if (str[str.size()-1] == 'm' || str[str.size()-1] == 'k' || isdigit(str[str.size()-1]))
         {
-            if (!isdigit(str[i]))
-                return false;
+            for (int i = 0; i < (int)str.size() - 1; i++)
+            {
+                if (!isdigit(str[i]))
+                    return false;
+            }
         }
-    }
+        else
+            return false;
+     }
     else
-        return false;
+    {
+        std::cout << "Error: server_name accept only one value \n";
+        exit(1);
+    }
     return checkRet;
 }
 
@@ -193,10 +206,14 @@ void    Conf::parsMaxBodySize(std::string &str)
 {
     if (str[str.size()-1] == ';')
     {
+        str = trim(str.substr(0, str.size()-1), " ");
         if (checkMaxBodySize(str) == true)
         {
-            str = str.substr(0, str.size()-1);
             singleServer.maxBodySize = atoi(str.c_str());
+            if (str[str.size()-1] == 'k')
+                singleServer.maxBodySize *= 1000;
+            else if (str[str.size()-1] == 'm')
+                singleServer.maxBodySize *= 1000000;
         }
         else
         {
@@ -376,7 +393,7 @@ void   Conf::parsAutoindex(std::string value)
 {
     if (value[value.size()-1] == ';')
     {
-        value = value.substr(0, value.size()-1);
+        value = trim(value.substr(0, value.size()-1), " ");
         if (value == "on")
             singleServer.servLoc.autoIndex = true;
         else if (value == "off")
@@ -467,7 +484,7 @@ void	Conf::parsCgi(std::string value)
 {
     if (value[value.size()-1] == ';')
     {
-        value = value.substr(0, value.size()-1);
+        value = trim(value.substr(0, value.size()-1), " ");
         int pos = value.find(' ');
         if (pos != -1)
         {
@@ -475,6 +492,11 @@ void	Conf::parsCgi(std::string value)
             value = value.substr(pos, value.size());
             key = trim(key, " \n;");
             value = trim(value, " \n;");
+            if (value.find(" ") != std::string::npos)
+            {
+                std::cout << "Error: invalid cgi_pass value\n";
+                exit(1);
+            }
             singleServer.servLoc.cgiPath[key] = value;
         }
         else
@@ -550,6 +572,7 @@ void    Conf::fill_Directives_Locations()
             indx++;
         }
         _serverBlocks[i] = serv_push;
+        
         // std::cout << "==*==*==*==*==*==*==*==*==*==*==*==*==*==*==*==\n";
         // std::cout << serv_push << std::endl;
 
@@ -601,14 +624,23 @@ void    Conf::fill_Directives_Locations()
                     parsMaxBodySize(value);
                 else if (key == "error_page" && isLocation == false)
                     parsError_page(value);
-                else if (key == "location" && isLocation == false)
+                if (key == "location")
                 {
-                    isLocation = true;
-                    pos = _serverBlocks[i].find('\n', 0);
-                    singleServer.servLoc.path = value;
-                    checkLocationBrace = 2;
+                    std::cout << checkLocationBrace << std::endl;
+                    if (checkLocationBrace == 0)
+                    {
+                        isLocation = true;
+                        pos = _serverBlocks[i].find('\n', 0);
+                        singleServer.servLoc.path = value;
+                        checkLocationBrace = 2;
+                    }
+                    else
+                    {
+                        std::cout << "Error: invalid location block\n";
+                        exit(1);
+                    }
                 }
-                else if (checkLocationBrace == 2 )
+                else if (checkLocationBrace == 2)
                 {
                     if (key != "{")
                     {
@@ -622,11 +654,17 @@ void    Conf::fill_Directives_Locations()
                     isLocation = false;
                     singleServer.loc.push_back(singleServer.servLoc);
                     singleServer.servLoc = Location();
+                    checkLocationBrace--;
                 }
                 else if (checkLocationBrace == 1)
                 {
                     parsLocation(key, value);
                 }
+                // else
+                // {
+                //     std::cout << "Error: invalid directive\n";
+                //     exit(1);
+                // }
                 
             }
             else
@@ -634,8 +672,34 @@ void    Conf::fill_Directives_Locations()
                 std::cout << "3Error: invalid directive\n";
                 exit(1);
             }
-            // std::cout << "key = " << key;
-            // std::cout << " ----- value = " << value << std::endl;
+            std::cout << "key = " << key;
+            std::cout << " ----- value = " << value << std::endl;
+        }
+
+        // check if all directives of server are filled
+        if (singleServer._listen.size() == 0)
+        {
+            std::cout << "Error: listen directive is missing\n";
+            exit(1);
+        }
+        if (singleServer.root.size() == 0)
+        {
+            std::cout << "Error: root directive is missing\n";
+            exit(1);
+        }
+        if (singleServer.index.size() == 0)
+        {
+            std::cout << "Error: index directive is missing\n";
+            exit(1);
+        }
+        if (singleServer.serverName.size() == 0)
+        {
+            std::cout << "Error: server_name directive is missing\n";
+            exit(1);
+        }
+        if (singleServer.maxBodySize == 0)
+        {
+            singleServer.maxBodySize = 1000000;
         }
         if (isServer == true)
         {
@@ -645,41 +709,47 @@ void    Conf::fill_Directives_Locations()
         }
     }
 
-    // print the vector of server blocks
 
-    std::cout << servers.size() << std::endl;
-    for(int i = 0; i < (int)servers.size(); i++)
-    {
-        std::cout << "\n--------********server = "<< i << "***********-----------\n\n";
-        for (int j = 0; j < (int)servers[i]._listen.size(); j++)
-        {
-            std::cout << "listen = " << servers[i]._listen[j].first << ":" << servers[i]._listen[j].second << std::endl;
-        }
-        std::cout << "root = " << servers[i].root << std::endl;
-        std::cout << "index = " << servers[i].index << std::endl;
-        std::cout << "serverName = " << servers[i].serverName << std::endl;
-        std::cout << "maxBodySize = " << servers[i].maxBodySize << std::endl;
-        std::cout << "----------location--------------\n";
-        for (int j = 0; j < (int)servers[i].loc.size(); j++)
-        {
-            std::cout << "path = " << servers[i].loc[j].path << "|" << std::endl;
-            std::cout << "root = " << servers[i].loc[j].root << "|" << std::endl;
-            std::cout << "index = " << servers[i].loc[j].index << "|" << std::endl;
-            std::cout << "autoIndex = " << servers[i].loc[j].autoIndex << "|" << std::endl;
-            std::cout << "allowed_methods = " << servers[i].loc[j].methods[0] << " " << servers[i].loc[j].methods[1] << " " << servers[i].loc[j].methods[2] << std::endl;
-            std::cout << "return = " << servers[i].loc[j].redir.first << " " << servers[i].loc[j].redir.second << std::endl;
-            for (auto el: servers[i].loc[j].errorPage)
-            {
-                std::cout << "errorPage = " << el.first << " " << el.second << std::endl;
-            }
-            for (auto el: servers[i].loc[j].cgiPath)
-            {
-                std::cout << "cgiPath = " << el.first << " " << el.second << std::endl;
-            }
-            std::cout << "-------------location-------------------\n";
-        }
 
-    }
+
+
+
+
+    // // print the vector of server blocks
+
+    // std::cout << servers.size() << std::endl;
+    // for(int i = 0; i < (int)servers.size(); i++)
+    // {
+    //     std::cout << "\n--------********server = "<< i << "***********-----------\n\n";
+    //     for (int j = 0; j < (int)servers[i]._listen.size(); j++)
+    //     {
+    //         std::cout << "listen = " << servers[i]._listen[j].first << ":" << servers[i]._listen[j].second << std::endl;
+    //     }
+    //     std::cout << "root = " << servers[i].root << std::endl;
+    //     std::cout << "index = " << servers[i].index << std::endl;
+    //     std::cout << "serverName = " << servers[i].serverName << std::endl;
+    //     std::cout << "maxBodySize = " << servers[i].maxBodySize << std::endl;
+    //     std::cout << "----------location--------------\n";
+    //     for (int j = 0; j < (int)servers[i].loc.size(); j++)
+    //     {
+    //         std::cout << "path = " << servers[i].loc[j].path << "|" << std::endl;
+    //         std::cout << "root = " << servers[i].loc[j].root << "|" << std::endl;
+    //         std::cout << "index = " << servers[i].loc[j].index << "|" << std::endl;
+    //         std::cout << "autoIndex = " << servers[i].loc[j].autoIndex << "|" << std::endl;
+    //         std::cout << "allowed_methods = " << servers[i].loc[j].methods[0] << " " << servers[i].loc[j].methods[1] << " " << servers[i].loc[j].methods[2] << std::endl;
+    //         std::cout << "return = " << servers[i].loc[j].redir.first << " " << servers[i].loc[j].redir.second << std::endl;
+    //         for (auto el: servers[i].loc[j].errorPage)
+    //         {
+    //             std::cout << "errorPage = " << el.first << " " << el.second << std::endl;
+    //         }
+    //         for (auto el: servers[i].loc[j].cgiPath)
+    //         {
+    //             std::cout << "cgiPath = " << el.first << " " << el.second << std::endl;
+    //         }
+    //         std::cout << "-------------location-------------------\n";
+    //     }
+
+    // }
 }
 
 // do a check variable to check if a pass a location block pass the curly bracket
