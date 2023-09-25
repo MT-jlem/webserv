@@ -207,6 +207,11 @@ void    Conf::parsMaxBodySize(std::string &str)
     if (str[str.size()-1] == ';')
     {
         str = trim(str.substr(0, str.size()-1), " ");
+        if (str.size() == 1)
+        {
+            std::cout << "Error: invalid client_max_body_size value\n";
+            exit(1);
+        }
         if (checkMaxBodySize(str) == true)
         {
             singleServer.maxBodySize = atoi(str.c_str());
@@ -523,8 +528,8 @@ void    Conf::parsLocation(std::string key, std::string value)
         parsCgi(value);
     else
     {
-        // std::cout << "11Error: invalid directive\n";
-        // exit(1);
+        std::cout << "11Error: invalid directive\n";
+        exit(1);
     }
 }
 
