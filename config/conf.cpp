@@ -715,7 +715,7 @@ void    Conf::fill_Directives_Locations()
 
     // print the vector of server blocks
 
-    std::cout << servers.size() << std::endl;
+    // std::cout << servers.size() << std::endl;
     // for(int i = 0; i < (int)servers.size(); i++)
     // {
     //     std::cout << "\n--------********server = "<< i << "***********-----------\n\n";

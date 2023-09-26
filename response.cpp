@@ -28,21 +28,22 @@
 extern std::string err;
 extern std::map<std::string, std::string> statusCodes;
 
-//❌ to-do change error handling and err res
 bool checkReDirPath(std::string path){
-	if (path.size() > 2048)
-		return true; //status code 414
+	if (path.size() > 2048){
+		err = "414";
+		return true;
+	}
 	for (size_t i = 0; path[i]; ++i){
 		if ((path[i] >= 'A' && path[i] <= 'Z') || (path[i] >= 'a' && path[i] <= 'z') ||
 		 (path[i] >= '0' && path[i] <= '9'))
-			continue; //400
+			continue;
 		if (path[i] == '~' || path[i] == '!' || (path[i] >= '#' && path[i] <= '/') ||
 			path[i] == ':' || path[i] == ';' || path[i] == '=' || path[i] == '?' || path[i] == '@')
 			continue;
 		if (path[i] == '[' || path[i] == ']' || path[i] == '_')
 			continue;
 		err = "400";
-		return true; // 400
+		return true;
 	}
 	return false;
 }
@@ -51,21 +52,23 @@ Response::Response(){}
 Response::Response(request &req, Server &serv){
 	res = "HTTP/1.1 ";
 	locIndex = -1;
+	pos = std::string::npos;
+	errorHandled = false;
+
 	if (err != ""){
 		errorRes(serv, req);
 		return;
 	}
-	pos = std::string::npos;
 	locIndex = getLocation(req, serv);
 	if (locIndex == -1){
-		std::cout << "LOC not found\n";
 		err = "404";
+		return;
 	} else {
 		path = getPath(req, serv);
 		file = getFile(serv);
 		if (file != ""){
 			size_t pos = file.rfind(".");
-			pos = pos != file.npos ? pos : 0;
+			pos = pos != file.npos ? pos : file.size() -1;
 			ext = file.substr(pos, file.size());
 		}
 	}
@@ -88,16 +91,15 @@ void Response::reDirRes(Server &serv, request &req){
 		res += "Location: "; res += tmp.second; res += "\r\n";
 		res += "\r\n";
 	}
-
 }
 
 std::string Response::getPath(request &req, Server &serv){
 	std::string root = serv.loc[locIndex].root != "" ? serv.loc[locIndex].root : serv.root;
 	std::string reqPath = req.getPath();
+
+	root = root[root.size() - 1] != '/' ? root + "/" : root;
 	if (pos != std::string::npos)
 		file = reqPath.substr(pos + 1, reqPath.size() - pos + 1);
-	// if (serv.loc[locIndex].errorPage.second.find(err) != serv.loc[locIndex].errorPage.second.end())
-	//check if there a custom error page if not generate the default
 	if (err != "")
 		return "";
 	return  root + file;
@@ -130,8 +132,10 @@ int Response::getLocation(request &req, Server &serv){
 				return i;
 		}
 		pos = str.rfind("/", pos-1);
-		if (pos == std::string::npos)
+		if (pos == std::string::npos){
+			err = "400";
 			return  -1;
+		}
 		str = str.substr(0, pos + 1);
 	}
 	return -1;
@@ -222,7 +226,6 @@ void Response::deleteM(){
 		std::cout << "delete m error \n";
 		err = "500";
 		return;
-		// exit(1);
 	}
 	res += "204 ";
 	res += statusCodes["204"];
@@ -234,6 +237,7 @@ void Response::resBuilder(request &req, Server &serv){
 	
 	if (err != ""){
 		errorRes(serv, req);
+		return;
 	}
 	else if(req.getMethod() == "GET" ){
 		if (serv.loc[locIndex].methods[GET]){
@@ -275,8 +279,6 @@ void Response::resBuilder(request &req, Server &serv){
 		}
 	}
 }
-
-// std::string Response::getResLine(request &req, Server &serv){}
 
 std::string Response::getDate(){
 	std::tm *date;
@@ -471,16 +473,19 @@ std::string Response:: getBody(const std::string &path, Server &serv, request &r
 }
 
 void	 Response::errorRes(Server &serv, request &req){
+	if (errorHandled)
+		return;
 	// if there's custom error page we should know which location the error occurred
 	body = "";
 	res = "HTTP/1.1 ";
 	std::string path;
 	if (locIndex >= 0){
-		if (serv.loc[locIndex].errorPage[err] != "")
+		if (serv.loc[locIndex].errorPage[err] != ""){
 			body = getBody(serv.loc[locIndex].errorPage[err], serv,req);
-		else if (serv.errorPage[err] != "")
-			body = getBody(serv.errorPage[err], serv,req);
+		}
 	}
+	else if (serv.errorPage[err] != "")
+		body = getBody(serv.errorPage[err], serv,req);
 	if (body == "")
 		body = generateErrHtml();
 	res += err;
@@ -489,6 +494,7 @@ void	 Response::errorRes(Server &serv, request &req){
 	res += "\r\n";
 	res += body;
 	res += "\r\n";
+	errorHandled = true;
 }
 
 std::string Response::generateDirHtml(std::string path, request &req){
@@ -576,7 +582,6 @@ std::string Response::execCgi(Server &serv, request &req){
 		std::cout << "execCgi failed\n";
 		err = "500";
 		return "";
-		// exit(1);
 	}
 	if (req.getMethod() == "POST"){
 		write(cgiFile, data[0].c_str(), data[0].size());

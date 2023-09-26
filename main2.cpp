@@ -44,7 +44,12 @@ class Client {
 		std::string req;
 		bool firstTime;
 		int servIndex;
+		bool processing;
+		std::string __response;
+		long long sendLength;
 		Client(){
+			sendLength = 0;
+			processing = false;
 			fd = -1;
 			read = 0;
 			chunked = false;
@@ -52,6 +57,7 @@ class Client {
 			req = "";
 			firstTime = true;
 			servIndex = -1;
+			__response = "";
 		};
 		~Client(){};
 		void clear(){
@@ -145,6 +151,7 @@ int main(int ac, char *av[]){
 		if (config.servers[i].createServer()){
 			for (int j = i; j >= 0; --j)
 				config.servers[j].closeFd();
+			std::cout << "error while creating servers\n";
 			return -1;
 		}
 		fds.insert(fds.end(), config.servers[i].fds.begin(), config.servers[i].fds.end());
@@ -158,7 +165,7 @@ int main(int ac, char *av[]){
 	while (1) {
 		rv = poll(fds.data(), fds.size(), -1);
 		if (rv < 0){
-			std::cerr << "poll() failed\n";
+			std::cout << "poll() failed\n";
 			exit(1);
 		}
 		else if (rv){
@@ -178,7 +185,7 @@ int main(int ac, char *av[]){
 						tmp.fd = cfd;
 						tmp.events = POLLIN;
 						fds.push_back(tmp);
-						clients.insert(std::make_pair(fds[i].fd, Client()));
+						clients.insert(std::make_pair(cfd, Client()));
 						clients[cfd].servIndex = find_server(config.servers, fds[i].fd);
 					} 
 					else {
@@ -209,27 +216,44 @@ int main(int ac, char *av[]){
 						}
 						bzero(buff, recv);
 					}
-				}	
-				else if (fds[i].revents & POLLOUT){
-					Client &ref = clients[fds[i].fd];
-					request req(ref.req);
-					req.parse(config.servers[ref.servIndex]);
-					Response res(req, config.servers[ref.servIndex]);
-					res.resBuilder(req,config.servers[ref.servIndex]);
-					long long rt = write(fds[i].fd, res.res.c_str(), res.res.size());
-					if (rt < 0){
-						std::cerr << "write \n";
-						exit(1);
+				}
+				else if (fds[i].revents & POLLOUT) {
+					if (!clients[fds[i].fd].processing)
+					{
+						std::cout << clients[fds[i].fd].req << '\n';
+						request req(clients[fds[i].fd].req);
+						req.parse(config.servers[clients[fds[i].fd].servIndex]);
+						Response res(req, config.servers[clients[fds[i].fd].servIndex]);
+						res.resBuilder(req, config.servers[clients[fds[i].fd].servIndex]);
+						clients[fds[i].fd].processing = true;
+						clients[fds[i].fd].__response = res.res;
 					}
-					if (rt == 0){
-						std::cout << "connection closed\n";
-						exit(1);
+					int buffWrite = 0;
+					if (clients[fds[i].fd].sendLength < (long)clients[fds[i].fd].__response.length())
+					{
+						// std::cout << "writing the res\n";
+						if ((long)clients[fds[i].fd].__response.length() - clients[fds[i].fd].sendLength < 1024)
+							buffWrite = (long)clients[fds[i].fd].__response.length() - clients[fds[i].fd].sendLength;
+						else
+							buffWrite = 1024;
+						int res = write(fds[i].fd, clients[fds[i].fd].__response.c_str() + clients[fds[i].fd].sendLength, buffWrite);
+						if (res == -1 || res == 0)
+						{
+							std::cout << "write failed\n";
+							close(fds[i].fd);
+							clients.erase(fds[i].fd);
+							fds.erase(fds.begin() + i);
+							break;
+						}
+						clients[fds[i].fd].sendLength += buffWrite;
 					}
-					usleep(2000);
-					clients.erase(fds[i].fd);
-					close(fds[i].fd);
-					fds.erase(fds.begin() + i);
-					err = "";
+					else
+					{
+						err = "";
+						clients.erase(fds[i].fd);
+						close(fds[i].fd);
+						fds.erase(fds.begin() + i);
+					}
 				}
 			}
 		}
