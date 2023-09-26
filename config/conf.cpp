@@ -60,6 +60,11 @@ void    Conf::checkIsServer(int servIndex)
     }
     else if (keyWord == "server{")
         isServer = true;
+    else
+    {
+        std::cout << "Error: invalid server block\n";
+        exit(1);
+    }
 }
 
 
@@ -94,21 +99,20 @@ std::string Conf::parseIp(std::string ip)
 
 bool Conf::listenCharIsValid(const std::string &str)
 {
-    return str.find_first_not_of("0123456789.:;") == std::string::npos;
+    return str.find_first_not_of("0123456789.:") == std::string::npos;
 }
-
 
 void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listenDup)
 {
 	
-    if (listenCharIsValid(listenValue) == false)
-    {
-        std::cout << "Error: invalid listen value\n";
-        exit(1);
-    }
     if (listenValue[listenValue.size()-1] == ';')
     {
-        listenValue = listenValue.substr(0, listenValue.size()-1);
+        listenValue = trim(listenValue.substr(0, listenValue.size()-1), " ");
+        if (listenCharIsValid(listenValue) == false)
+        {
+            std::cout << "Error: invalid listen value\n";
+            exit(1);
+        }
         std::string port;
         std::string ip;
         std::stringstream num;
@@ -175,27 +179,26 @@ void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listen
 
 bool checkMaxBodySize(std::string &str)
 {
-    bool check = true;
-    int count = 0;
-    if (str[str.size()-2] != 'M' && str[str.size()-2] != 'K')
+    bool checkRet = true;
+    if (str.find(' ') == std::string::npos)
     {
-        count++;
-        check = false;
-    }
-    for (int i = 0; i < (int)str.size() -1; i++)
-    {
-        if ((str[i] >= 'a' && str[i]<='z') || (str[i] >= 'A' && str[i] <= 'Z'))
-            count++;
-        else if (str[i] >= '0' && str[i] <= '9')
-            continue;
-        else
+        if (str[str.size()-1] == 'm' || str[str.size()-1] == 'k' || isdigit(str[str.size()-1]))
         {
-            check = false;
+            for (int i = 0; i < (int)str.size() - 1; i++)
+            {
+                if (!isdigit(str[i]))
+                    return false;
+            }
         }
-        if (count == 2)
-            check = false;
+        else
+            return false;
+     }
+    else
+    {
+        std::cout << "Error: server_name accept only one value \n";
+        exit(1);
     }
-    return check;
+    return checkRet;
 }
 
 
@@ -203,14 +206,23 @@ void    Conf::parsMaxBodySize(std::string &str)
 {
     if (str[str.size()-1] == ';')
     {
+        str = trim(str.substr(0, str.size()-1), " ");
+        if (str.size() == 1)
+        {
+            std::cout << "Error: invalid client_max_body_size value\n";
+            exit(1);
+        }
         if (checkMaxBodySize(str) == true)
         {
-            str = str.substr(0, str.size()-1);
             singleServer.maxBodySize = atoi(str.c_str());
+            if (str[str.size()-1] == 'k')
+                singleServer.maxBodySize *= 1000;
+            else if (str[str.size()-1] == 'm')
+                singleServer.maxBodySize *= 1000000;
         }
         else
         {
-            std::cout << "Megabytes, M, and Kilobytes, K, are the accepted units \
+            std::cout << "Error: Megabytes, M, and Kilobytes, K, are the accepted units \
 in client_max_body_size.\n";
             exit(1);
         }
@@ -225,19 +237,15 @@ in client_max_body_size.\n";
 
 void    Conf::parsServerName(std::string value)
 {
-    if (value.find(' ') == std::string::npos)
+    if (value[value.size()-1] == ';')
+        value = trim(value.substr(0, value.size()-1), " ");
+    else
     {
-        if (value[value.size()-1] == ';')
-        {
-            value = value.substr(0, value.size()-1);
-            singleServer.serverName = value;
-        }
-        else
-        {
-            std::cout << "Error: simple directive must end with a semicolon\n";
-            exit(1);
-        }
+        std::cout << "Error: simple directive must end with a semicolon\n";
+        exit(1);
     }
+    if (value.find(' ') == std::string::npos)
+        singleServer.serverName = value;
     else
     {
         std::cout << "Error: server_name accept only one value \n";
@@ -255,8 +263,14 @@ void    Conf::parsRootIndex(std::string value, std::string key)
         {
             if (value[value.size()-1] == ';')
             {
-                value = value.substr(0, value.size()-1);
-                singleServer.index = value;
+                value = trim(value.substr(0, value.size()-1), " ");
+                if (value.find(' ') == std::string::npos)
+                    singleServer.index = value;
+                else
+                {
+                    std::cout << "Error: index accept only one value \n";
+                    exit(1);
+                }
                 return;
             }
         }
@@ -264,8 +278,14 @@ void    Conf::parsRootIndex(std::string value, std::string key)
         {
             if (value[value.size()-1] == ';')
             {
-                value = value.substr(0, value.size()-1);
-                singleServer.root = value;
+                value = trim(value.substr(0, value.size()-1), " ");
+                if (value.find(' ') == std::string::npos)
+                    singleServer.root = value;
+                else
+                {
+                    std::cout << "Error: root accept only one value \n";
+                    exit(1);
+                }
                 return;
             }
         }
@@ -276,8 +296,14 @@ void    Conf::parsRootIndex(std::string value, std::string key)
         {
             if (value[value.size()-1] == ';')
             {
-                value = value.substr(0, value.size()-1);
-                singleServer.servLoc.index = value;
+                value = trim(value.substr(0, value.size()-1), " ");
+                if (value.find(' ') == std::string::npos)
+                    singleServer.servLoc.index = value;
+                else
+                {
+                    std::cout << "Error: index accept only one value \n";
+                    exit(1);
+                }
                 return;
             }
         }
@@ -285,8 +311,14 @@ void    Conf::parsRootIndex(std::string value, std::string key)
         {
             if (value[value.size()-1] == ';')
             {
-                value = value.substr(0, value.size()-1);
-                singleServer.servLoc.root = value;
+                value = trim(value.substr(0, value.size()-1), " ");
+                if (value.find(' ') == std::string::npos)
+                    singleServer.servLoc.root = value;
+                else
+                {
+                    std::cout << "Error: root accept only one value \n";
+                    exit(1);
+                }
                 return;
             }
         }
@@ -297,7 +329,6 @@ void    Conf::parsRootIndex(std::string value, std::string key)
 
 bool    checkErrorPagesCode(const std::string key)
 { 
-    // 100 101 102 200 201 202 203 204 205 206 207 300 301 302 303 304 305 307 308 400 401 402 403 404 405 406 407 408 409 410 411 412 413 414 415 416 417 418 419 420 421 422 423 424 428 429 431 451 500 501 502 503 504 505 507 511
     if (key == "100" || key == "101" || key == "102" || key == "200" || key == "201" || key == "511" \
          || key == "202" || key == "203" || key == "204" || key == "205" || key == "206" \
          || key == "207" || key == "300" || key == "301" || key == "302" || key == "303" \
@@ -367,7 +398,7 @@ void   Conf::parsAutoindex(std::string value)
 {
     if (value[value.size()-1] == ';')
     {
-        value = value.substr(0, value.size()-1);
+        value = trim(value.substr(0, value.size()-1), " ");
         if (value == "on")
             singleServer.servLoc.autoIndex = true;
         else if (value == "off")
@@ -385,7 +416,7 @@ void   Conf::parsAutoindex(std::string value)
     }
 }
 
-
+    
 void    Conf::parsReturn(std::string value)
 {
     if (value[value.size()-1] == ';')
@@ -458,7 +489,7 @@ void	Conf::parsCgi(std::string value)
 {
     if (value[value.size()-1] == ';')
     {
-        value = value.substr(0, value.size()-1);
+        value = trim(value.substr(0, value.size()-1), " ");
         int pos = value.find(' ');
         if (pos != -1)
         {
@@ -466,6 +497,11 @@ void	Conf::parsCgi(std::string value)
             value = value.substr(pos, value.size());
             key = trim(key, " \n;");
             value = trim(value, " \n;");
+            if (value.find(" ") != std::string::npos)
+            {
+                std::cout << "Error: invalid cgi_pass value\n";
+                exit(1);
+            }
             singleServer.servLoc.cgiPath[key] = value;
         }
         else
@@ -502,13 +538,13 @@ void    Conf::parsLocation(std::string key, std::string value)
 void    Conf::fill_Directives_Locations()
 {
     std::string serv;
-    std::string serv_push;
 
     for (int i = 0; i < (int)_serverBlocks.size(); i++)
     {
+        std::string serv_push;
         _serverBlocks[i] = trim(_serverBlocks[i], " \n");
         int indx = 0;
-        while (indx < (int)_serverBlocks[i].size())
+        while (indx <= (int)_serverBlocks[i].size())
         {
             if (_serverBlocks[i][indx] == '#')
             {
@@ -525,9 +561,7 @@ void    Conf::fill_Directives_Locations()
                 serv += _serverBlocks[i][indx];
                 serv += '\n';
                 serv = trim(serv, " ");
-                serv_push += serv;
-                serv = "";
-
+                
             }
             else if (_serverBlocks[i][indx] == '\n')
             {
@@ -538,15 +572,27 @@ void    Conf::fill_Directives_Locations()
             else
                 serv += _serverBlocks[i][indx];
 
+            serv_push += serv;
+            serv = ""; 
             indx++;
         }
         _serverBlocks[i] = serv_push;
+        
+        // std::cout << "==*==*==*==*==*==*==*==*==*==*==*==*==*==*==*==\n";
+        // std::cout << serv_push << std::endl;
+
     }
-    int locIndx = 0;
+    int checkLocationBrace = 0;
+
+    
     std::vector<std::string> listenDup;
+
     for (int i = 0; i < (int)_serverBlocks.size(); i++)
     {
+        // std::cout << _serverBlocks[i] << std::endl;
+        // std::cout << "==*==*==*==*==*==*==*==*==*==*==*==*==*==*==*==\n";
         checkIsServer(i);
+
         while (isServer == true && (int)_serverBlocks[i].size() > 1)
         {
             std::string key;
@@ -565,12 +611,13 @@ void    Conf::fill_Directives_Locations()
                 key = keyWord.substr(0, keyWord.find_first_of(" "));
                 keyWord.replace(0, key.size(), "");
                 value = keyWord.substr(keyWord.find_first_not_of(" "), keyWord.find_first_of(";}"));
+                value = trim(value, " ");
             }
             catch(const std::exception& e)
             {
                 // std::cerr << e.what() << '\n';
             }
-            if (value.size() > 0 || (value != "{" || value != "}"))
+            if (key.size() > 0)
             {
                 if (key == "listen" && isLocation == false)
                     parseListen(value, listenDup);
@@ -582,42 +629,75 @@ void    Conf::fill_Directives_Locations()
                     parsMaxBodySize(value);
                 else if (key == "error_page" && isLocation == false)
                     parsError_page(value);
-                else if (key == "location" && isLocation == false)
+                if (key == "location")
                 {
-                    isLocation = true;
-                    pos = _serverBlocks[i].find('\n', 0);
-                    _serverBlocks[i] = _serverBlocks[i].substr(pos+1, _serverBlocks[i].size()-pos - 1);
-                    value = trim(value, " ");
-                    singleServer.servLoc.path = value;
+                    if (checkLocationBrace == 0)
+                    {
+                        isLocation = true;
+                        pos = _serverBlocks[i].find('\n', 0);
+                        singleServer.servLoc.path = value;
+                        checkLocationBrace = 2;
+                    }
+                    else
+                    {
+                        std::cout << "Error: invalid location block\n";
+                        exit(1);
+                    }
+                }
+                else if (checkLocationBrace == 2)
+                {
+                    if (key != "{")
+                    {
+                        std::cout << "Error: invalid location block\n";
+                        exit(1);
+                    }
+                    checkLocationBrace--;
                 }
                 else if (key == "}")
                 {
                     isLocation = false;
                     singleServer.loc.push_back(singleServer.servLoc);
                     singleServer.servLoc = Location();
-                    locIndx++;
+                    checkLocationBrace--;
                 }
-                else if (isLocation == true)
+                else if (checkLocationBrace == 1)
                 {
-                    if (key == "{")
-                    {
-                        std::cout << key <<"1Error: invalid directive\n";
-                        exit(1);
-                    }
                     parsLocation(key, value);
                 }
-                else
-                {
-                    std::cout << key << "2Error: invalid directive\n";
-                    exit(1);
-                }
-                
             }
             else
             {
                 std::cout << "3Error: invalid directive\n";
                 exit(1);
             }
+            // std::cout << "key = " << key;
+            // std::cout << " ----- value = " << value << std::endl;
+        }
+
+        // check if all directives of server are filled
+        if (singleServer._listen.size() == 0)
+        {
+            std::cout << "Error: listen directive is missing\n";
+            exit(1);
+        }
+        if (singleServer.root.size() == 0)
+        {
+            std::cout << "Error: root directive is missing\n";
+            exit(1);
+        }
+        if (singleServer.index.size() == 0)
+        {
+            std::cout << "Error: index directive is missing\n";
+            exit(1);
+        }
+        if (singleServer.serverName.size() == 0)
+        {
+            std::cout << "Error: server_name directive is missing\n";
+            exit(1);
+        }
+        if (singleServer.maxBodySize == 0)
+        {
+            singleServer.maxBodySize = 1000000;
         }
         if (isServer == true)
         {
@@ -627,83 +707,47 @@ void    Conf::fill_Directives_Locations()
         }
     }
 
+
+
+
+
+
+
     // print the vector of server blocks
 
+    std::cout << servers.size() << std::endl;
     // for(int i = 0; i < (int)servers.size(); i++)
     // {
-    //     std::cout << "-------------------------------------\n";
-    //     std::cout << servers[i].root << std::endl;
-    //     std::cout << servers[i].loc[i].path << std::endl;
-    //     std::cout << servers[i].loc[i].root << std::endl;
-    //     std::cout << servers[i].loc[i].autoIndex << std::endl;
-    //     // std::cout << servers[i].loc[i].errorPage.begin() << std::endl;
-    //     std::cout << servers[i].loc[i].path << std::endl;
-    //     std::cout << servers[i].loc[i].path << std::endl;
-    // }  
-    // for (auto el: servers[0].loc[0].errorPage)
-    // {
-    //     std::cout << el.first << " " << el.second << std::endl;
+    //     std::cout << "\n--------********server = "<< i << "***********-----------\n\n";
+    //     for (int j = 0; j < (int)servers[i]._listen.size(); j++)
+    //     {
+    //         std::cout << "listen = " << servers[i]._listen[j].first << ":" << servers[i]._listen[j].second << std::endl;
+    //     }
+    //     std::cout << "root = " << servers[i].root << std::endl;
+    //     std::cout << "index = " << servers[i].index << std::endl;
+    //     std::cout << "serverName = " << servers[i].serverName << std::endl;
+    //     std::cout << "maxBodySize = " << servers[i].maxBodySize << std::endl;
+    //     std::cout << "----------location--------------\n";
+    //     for (int j = 0; j < (int)servers[i].loc.size(); j++)
+    //     {
+    //         std::cout << "path = " << servers[i].loc[j].path << "|" << std::endl;
+    //         std::cout << "root = " << servers[i].loc[j].root << "|" << std::endl;
+    //         std::cout << "index = " << servers[i].loc[j].index << "|" << std::endl;
+    //         std::cout << "autoIndex = " << servers[i].loc[j].autoIndex << "|" << std::endl;
+    //         std::cout << "allowed_methods = " << servers[i].loc[j].methods[0] << " " << servers[i].loc[j].methods[1] << " " << servers[i].loc[j].methods[2] << std::endl;
+    //         std::cout << "return = " << servers[i].loc[j].redir.first << " " << servers[i].loc[j].redir.second << std::endl;
+    //         for (auto el: servers[i].loc[j].errorPage)
+    //         {
+    //             std::cout << "errorPage = " << el.first << " " << el.second << std::endl;
+    //         }
+    //         for (auto el: servers[i].loc[j].cgiPath)
+    //         {
+    //             std::cout << "cgiPath = " << el.first << " " << el.second << std::endl;
+    //         }
+    //         std::cout << "-------------location-------------------\n";
+    //     }
+
     // }
-
-
-
 }
 
 // do a check variable to check if a pass a location block pass the curly bracket
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*################### some printing stuff ###################*/
-
-        // // print listen
-        // for (int i = 0; i < (int)listen.size(); i++)
-        // {
-        //     std::cout << "listen = " << listen[i].first << ":" << listen[i].second << std::endl;
-        // }
-        // std::cout << "--------------------------------\n";
-        // // print serverName
-        // std::cout << "serverName = " << serverName << std::endl;
-        // std::cout << "--------------------------------\n";
-        // // print root
-        // std::cout << "root = " << root << std::endl;
-        // std::cout << "--------------------------------\n";
-        // // print index
-        // std::cout << "index = " << index << std::endl;
-        // std::cout << "--------------------------------\n";
-        // // print maxBodySize
-        // std::cout << "maxBodySize = " << maxBodySize << std::endl;
-        // std::cout << "--------------------------------\n";
-        // // print errorPage
-        // std::map<std::string, std::string>::iterator it;
-        // for (it = errorPage.begin(); it != errorPage.end(); it++)
-        // {
-        //     std::cout << "errorPage = " << it->first << " " << it->second << std::endl;
-        // }
-        // std::cout << "--------------------------------\n";
-        // // print location
-        // std::cout << "path = " << loc[0].path << std::endl;
-        // std::cout << "root = " << loc[0].root << std::endl;
-        // std::cout << "index = " << loc[0].index << std::endl;
-        // std::cout << "autoIndex = " << loc[0].autoIndex << std::endl;
-        // std::cout << "path = " << loc[1].path << std::endl;
-        // std::cout << "root = " << loc[1].root << std::endl;
-        // std::cout << "index = " << loc[1].index << std::endl;
-        // std::cout << "autoIndex = " << loc[1].autoIndex << std::endl;
-        // std::cout << "allowed_methods = " << loc[1].methods[0] << " " << loc[1].methods[1] << " " << loc[1].methods[2] << std::endl;

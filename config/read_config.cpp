@@ -38,9 +38,15 @@ void ReadConfig::checkBraces()
 	std::stack<char> s;
 	int j = 0;
 	bool isBraces = false;
-	int vindx = 0;
 	for (int i = 0; i < (int)_configFile.size(); i++) 
 	{
+		if (_configFile[i] == '#')
+        {
+            i = _configFile.find('\n', i);
+			if (i == -1)
+				break;
+			continue;
+        }
 		char c = _configFile[i];
 		if (c == '{')
 		{
@@ -59,10 +65,8 @@ void ReadConfig::checkBraces()
 		if (s.empty() && isBraces)
 		{
 			isBraces = false;
-			// _configFile = _configFile + "}";
+			i++;
 			_serverBlocks.push_back(_configFile.substr(j, i));
-			_serverBlocks[vindx].append("}");
-			vindx++;
 			j = i+1;
 		}
 	}
@@ -72,4 +76,3 @@ void ReadConfig::checkBraces()
 		exit(1);
 	}
 }
-

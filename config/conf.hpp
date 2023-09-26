@@ -17,7 +17,6 @@
 
 
 
-
 #define GET 0
 #define POST 1
 #define DELETE 2
@@ -95,7 +94,7 @@ class Conf : public ReadConfig
 		bool isLocation;
 		int listenIndx;
 		std::string default_ip;
-    public:
+	public:
 		Server singleServer;
 		std::vector<Server> servers;
         Conf(int ac, char *av);
