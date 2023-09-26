@@ -50,6 +50,7 @@ bool checkReDirPath(std::string path){
 Response::Response(){}
 Response::Response(request &req, Server &serv){
 	res = "HTTP/1.1 ";
+	locIndex = -1;
 	if (err != ""){
 		errorRes(serv, req);
 		return;
@@ -61,18 +62,13 @@ Response::Response(request &req, Server &serv){
 		err = "404";
 	} else {
 		path = getPath(req, serv);
-		// std::cout << path << "\n";
 		file = getFile(serv);
 		if (file != ""){
 			size_t pos = file.rfind(".");
 			pos = pos != file.npos ? pos : 0;
-			ext = file.substr(pos, file.size()); // check for errors 🛑🛑🛑🛑🛑
+			ext = file.substr(pos, file.size());
 		}
 	}
-	// std::cout << serv.loc[locIndex].path << "<<\n";
-	// std::cout << path << "<< path\n";
-	// std::cout << file << "<< file \n";
-	//❌ check if method is allowed in the location
 }
 
 Response::~Response(){}
@@ -142,7 +138,6 @@ int Response::getLocation(request &req, Server &serv){
 }
 
 void Response::getM(Server &serv, request &req){
-	// std::cout << "GET\n";
 	body = getBody(path, serv, req);
 	if (err!= "")
 		errorRes(serv, req);
@@ -180,7 +175,8 @@ void Response::postM(Server &serv, request &req){
 					std::ofstream file (upload + filename);
 					if (!file.is_open() || file.fail()){
 						std::cout << "can't upload(file not created)\n";
-						exit(1);
+						err = "500";
+						return;
 					}
 					if (tmpData[fileSize + boundary.size()] == '-'){
 						file << tmpData.substr(fileStart, fileSize - fileStart - 4);
@@ -212,8 +208,6 @@ void Response::postM(Server &serv, request &req){
 			res += "204 ";
 			res += statusCodes["204"];
 		}
-		// for (size_t i = 0; i < data.size(); ++i)
-		// 	std::cout << data[i] << "<<line\n";
 		res += getHeaders();
 		res += "\r\n";
 		res += body; res += "\r\n";
@@ -225,9 +219,10 @@ void Response::postM(Server &serv, request &req){
 
 void Response::deleteM(){
 	if (remove(path.data())){
-		std::cout << "ERROR\n";
-		err = "";
-		exit(1);
+		std::cout << "delete m error \n";
+		err = "500";
+		return;
+		// exit(1);
 	}
 	res += "204 ";
 	res += statusCodes["204"];
@@ -427,9 +422,10 @@ std::string Response::getHeaders(){
 	str += getContentLength();
 	str += "Content-Type: ";
 	if (err != "")
-		str += "text/html\r\n";
+		str += "text/html";
 	else
-		str += getContentType(); str += "\r\n";
+		str += getContentType();
+	str += "\r\n";
 	return str;
 }
 
@@ -479,7 +475,7 @@ void	 Response::errorRes(Server &serv, request &req){
 	body = "";
 	res = "HTTP/1.1 ";
 	std::string path;
-	if (locIndex > 0){
+	if (locIndex >= 0){
 		if (serv.loc[locIndex].errorPage[err] != "")
 			body = getBody(serv.loc[locIndex].errorPage[err], serv,req);
 		else if (serv.errorPage[err] != "")
@@ -487,7 +483,7 @@ void	 Response::errorRes(Server &serv, request &req){
 	}
 	if (body == "")
 		body = generateErrHtml();
-	res += err; res += " ";
+	res += err;
 	res += statusCodes[err];
 	res += getHeaders();
 	res += "\r\n";
@@ -559,10 +555,7 @@ void Response::initializeEnv(request &req){
 		cgiEnv[i] = strdup(var[i].c_str());
 	}
 	cgiEnv[10] = NULL;
-	// int j = 0;
-	// while (cgiEnv[j]) {
-	// 	std::cout << cgiEnv[j++] << '\n';
-	// }
+
 }
 
 std::string Response::execCgi(Server &serv, request &req){
@@ -580,9 +573,10 @@ std::string Response::execCgi(Server &serv, request &req){
 		err = "404";
 		close(cgiFile);
 		close(cgiRes);
-		std::cout << "execCgi faild\n";
-		exit(1);
+		std::cout << "execCgi failed\n";
+		err = "500";
 		return "";
+		// exit(1);
 	}
 	if (req.getMethod() == "POST"){
 		write(cgiFile, data[0].c_str(), data[0].size());
@@ -623,7 +617,6 @@ std::string Response::execCgi(Server &serv, request &req){
 		
 		}
 		close(fd[0]);
-		// std::cout << str << '\n';
 	}
 	close(cgiFile);
 	close(cgiRes);

@@ -107,13 +107,7 @@ void initializeServ(Server &serv){
 	serv.loc[1].methods[DELETE] = 1;
 }
 
-size_t toHex(const std::string &hex){
-	std::stringstream tmp;
-	size_t res;
-	tmp << std::hex << hex;
-	tmp >> res;
-	return res;
-}
+
 int sock;
 
 void handler(int){

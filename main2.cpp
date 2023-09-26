@@ -130,14 +130,6 @@ void statusCodesInitialize(){
 	statusCodes["505"] = " HTTP Version Not Supported\r\n";
 }
 
-//❌❌❌❌❌❌❌ close all the fds
-
-// void handler(int){
-// 	std::cout << "i'm out here\n";
-// 	close(sock);
-// 	exit(1);
-// }
-
 int main(int ac, char *av[]){
 
 	Conf config(ac, av[1]);
@@ -162,10 +154,9 @@ int main(int ac, char *av[]){
 	statusCodesInitialize();
 	initializeEncode();
 	int rv;
+	config.servers[0].loc[1].upload = "/Users/mjlem/Desktop/upload/";
 	while (1) {
-		// std::cout << "start polling\n";
 		rv = poll(fds.data(), fds.size(), -1);
-		// std::cout << "finish polling\n";
 		if (rv < 0){
 			std::cerr << "poll() failed\n";
 			exit(1);
@@ -197,10 +188,10 @@ int main(int ac, char *av[]){
 						client.fd = fds[i].fd;
 						long long recv = read(fds[i].fd, buff, BUFFER_SIZE);
 						if (recv == -1){
-								err = "500";
-								std::cout << "read error\n";
-								std::strerror(errno);
-								exit(1);
+							err = "500";
+							std::cout << "read error\n";
+							std::strerror(errno);
+							exit(1);
 						}
 						else if (recv == 0){
 							std::cout << "read hanging\n";
@@ -209,7 +200,6 @@ int main(int ac, char *av[]){
 							fds.erase(fds.begin() + i);
 							continue;
 						}
-						// std::cout << buff << "-----------------------------------\n";
 						client.req.append(buff, recv);
 						client.read	+= recv;
 						if (client.firstTime)
@@ -224,7 +214,6 @@ int main(int ac, char *av[]){
 					Client &ref = clients[fds[i].fd];
 					request req(ref.req);
 					req.parse(config.servers[ref.servIndex]);
-					// std::cout << ref.req << '\n';
 					Response res(req, config.servers[ref.servIndex]);
 					res.resBuilder(req,config.servers[ref.servIndex]);
 					long long rt = write(fds[i].fd, res.res.c_str(), res.res.size());
@@ -236,6 +225,7 @@ int main(int ac, char *av[]){
 						std::cout << "connection closed\n";
 						exit(1);
 					}
+					usleep(2000);
 					clients.erase(fds[i].fd);
 					close(fds[i].fd);
 					fds.erase(fds.begin() + i);

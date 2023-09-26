@@ -1,6 +1,10 @@
 // junky parsing
 #include "request.hpp"
+#include <cstddef>
+#include <cstdlib>
+#include <exception>
 #include <map>
+#include <sys/_types/_size_t.h>
 #include <utility>
 #include <vector>
 #include <iostream>
@@ -12,7 +16,13 @@
 
 extern std::string err;
 std::map<std::string, std::string> encode;
-
+size_t toHex(std::string hex){
+	std::stringstream tmp;
+	size_t res;
+	tmp << std::hex << hex;
+	tmp >> res;
+	return res;
+}
 // remove boundary + headers from the body 
 // handle chunked req && convert size from hex to int and recv the body && remove the boundary
 void initializeEncode(){
@@ -92,25 +102,20 @@ bool								request::checkPath(){
 			if (path[i] == '[' || path[i] == ']' || path[i] == '_')
 				continue;
 			err = "400";
-			return true; // 400
+			return true;
 	}
 	size_t start = path.find("?");
 	if (start != path.npos){
 		query = path.substr(start + 1, path.size() - (start + 1));
 		path = path.substr(0, start);
 	}
-	else
-		query = "";
-	// std::cout << "---------------------HERE---------------------\n";
-	// separate the query from the url/path then check it && check for err
 	return false;
 }
 
 bool 								request::checkMethod(){
-	//check method is allowed 405
 	if (method != "GET" && method != "POST" && method != "DELETE"){
 		err = "501";
-		return true;//501
+		return true;
 	}
 	return false;
 }
@@ -119,14 +124,14 @@ bool								request::checkHeaders(){
 	if (headers.find("Transfer-Encoding") != headers.end()){
 		if (headers.find("Transfer-Encoding")->second.find("chunked") == std::string::npos){
 			err = "501";
-			return true;//status code 501
+			return true;
 		}
 	}
 
 	if (method == "POST"){
 		if (headers.find("Content-Length") == headers.end() && headers.find("Transfer-Encoding") == headers.end()){
 			err = "400";
-			return true;//status code 400
+			return true;
 		}
 	}
 	return false;
@@ -134,7 +139,6 @@ bool								request::checkHeaders(){
 
 void	request::parseBody(){
 	std::string boundary;
-
 	std::multimap<std::string, std::string>::iterator it =  headers.find("Content-Type");
 
 	if (it == headers.end())
@@ -143,17 +147,31 @@ void	request::parseBody(){
 	size_t start = header.find("boundary");
 	if (start != std::string::npos){
 		boundary = header.substr(start + 9, header.find("\r", start + 9));
-		// std::string tmp;
 		it = headers.find("Transfer-Encoding");
 		if (it == headers.end())
 			return;
 		header = it->second;
-	std::cout << "===============================error ==============\n";
 		if (header.find("chunked") != std::string::npos){
-			
-		}
-		else{
-			//remove the hex;
+			std::string tmpBody = "";
+			std::string tmp;
+			long long chunk = 0;
+			size_t start = 0;
+			long long end =0;
+
+			while (1) {
+				start = body.find("\r\n", end);
+				if (start == std::string::npos){
+					err = "500";
+					return;
+				}
+				tmp = body.substr(end, start - end);
+				chunk = toHex(tmp.c_str());
+				if (chunk == 0)
+					break;
+				tmpBody.append(body.substr(start + 2, chunk));//
+				end += chunk + tmp.size() + 4;
+			}
+			body =  tmpBody;
 		}
 	}
 }
@@ -174,56 +192,52 @@ size_t	request::parseHeaders(size_t start){
 			break;
 		headers.insert(std::make_pair(tmp.substr(0, end) , tmp.substr(end + 2, tmp.size() - (end + 3))));
 	}
-	// for ( std::multimap<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it)
-	// 	std::cout << "line >> " << it->first << ":" << it->second << "\n";
 	return ret;
 }
 
 void	request::parse(Server &serv){
 	if (err != "")
 		return;
-	size_t i = 0, start = 0;
-	std::string	tmp;
+	try {
+		size_t i = 0, start = 0;
+		std::string	tmp;
 
-	i = rawReq.find(" ", 0);//error handling for find and substr
-	if (i == rawReq.npos){
-		err = "400";
+		i = rawReq.find(" ", 0);
+		if (i == rawReq.npos){
+			err = "400";
+			return;
+		}
+		method = rawReq.substr(0, i);
+		start = rawReq.find(" ", i + 1);
+		if (start == rawReq.npos){
+			err = "400";
+			return;
+		}
+		path = rawReq.substr(i + 1, start - i - 1);
+		i = rawReq.find("\r", start + 1);
+		if (i == rawReq.npos){
+			err = "400";
+			return;
+		}
+		version = rawReq.substr(start + 1, i - start - 1);
+		if (checkVerion())
+			return;
+		if (checkMethod())
+			return;
+		if (checkPath())
+			return;
+		urlDecoding();
+		start = parseHeaders(i + 2);
+		if (checkHeaders())
+			return;
+		body = rawReq.substr(start+ 4, rawReq.size() - start);
+		if(body.size() > serv.maxBodySize){
+			err = "413";
+			return;
+		}
+		parseBody();
+	} catch (std::exception &) {
+		err = "500";
 		return;
 	}
-	method = rawReq.substr(0, i);
-	// std::cout << method << "-METHOD\n";
-
-	start = rawReq.find(" ", i + 1);
-	if (start == rawReq.npos){
-		err = "400";
-		return;
-	}
-	path = rawReq.substr(i + 1, start - i - 1);
-	// std::cout << path << "-PATH\n";
-
-	i = rawReq.find("\r", start + 1);
-	if (i == rawReq.npos){
-		err = "400";
-		return;
-	}
-	version = rawReq.substr(start + 1, i - start - 1);
-	// std::cout << version << "-VERSION\n";
-	//check for error
-	if (checkVerion())
-		return;
-	if (checkMethod())
-		return;
-	if (checkPath())
-		return;
-	urlDecoding();
-	start = parseHeaders(i + 2);
-	if (checkHeaders())
-		return;
-	body = rawReq.substr(start+ 4, rawReq.size() - start);
-	//IF body.size() > max body size in config file THEN return 413
-	if(body.size() > serv.maxBodySize){
-		err = "413";
-		return;
-	}
-	parseBody();
 }
