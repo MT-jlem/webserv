@@ -5,6 +5,7 @@ Conf::Conf(int ac, char *av) : ReadConfig(ac, av)
     isLocation = false;
     listenIndx = 0;
     default_ip = "127.0.0.1";
+    
 }
 
 Conf::~Conf()
@@ -675,11 +676,6 @@ void    Conf::fill_Directives_Locations()
             std::cout << "Error: root directive is missing\n";
             exit(1);
         }
-        // if (singleServer.serverName.size() == 0)
-        // {
-        //     std::cout << "Error: server_name directive is missing\n";
-        //     exit(1);
-        // }
         if (singleServer.maxBodySize == 0)
         {
             singleServer.maxBodySize = 1000000;
@@ -691,14 +687,7 @@ void    Conf::fill_Directives_Locations()
         }
     }
 
-
-
-
-
-
-
     // print the vector of server blocks
-
     // std::cout << servers.size() << std::endl;
     std::cout << servers[0].loc.size() << std::endl;
     for(int i = 0; i < (int)servers.size(); i++)
