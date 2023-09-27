@@ -52,10 +52,12 @@ Response::Response(){}
 Response::Response(request &req, Server &serv){
 	res = "HTTP/1.1 ";
 	locIndex = -1;
-	pos = std::string::npos;
+	pos = req.getPath().size() - 1;
 	errorHandled = false;
 
 	if (err != ""){
+		std::cout << req.rawReq << '\n';
+		std::cout << "const\n";
 		errorRes(serv, req);
 		return;
 	}
@@ -81,6 +83,7 @@ void Response::reDirRes(Server &serv, request &req){
 	if (checkReDirPath(tmp.second)){
 		err = "500";
 		errorRes(serv, req);
+		return;
 	} else {
 		res += tmp.first;
 		res += statusCodes[tmp.first];
@@ -126,6 +129,8 @@ int Response::getLocation(request &req, Server &serv){
 	size_t vecSize = serv.loc.size();
 	std::string str = req.getPath();
 
+	std::cout << vecSize << "<< loc size\n";
+	std::cout << str << "<< req path\n";
 	while (true) {
 		for (size_t i = 0; i < vecSize; ++i){
 			if (str == serv.loc[i].path)
@@ -133,6 +138,7 @@ int Response::getLocation(request &req, Server &serv){
 		}
 		pos = str.rfind("/", pos-1);
 		if (pos == std::string::npos){
+			std::cout << str << '\n';
 			err = "400";
 			return  -1;
 		}
@@ -143,8 +149,10 @@ int Response::getLocation(request &req, Server &serv){
 
 void Response::getM(Server &serv, request &req){
 	body = getBody(path, serv, req);
-	if (err!= "")
+	if (err!= ""){
 		errorRes(serv, req);
+		return;
+	}
 	res += "200 ";
 	res += statusCodes["200"];
 	res += getHeaders();
@@ -247,11 +255,13 @@ void Response::resBuilder(request &req, Server &serv){
 				getM(serv, req);
 			if (err != ""){
 					errorRes(serv, req);
+					return;
 				}
 		}
 		else{
 			err = "405";
 			errorRes(serv, req);
+			return;
 		}
 	}
 	else if (req.getMethod() == "POST"){
@@ -264,6 +274,7 @@ void Response::resBuilder(request &req, Server &serv){
 		else{
 			err = "405";
 			errorRes(serv, req);
+			return;
 		}
 	}
 	else{
@@ -276,6 +287,7 @@ void Response::resBuilder(request &req, Server &serv){
 		else{
 			err = "405";
 			errorRes(serv, req);
+			return;
 		}
 	}
 }
@@ -445,8 +457,7 @@ std::string Response:: getBody(const std::string &path, Server &serv, request &r
 		file = ".html";
 		return str;
 	}
-	// use access to check for permission
-	// use state to check if path is dir
+
 	if (access(path.data(), F_OK)){
 		err = "404";
 		return "";
@@ -475,10 +486,8 @@ std::string Response:: getBody(const std::string &path, Server &serv, request &r
 void	 Response::errorRes(Server &serv, request &req){
 	if (errorHandled)
 		return;
-	// if there's custom error page we should know which location the error occurred
 	body = "";
 	res = "HTTP/1.1 ";
-	std::string path;
 	if (locIndex >= 0){
 		if (serv.loc[locIndex].errorPage[err] != ""){
 			body = getBody(serv.loc[locIndex].errorPage[err], serv,req);

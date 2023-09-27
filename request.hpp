@@ -9,7 +9,6 @@
 class request
 {
 private:
-	std::string	rawReq;
 	std::string method;
 	std::string path;
 	std::string version;
@@ -18,6 +17,7 @@ private:
 	//std::vector<std::pair<std::string, std::string> > headers;
 	std::string body;
 public:
+	std::string	rawReq;
 	request(const std::string &req);
 	~request();
 
