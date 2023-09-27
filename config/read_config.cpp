@@ -22,7 +22,6 @@ void ReadConfig::readingFile()
 			exit (1);
 		}
 		getline(myfile, _configFile, '\0');
-		// std::cout << _configFile << std::endl;
 	}
 	else if (_ac == 1)
 		std::cout << "default config file here\n";

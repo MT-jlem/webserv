@@ -5,7 +5,6 @@ Conf::Conf(int ac, char *av) : ReadConfig(ac, av)
     isLocation = false;
     listenIndx = 0;
     default_ip = "127.0.0.1";
-
 }
 
 Conf::~Conf()
@@ -25,7 +24,7 @@ Conf::~Conf()
 //     upload = "";
 // }
 
- 
+
 std::string left(const std::string &s, std::string str)
 {
     size_t start = s.find_first_not_of(str);
@@ -182,7 +181,7 @@ bool checkMaxBodySize(std::string &str)
     bool checkRet = true;
     if (str.find(' ') == std::string::npos)
     {
-        if (str[str.size()-1] == 'm' || str[str.size()-1] == 'k' || isdigit(str[str.size()-1]))
+        if (tolower(str[str.size()-1]) == 'm' || tolower(str[str.size()-1]) == 'k' || isdigit(str[str.size()-1]))
         {
             for (int i = 0; i < (int)str.size() - 1; i++)
             {
@@ -514,7 +513,7 @@ void	Conf::parsCgi(std::string value)
 
 void    Conf::parsLocation(std::string key, std::string value)
 {
-    if (key == "root" || key == "index" || key == "path")
+    if (key == "root" || key == "index")
         parsRootIndex(value, key);
     else if (key == "error_page")
         parsError_page(value);
@@ -528,12 +527,10 @@ void    Conf::parsLocation(std::string key, std::string value)
         parsCgi(value);
     else
     {
-        std::cout << "11Error: invalid directive\n";
+        std::cout << "Error: invalid directive\n";
         exit(1);
     }
 }
-
-
 
 void    Conf::fill_Directives_Locations()
 {
@@ -577,22 +574,12 @@ void    Conf::fill_Directives_Locations()
             indx++;
         }
         _serverBlocks[i] = serv_push;
-        
-        // std::cout << "==*==*==*==*==*==*==*==*==*==*==*==*==*==*==*==\n";
-        // std::cout << serv_push << std::endl;
-
     }
-    int checkLocationBrace = 0;
-
-    
     std::vector<std::string> listenDup;
-
     for (int i = 0; i < (int)_serverBlocks.size(); i++)
     {
-        // std::cout << _serverBlocks[i] << std::endl;
-        // std::cout << "==*==*==*==*==*==*==*==*==*==*==*==*==*==*==*==\n";
+        int checkLocationBrace = 0;
         checkIsServer(i);
-
         while (isServer == true && (int)_serverBlocks[i].size() > 1)
         {
             std::string key;
@@ -629,7 +616,7 @@ void    Conf::fill_Directives_Locations()
                     parsMaxBodySize(value);
                 else if (key == "error_page" && isLocation == false)
                     parsError_page(value);
-                if (key == "location")
+                else if (key == "location")
                 {
                     if (checkLocationBrace == 0)
                     {
@@ -664,14 +651,17 @@ void    Conf::fill_Directives_Locations()
                 {
                     parsLocation(key, value);
                 }
+                else 
+                {
+                    std::cout << "Error: invalid directive\n";
+                    exit(1);
+                }
             }
             else
             {
-                std::cout << "3Error: invalid directive\n";
+                std::cout << "Error: invalid directive\n";
                 exit(1);
             }
-            // std::cout << "key = " << key;
-            // std::cout << " ----- value = " << value << std::endl;
         }
 
         // check if all directives of server are filled
@@ -685,16 +675,11 @@ void    Conf::fill_Directives_Locations()
             std::cout << "Error: root directive is missing\n";
             exit(1);
         }
-        if (singleServer.index.size() == 0)
-        {
-            std::cout << "Error: index directive is missing\n";
-            exit(1);
-        }
-        if (singleServer.serverName.size() == 0)
-        {
-            std::cout << "Error: server_name directive is missing\n";
-            exit(1);
-        }
+        // if (singleServer.serverName.size() == 0)
+        // {
+        //     std::cout << "Error: server_name directive is missing\n";
+        //     exit(1);
+        // }
         if (singleServer.maxBodySize == 0)
         {
             singleServer.maxBodySize = 1000000;
@@ -703,7 +688,6 @@ void    Conf::fill_Directives_Locations()
         {
             servers.push_back(singleServer);
             singleServer = Server();
-            listenDup.clear();
         }
     }
 
