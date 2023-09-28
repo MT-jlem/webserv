@@ -46,6 +46,7 @@ class Conf : public ReadConfig
 		void			parsReturn(std::string value);
 		void			parsMethods(std::string value);
 		void			parsCgi(std::string value);
+		void			parsUpload(std::string value);
 		//parse();
 };
 

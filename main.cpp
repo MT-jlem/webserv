@@ -96,10 +96,10 @@ void first_req(Client &ref){
 
 }
 
-int find_server(std::vector<Server> servers, int fd){
+int find_server(std::vector<Server> &servers, int fd){
 
-	for (size_t i = 0; servers.size(); ++i){
-		for (size_t j = 0; servers[i].fd.size(); ++j){
+	for (size_t i = 0; i <  servers.size(); ++i){
+		for (size_t j = 0; j < servers[i].fd.size(); ++j){
 			if (servers[i].fd[j] == fd)
 				return i;
 		}

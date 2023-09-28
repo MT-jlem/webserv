@@ -26,6 +26,7 @@ public:
 	std::string root;
 	std::string index;
 	bool autoIndex;
+	bool trackAutoIndex;
 	int methods[3]; 								// GET 0 POST 1 DELETE 2 done
 	std::pair<std::string, std::string> redir; 	   // return 				 done
 	std::map<std::string, std::string> errorPage; // 						 done

@@ -1,4 +1,6 @@
 #include "conf.hpp"
+#include <cstdlib>
+#include <iostream>
 
 Conf::Conf(int ac, char *av) : ReadConfig(ac, av)
 {
@@ -11,18 +13,6 @@ Conf::~Conf()
 {
 }
 
-// Location::Location()
-// {
-//     path = "";
-//     root = "";
-//     index = "";
-//     autoIndex = false;
-//     methods[0] = 0;
-//     methods[1] = 0;
-//     methods[2] = 0;
-//     redir = std::make_pair("", "");
-//     upload = "";
-// }
 
 
 std::string left(const std::string &s, std::string str)
@@ -119,6 +109,11 @@ void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listen
         int pos = listenValue.find(':');
         if (pos == -1)
         {
+            if (!(listenValue.find_first_not_of("0123456789") == std::string::npos))
+            {
+                std::cout << "Error: invalid port number\n";
+                exit(1);
+            }
             port = listenValue;
             listenValue = default_ip + ':' + port;
             num << port;
@@ -144,6 +139,11 @@ void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listen
         }
         else
         {
+            if (listenValue[0] == ':')
+            {
+                std::cout << "Error: invalid ip address\n";
+                exit(1);
+            }
             ip = listenValue.substr(0, pos);
             port = listenValue.substr(pos+1, listenValue.size()-pos-1);
             num << port;
@@ -206,7 +206,7 @@ void    Conf::parsMaxBodySize(std::string &str)
     if (str[str.size()-1] == ';')
     {
         str = trim(str.substr(0, str.size()-1), " ");
-        if (str.size() == 1)
+        if (str.size() == 1 && !isdigit(str[0]))
         {
             std::cout << "Error: invalid client_max_body_size value\n";
             exit(1);
@@ -214,21 +214,20 @@ void    Conf::parsMaxBodySize(std::string &str)
         if (checkMaxBodySize(str) == true)
         {
             singleServer.maxBodySize = atoi(str.c_str());
-            if (str[str.size()-1] == 'k')
+            if (tolower(str[str.size()-1]) == 'k')
                 singleServer.maxBodySize *= 1000;
-            else if (str[str.size()-1] == 'm')
+            else if (tolower(str[str.size()-1]) == 'm')
                 singleServer.maxBodySize *= 1000000;
         }
         else
         {
-            std::cout << "Error: Megabytes, M, and Kilobytes, K, are the accepted units \
-in client_max_body_size.\n";
+            std::cout << "Error: invalid client_max_body_size value\n";
             exit(1);
         }
     }
     else
     {
-        std::cout << "Error: simple directive must end with a semicolon\n";
+        std::cout << "Error: max_body_size directive must end with a semicolon\n";
         exit(1);
     }
 }
@@ -240,7 +239,7 @@ void    Conf::parsServerName(std::string value)
         value = trim(value.substr(0, value.size()-1), " ");
     else
     {
-        std::cout << "Error: simple directive must end with a semicolon\n";
+        std::cout << "Error: server name directive must end with a semicolon\n";
         exit(1);
     }
     if (value.find(' ') == std::string::npos)
@@ -272,6 +271,10 @@ void    Conf::parsRootIndex(std::string value, std::string key)
                 }
                 return;
             }
+            else {
+                std::cout << "Error: index directive must end with a semicolon\n";
+                exit(1);
+            }
         }
         else if (key == "root")
         {
@@ -286,6 +289,11 @@ void    Conf::parsRootIndex(std::string value, std::string key)
                     exit(1);
                 }
                 return;
+            }
+            else 
+            {
+                std::cout << "Error: root directive must end with a semicolon\n";
+                exit(1);
             }
         }
     }
@@ -305,6 +313,11 @@ void    Conf::parsRootIndex(std::string value, std::string key)
                 }
                 return;
             }
+            else 
+            {
+                std::cout << "Error: index directive must end with a semicolon\n";
+                exit(1);
+            }
         }
         else if (key == "root")
         {
@@ -320,10 +333,13 @@ void    Conf::parsRootIndex(std::string value, std::string key)
                 }
                 return;
             }
+            else 
+            {
+                std::cout << "Error: root directive must end with a semicolon\n";
+                exit(1);
+            }
         }
     }
-    std::cout << "Error: simple directive must end with a semicolon\n";
-    exit(1);
 }
 
 bool    checkErrorPagesCode(const std::string key)
@@ -380,7 +396,7 @@ void    Conf::parsError_page(std::string value)
     }
     else
     {
-        std::cout << "Error: simple directive must end with a semicolon\n";
+        std::cout << "Error: error page directive must end with a semicolon\n";
         exit(1);
     }
     for (int j = 0; !isLocation && j < (int)val.size()-1; j++)
@@ -397,6 +413,7 @@ void   Conf::parsAutoindex(std::string value)
 {
     if (value[value.size()-1] == ';')
     {
+        singleServer.servLoc.trackAutoIndex = true;
         value = trim(value.substr(0, value.size()-1), " ");
         if (value == "on")
             singleServer.servLoc.autoIndex = true;
@@ -410,7 +427,7 @@ void   Conf::parsAutoindex(std::string value)
     }
     else
     {
-        std::cout << "Error: simple directive must end with a semicolon\n";
+        std::cout << "Error: autoindex directive must end with a semicolon\n";
         exit(1);
     }
 }
@@ -436,9 +453,9 @@ void    Conf::parsReturn(std::string value)
             exit(1);
         }
     }
-    else
+    else 
     {
-        std::cout << "Error: simple directive must end with a semicolon\n";
+        std::cout << "Error: return directive must end with a semicolon\n";
         exit(1);
     }
 }
@@ -480,7 +497,7 @@ void    Conf::parsMethods(std::string value)
     }
     else
     {
-        std::cout << "Error: simple directive must end with a semicolon\n";
+        std::cout << "Error: allowed_methods directive must end with a semicolon\n";
         exit(1);
     }
 }
@@ -509,16 +526,83 @@ void	Conf::parsCgi(std::string value)
             exit(1);
         }
     }
+    else
+    {
+        std::cout << "Error: cgi_pass directive must end with a semicolon\n";
+        exit(1);
+    }
 }
+
+
+void    Conf::parsUpload(std::string value)
+{
+
+    if (value[value.size()-1] == ';')
+    {
+        value = trim(value.substr(0, value.size()-1), " ");
+        if (value.find(' ') == std::string::npos)
+            singleServer.servLoc.upload = value;
+        else
+        {
+            std::cout << "Error: upload accept only one value \n";
+            exit(1);
+        }
+    }
+    else
+    {
+        std::cout << "Error: upload directive must end with a semicolon\n";
+        exit(1);
+    }
+}
+
 
 void    Conf::parsLocation(std::string key, std::string value)
 {
     if (key == "root" || key == "index")
-        parsRootIndex(value, key);
+    {
+        if (key == "root")
+        {
+            if (singleServer.servLoc.root.size() == 0)
+                parsRootIndex(value, key);
+            else
+            {
+                std::cout << "Error: duplicate root directive\n";
+                exit(1);
+            }
+        }
+        if (key == "index")
+        {
+            if (singleServer.servLoc.index.size() == 0)
+                parsRootIndex(value, key);
+            else
+            {
+                std::cout << "Error: duplicate index directive\n";
+                exit(1);
+            }
+        }
+    }
+    else if (key == "upload")
+    {
+        if (singleServer.servLoc.upload.size() == 0)
+            parsUpload(value);
+        else
+        {
+            std::cout << "Error: duplicate upload directive\n";
+            exit(1);
+        }
+    }
+    else if (key == "autoindex")
+    {
+        if (!singleServer.servLoc.trackAutoIndex)
+            parsAutoindex(value);
+        else
+        {
+            std::cout << "Error: duplicate autoindex directive\n";
+            exit(1);
+        }
+    }
     else if (key == "error_page")
         parsError_page(value);
-    else if (key == "autoindex")
-        parsAutoindex(value);
     else if (key == "return")
         parsReturn(value);
     else if (key == "allowed_methods")
@@ -587,7 +671,6 @@ void    Conf::fill_Directives_Locations()
             int pos = _serverBlocks[i].find('\n', 0);
             std::string keyWord = _serverBlocks[i].substr(0, pos);
             _serverBlocks[i] = _serverBlocks[i].substr(pos+1, _serverBlocks[i].size()-pos - 1);
-            
             size_t lindx = keyWord.find_first_not_of(" \n");
             size_t rindx = keyWord.find_last_not_of(" \n");
             if (lindx == std::string::npos || rindx == std::string::npos)
@@ -599,21 +682,67 @@ void    Conf::fill_Directives_Locations()
                 keyWord.replace(0, key.size(), "");
                 value = keyWord.substr(keyWord.find_first_not_of(" "), keyWord.find_first_of(";}"));
                 value = trim(value, " ");
+                if (value[value.size() - 1] == ';' && value.size() == 1)
+                {
+                    std::cout << "Error: no value for " << key << " directive\n";
+                    exit(1);
+                }
             }
             catch(const std::exception& e)
             {
-                // std::cerr << e.what() << '\n';
+                if (key == "location")
+                {
+                    std::cout << "Error: No path for location\n";
+                    exit(1);
+                }
             }
             if (key.size() > 0)
             {
                 if (key == "listen" && isLocation == false)
                     parseListen(value, listenDup);
                 else if (key == "server_name" && isLocation == false)
-                    parsServerName(value);
+                {
+                    if (singleServer.serverName.size() == 0)
+                        parsServerName(value);
+                    else
+                    {
+                        std::cout << "Error: duplicate server_name directive\n";
+                        exit(1);
+                    }
+                }
                 else if ((key == "index" || key == "root") && isLocation == false)
-                    parsRootIndex(value, key);
+                {
+                    if (key == "root")
+                    {
+                        if (singleServer.root.size() == 0)
+                            parsRootIndex(value, key);
+                        else
+                        {
+                            std::cout << "Error: duplicate root directive\n";
+                            exit(1);
+                        }
+                    }
+                    if (key == "index")
+                    {
+                        if (singleServer.index.size() == 0)
+                            parsRootIndex(value, key);
+                        else
+                        {
+                            std::cout << "Error: duplicate index directive\n";
+                            exit(1);
+                        }
+                    }
+                }
                 else if (key == "client_max_body_size" && isLocation == false)
-                    parsMaxBodySize(value);
+                {
+                    if (singleServer.maxBodySize == -1)
+                        parsMaxBodySize(value);
+                    else
+                    {
+                        std::cout << "Error: duplicate client_max_body_size directive\n";
+                        exit(1);
+                    }
+                }
                 else if (key == "error_page" && isLocation == false)
                     parsError_page(value);
                 else if (key == "location")
@@ -622,6 +751,12 @@ void    Conf::fill_Directives_Locations()
                     {
                         isLocation = true;
                         pos = _serverBlocks[i].find('\n', 0);
+                        if (value[0] != '/') value = '/' + value;
+                        if (value[value.size()-1] == ';')
+                        {
+                            std::cout << "Error: directive location has no opening '{'\n";
+                            exit(1);
+                        }
                         singleServer.servLoc.path = value;
                         checkLocationBrace = 2;
                     }
@@ -642,10 +777,21 @@ void    Conf::fill_Directives_Locations()
                 }
                 else if (key == "}")
                 {
-                    isLocation = false;
-                    singleServer.loc.push_back(singleServer.servLoc);
-                    singleServer.servLoc = Location();
-                    checkLocationBrace--;
+                    if (isLocation)
+                    {
+                        isLocation = false;
+                        for (int i = 0; i < (int)singleServer.loc.size(); i++)
+                        {
+                            if (singleServer.loc[i].path == singleServer.servLoc.path)
+                            {
+                                std::cout << "Error: duplicate location block\n";
+                                exit(1);
+                            }
+                        }
+                        singleServer.loc.push_back(singleServer.servLoc);
+                        singleServer.servLoc = Location();
+                        checkLocationBrace--;
+                    }
                 }
                 else if (checkLocationBrace == 1)
                 {
@@ -675,12 +821,7 @@ void    Conf::fill_Directives_Locations()
             std::cout << "Error: root directive is missing\n";
             exit(1);
         }
-        // if (singleServer.serverName.size() == 0)
-        // {
-        //     std::cout << "Error: server_name directive is missing\n";
-        //     exit(1);
-        // }
-        if (singleServer.maxBodySize == 0)
+        if (singleServer.maxBodySize == 0 || singleServer.maxBodySize == -1)
         {
             singleServer.maxBodySize = 1000000;
         }
@@ -691,15 +832,9 @@ void    Conf::fill_Directives_Locations()
         }
     }
 
-
-
-
-
-
-
     // print the vector of server blocks
-
     // std::cout << servers.size() << std::endl;
+    // std::cout <<servers[0].loc.size() << std::endl;
     // for(int i = 0; i < (int)servers.size(); i++)
     // {
     //     std::cout << "\n--------********server = "<< i << "***********-----------\n\n";

@@ -17,6 +17,7 @@ Location::Location()
     root = "";
     index = "";
     autoIndex = false;
+    trackAutoIndex = false;
     methods[0] = 0;
     methods[1] = 0;
     methods[2] = 0;
@@ -25,9 +26,17 @@ Location::Location()
 }
 
 
+
+
 Location::~Location(){}
 
 Server::Server(){
+    _listen = std::vector<std::pair<std::string, std::string> >();
+    root = "";
+    index = "";
+    serverName = "";
+    maxBodySize = -1;
+    errorPage = std::map<std::string, std::string>();
     memset(&hints, 0, sizeof(hints));
 }
 
