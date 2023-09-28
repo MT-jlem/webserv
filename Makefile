@@ -27,6 +27,3 @@ fclean : clean
 	-rm -rf $(NAME)
 
 re : fclean all
-
-b : re
-	clear && ./$(NAME) .conf

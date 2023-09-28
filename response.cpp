@@ -180,8 +180,8 @@ void Response::postM(Server &serv, request &req){
 				{
 					filenameStart += 10;
 					std::string filename = tmp.substr(filenameStart, tmp.find("\"", filenameStart) - filenameStart);
-					// path = path[path.size() -1 ] != '/' ? path + "/" : path;
 					std::string upload = serv.loc[locIndex].upload != "" ? serv.loc[locIndex].upload : "/tmp/";
+					upload = upload[upload.size() -1 ] != '/' ? upload + "/" : upload;
 					std::ofstream file (upload + filename);
 					if (!file.is_open() || file.fail()){
 						std::cout << "can't upload(file not created)\n";
@@ -232,19 +232,17 @@ void Response::postM(Server &serv, request &req){
 
 void Response::deleteM(){
 	struct stat st;
-	std::string str;
 
-	if (stat(str.c_str(),  &st)){
+	if (stat(path.c_str(),  &st) < 0){
 		err = "404";
 		return;
 	}
-	if ((st.st_mode & S_IFDIR)){
+	if (!S_ISDIR(st.st_mode) && !S_ISREG(st.st_mode)){
 		err = "404";
 		return;
 	}
 	if (remove(path.c_str())){
-		std::cout << "delete error \n";
-		err = "500";
+		err = "403";
 		return;
 	}
 	res += "204 ";
@@ -286,7 +284,7 @@ void Response::resBuilder(request &req, Server &serv){
 		}
 	}
 	else{
-		if (serv.loc[locIndex].methods[POST]){
+		if (serv.loc[locIndex].methods[DELETE]){
 			if (!serv.loc[locIndex].redir.first.empty())
 				reDirRes(serv, req);
 			else
@@ -629,7 +627,6 @@ std::string Response::execCgi(Server &serv, request &req){
 		waitpid(pid, &status, 0);
 		close(fd[1]);
 		if (status){
-			std::cout << "cgi error\n";
 			err = "500";
 			return "";
 		}
