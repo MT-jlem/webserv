@@ -24,7 +24,15 @@ void ReadConfig::readingFile()
 		getline(myfile, _configFile, '\0');
 	}
 	else if (_ac == 1)
-		std::cout << "default config file here\n";
+	{
+		myfile.open("default.conf");
+		if (!myfile.is_open())
+		{
+			std::cout << "Error: File not found" << std::endl;
+			exit (1);
+		}
+		getline(myfile, _configFile, '\0');
+	}
 	else
 	{
 		std::cout << "Wrong arg number\n";

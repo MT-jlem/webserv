@@ -612,8 +612,6 @@ void    Conf::fill_Directives_Locations()
             if (lindx == std::string::npos || rindx == std::string::npos)
                 continue;
             keyWord = keyWord.substr(lindx, rindx+1);
-            // std::cout << keyWord << std::endl;
-            // std::cout << "----------------------------------------\n";
             try
             {
                 key = keyWord.substr(0, keyWord.find_first_of(" "));
@@ -653,6 +651,11 @@ void    Conf::fill_Directives_Locations()
                         isLocation = true;
                         pos = _serverBlocks[i].find('\n', 0);
                         if (value[0] != '/') value = '/' + value;
+                        if (value[value.size()-1] == ';')
+                        {
+                            std::cout << "Error: directive location has no opening '{'\n";
+                            exit(1);
+                        }
                         singleServer.servLoc.path = value;
                         checkLocationBrace = 2;
                     }
