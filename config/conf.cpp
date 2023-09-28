@@ -228,7 +228,7 @@ in client_max_body_size.\n";
     }
     else
     {
-        std::cout << "Error: simple directive must end with a semicolon\n";
+        std::cout << "Error: max_body_size directive must end with a semicolon\n";
         exit(1);
     }
 }
@@ -240,7 +240,7 @@ void    Conf::parsServerName(std::string value)
         value = trim(value.substr(0, value.size()-1), " ");
     else
     {
-        std::cout << "Error: simple directive must end with a semicolon\n";
+        std::cout << "Error: server name directive must end with a semicolon\n";
         exit(1);
     }
     if (value.find(' ') == std::string::npos)
@@ -272,6 +272,10 @@ void    Conf::parsRootIndex(std::string value, std::string key)
                 }
                 return;
             }
+            else {
+                std::cout << "Error: index directive must end with a semicolon\n";
+                exit(1);
+            }
         }
         else if (key == "root")
         {
@@ -286,6 +290,11 @@ void    Conf::parsRootIndex(std::string value, std::string key)
                     exit(1);
                 }
                 return;
+            }
+            else 
+            {
+                std::cout << "Error: root directive must end with a semicolon\n";
+                exit(1);
             }
         }
     }
@@ -305,6 +314,11 @@ void    Conf::parsRootIndex(std::string value, std::string key)
                 }
                 return;
             }
+            else 
+            {
+                std::cout << "Error: index directive must end with a semicolon\n";
+                exit(1);
+            }
         }
         else if (key == "root")
         {
@@ -320,10 +334,13 @@ void    Conf::parsRootIndex(std::string value, std::string key)
                 }
                 return;
             }
+            else 
+            {
+                std::cout << "Error: root directive must end with a semicolon\n";
+                exit(1);
+            }
         }
     }
-    std::cout << "Error: simple directive must end with a semicolon\n";
-    exit(1);
 }
 
 bool    checkErrorPagesCode(const std::string key)
@@ -380,7 +397,7 @@ void    Conf::parsError_page(std::string value)
     }
     else
     {
-        std::cout << "Error: simple directive must end with a semicolon\n";
+        std::cout << "Error: error page directive must end with a semicolon\n";
         exit(1);
     }
     for (int j = 0; !isLocation && j < (int)val.size()-1; j++)
@@ -410,7 +427,7 @@ void   Conf::parsAutoindex(std::string value)
     }
     else
     {
-        std::cout << "Error: simple directive must end with a semicolon\n";
+        std::cout << "Error: autoindex directive must end with a semicolon\n";
         exit(1);
     }
 }
@@ -436,9 +453,9 @@ void    Conf::parsReturn(std::string value)
             exit(1);
         }
     }
-    else
+    else 
     {
-        std::cout << "Error: simple directive must end with a semicolon\n";
+        std::cout << "Error: return directive must end with a semicolon\n";
         exit(1);
     }
 }
@@ -480,7 +497,7 @@ void    Conf::parsMethods(std::string value)
     }
     else
     {
-        std::cout << "Error: simple directive must end with a semicolon\n";
+        std::cout << "Error: allowed_methods directive must end with a semicolon\n";
         exit(1);
     }
 }
@@ -511,7 +528,7 @@ void	Conf::parsCgi(std::string value)
     }
     else
     {
-        std::cout << "Error: simple directive must end with a semicolon\n";
+        std::cout << "Error: cgi_pass directive must end with a semicolon\n";
         exit(1);
     }
 }
@@ -533,7 +550,7 @@ void    Conf::parsUpload(std::string value)
     }
     else
     {
-        std::cout << "Error: simple directive must end with a semicolon\n";
+        std::cout << "Error: upload directive must end with a semicolon\n";
         exit(1);
     }
 }
