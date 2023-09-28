@@ -34,54 +34,10 @@
 #include "request.hpp"
 #include "config/read_config.hpp"
 #include "config/conf.hpp"
-
+#include "client.hpp"
 //host connection chunked in res 
 
-class Client {
-	public:
-		int fd;
-		long long read;
-		bool chunked;
-		long long content_length;
-		std::string req;
-		bool firstTime;
-		int servIndex;
-		bool processing;
-		std::string __response;
-		long long sendLength;
-		Client(const Client &obj){
-			// std::cout << "copy con\n";
-			fd = obj.fd;
-			read = obj.read;
-			chunked = obj.chunked;
-			content_length = obj.content_length;
-			req = obj.req;
-			firstTime = obj.firstTime;
-			servIndex = obj.servIndex;
-			processing = obj.processing;
-			sendLength = obj.sendLength;
-			}
-		Client(){
-			sendLength = 0;
-			processing = false;
-			fd = -1;
-			read = 0;
-			chunked = false;
-			content_length = 0;
-			req = "";
-			firstTime = true;
-			servIndex = -1;
-			__response = "";
-		};
-		~Client(){};
-		void clear(){
-			read = 0;
-			chunked = false;
-			content_length = 0;
-			req = "";
-			firstTime = true;
-		}
-};
+
 
 void first_req(Client &ref){
 	size_t pos;
@@ -201,7 +157,7 @@ int main(int ac, char *av[]){
 							if (cfd < 0){
 								std::cout << "accept() failed\n";
 								std::strerror(errno);
-								exit(1);
+								continue;
 							}
 							fcntl(cfd, F_SETFL, O_NONBLOCK);
 							pollfd tmp;

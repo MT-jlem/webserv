@@ -644,7 +644,7 @@ std::string Response::execCgi(Server &serv, request &req){
 		
 		}
 		close(fd[0]);
-		size_t start;
+		size_t start = 0;
 		while ((start = path.find("%", start)) != path.npos) {
 			str.replace(start, 2, "\r\n");
 		}
