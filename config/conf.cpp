@@ -642,6 +642,7 @@ void    Conf::fill_Directives_Locations()
                     {
                         isLocation = true;
                         pos = _serverBlocks[i].find('\n', 0);
+                        if (value[0] != '/') value = '/' + value;
                         singleServer.servLoc.path = value;
                         checkLocationBrace = 2;
                     }
