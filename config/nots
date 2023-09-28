@@ -9,8 +9,7 @@
 // duplicate directives;                             X
 // dup location;                                     X
 // dup directives in location just root and index;   X
-// listen in location dosent need to be there;       X
 
 //************************ REMARK ************************//
 
-// add an if statment before assign new value if it is already full
+// add an if statment before assign new value if it is already full for duplicate directives;

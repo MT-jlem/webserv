@@ -509,6 +509,11 @@ void	Conf::parsCgi(std::string value)
             exit(1);
         }
     }
+    else
+    {
+        std::cout << "Error: simple directive must end with a semicolon\n";
+        exit(1);
+    }
 }
 
 
@@ -525,6 +530,11 @@ void    Conf::parsUpload(std::string value)
             std::cout << "Error: upload accept only one value \n";
             exit(1);
         }
+    }
+    else
+    {
+        std::cout << "Error: simple directive must end with a semicolon\n";
+        exit(1);
     }
 }
 
