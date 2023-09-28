@@ -231,7 +231,7 @@ void	request::parse(Server &serv){
 		if (checkHeaders())
 			return;
 		body = rawReq.substr(start+ 4, rawReq.size() - start);
-		if(body.size() > serv.maxBodySize){
+		if((long long)body.size() > serv.maxBodySize){
 			err = "413";
 			return;
 		}

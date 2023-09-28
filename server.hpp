@@ -45,7 +45,7 @@ public:
 	std::string root;
 	std::string index;
 	std::string serverName;
-	size_t		maxBodySize;
+	long long		maxBodySize;
 	std::map<std::string, std::string> errorPage;
 	Location servLoc;
 	std::vector<Location> loc;

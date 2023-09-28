@@ -182,8 +182,6 @@ void Response::postM(Server &serv, request &req){
 					std::string filename = tmp.substr(filenameStart, tmp.find("\"", filenameStart) - filenameStart);
 					// path = path[path.size() -1 ] != '/' ? path + "/" : path;
 					std::string upload = serv.loc[locIndex].upload != "" ? serv.loc[locIndex].upload : "/tmp/";
-					struct stat st;
-					stat(path.data(),  &st);
 					std::ofstream file (upload + filename);
 					if (!file.is_open() || file.fail()){
 						std::cout << "can't upload(file not created)\n";
@@ -233,12 +231,18 @@ void Response::postM(Server &serv, request &req){
 }
 
 void Response::deleteM(){
-	if (access(path.data(), F_OK)){
-		std::cout << "not found\n";
+	struct stat st;
+	std::string str;
+
+	if (stat(str.c_str(),  &st)){
 		err = "404";
-		return ;
+		return;
 	}
-	if (remove(path.data())){
+	if ((st.st_mode & S_IFDIR)){
+		err = "404";
+		return;
+	}
+	if (remove(path.c_str())){
 		std::cout << "delete error \n";
 		err = "500";
 		return;
