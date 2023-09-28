@@ -176,7 +176,7 @@ int main(int ac, char *av[]){
 		statusCodesInitialize();
 		initializeEncode();
 		int rv;
-		config.servers[0].loc[0].upload = "/Users/mjlem/Desktop/upload/";
+		// config.servers[0].loc[0].upload = "/Users/mjlem/Desktop/upload/";
 		signal(SIGPIPE, SIG_IGN);
 		while (1) {
 			rv = poll(fds.data(), fds.size(), -1);
