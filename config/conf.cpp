@@ -6,7 +6,7 @@ Conf::Conf(int ac, char *av) : ReadConfig(ac, av)
 {
     isLocation = false;
     listenIndx = 0;
-    default_ip = "127.0.0.1";    
+    default_ip = "127.0.0.1";
 }
 
 Conf::~Conf()
@@ -414,6 +414,7 @@ void   Conf::parsAutoindex(std::string value)
 {
     if (value[value.size()-1] == ';')
     {
+        singleServer.servLoc.trackAutoIndex = true;
         value = trim(value.substr(0, value.size()-1), " ");
         if (value == "on")
             singleServer.servLoc.autoIndex = true;
@@ -559,19 +560,56 @@ void    Conf::parsUpload(std::string value)
 void    Conf::parsLocation(std::string key, std::string value)
 {
     if (key == "root" || key == "index")
-        parsRootIndex(value, key);
+    {
+        if (key == "root")
+        {
+            if (singleServer.servLoc.root.size() == 0)
+                parsRootIndex(value, key);
+            else
+            {
+                std::cout << "Error: duplicate root directive\n";
+                exit(1);
+            }
+        }
+        if (key == "index")
+        {
+            if (singleServer.servLoc.index.size() == 0)
+                parsRootIndex(value, key);
+            else
+            {
+                std::cout << "Error: duplicate index directive\n";
+                exit(1);
+            }
+        }
+    }
+    else if (key == "upload")
+    {
+        if (singleServer.servLoc.upload.size() == 0)
+            parsUpload(value);
+        else
+        {
+            std::cout << "Error: duplicate upload directive\n";
+            exit(1);
+        }
+    }
+    else if (key == "autoindex")
+    {
+        if (!singleServer.servLoc.trackAutoIndex)
+            parsAutoindex(value);
+        else
+        {
+            std::cout << "Error: duplicate autoindex directive\n";
+            exit(1);
+        }
+    }
     else if (key == "error_page")
         parsError_page(value);
-    else if (key == "autoindex")
-        parsAutoindex(value);
     else if (key == "return")
         parsReturn(value);
     else if (key == "allowed_methods")
         parsMethods(value);
     else if (key == "cgi_pass")
         parsCgi(value);
-    else if (key == "upload")
-        parsUpload(value);
     else
     {
         std::cout << "Error: invalid directive\n";

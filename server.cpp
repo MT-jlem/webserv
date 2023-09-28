@@ -17,6 +17,7 @@ Location::Location()
     root = "";
     index = "";
     autoIndex = false;
+    trackAutoIndex = false;
     methods[0] = 0;
     methods[1] = 0;
     methods[2] = 0;
