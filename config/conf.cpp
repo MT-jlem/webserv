@@ -780,6 +780,14 @@ void    Conf::fill_Directives_Locations()
                     if (isLocation)
                     {
                         isLocation = false;
+                        for (int i = 0; i < (int)singleServer.loc.size(); i++)
+                        {
+                            if (singleServer.loc[i].path == singleServer.servLoc.path)
+                            {
+                                std::cout << "Error: duplicate location block\n";
+                                exit(1);
+                            }
+                        }
                         singleServer.loc.push_back(singleServer.servLoc);
                         singleServer.servLoc = Location();
                         checkLocationBrace--;
@@ -797,7 +805,7 @@ void    Conf::fill_Directives_Locations()
             }
             else
             {
-                std::cout << "hna Error: invalid directive\n";
+                std::cout << "Error: invalid directive\n";
                 exit(1);
             }
         }

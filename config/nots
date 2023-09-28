@@ -8,7 +8,7 @@
 // add default file;                                 √ DONE
 // dup directives in location just root and index;   √ DONE
 // duplicate directives;                             √ DONE
-// dup location;                                     X
+// dup location;                                     X                                    
 
 //************************ REMARK ************************//
 
