@@ -6,9 +6,9 @@
 // listen like that ":8080" need to show error;      √ DONE
 // location /somthing; {} this one need to stoped;   √ DONE
 // add default file;                                 √ DONE
-// duplicate directives;                             X
+// dup directives in location just root and index;   √ DONE
+// duplicate directives;                             √ DONE
 // dup location;                                     X
-// dup directives in location just root and index;   X
 
 //************************ REMARK ************************//
 

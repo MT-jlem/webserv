@@ -35,7 +35,7 @@ Server::Server(){
     root = "";
     index = "";
     serverName = "";
-    maxBodySize = 0;
+    maxBodySize = -1;
     errorPage = std::map<std::string, std::string>();
     memset(&hints, 0, sizeof(hints));
 }

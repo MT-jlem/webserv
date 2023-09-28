@@ -214,15 +214,14 @@ void    Conf::parsMaxBodySize(std::string &str)
         if (checkMaxBodySize(str) == true)
         {
             singleServer.maxBodySize = atoi(str.c_str());
-            if (str[str.size()-1] == 'k')
+            if (tolower(str[str.size()-1]) == 'k')
                 singleServer.maxBodySize *= 1000;
-            else if (str[str.size()-1] == 'm')
+            else if (tolower(str[str.size()-1]) == 'm')
                 singleServer.maxBodySize *= 1000000;
         }
         else
         {
-            std::cout << "Error: Megabytes, M, and Kilobytes, K, are the accepted units \
-in client_max_body_size.\n";
+            std::cout << "Error: invalid client_max_body_size value\n";
             exit(1);
         }
     }
@@ -702,11 +701,48 @@ void    Conf::fill_Directives_Locations()
                 if (key == "listen" && isLocation == false)
                     parseListen(value, listenDup);
                 else if (key == "server_name" && isLocation == false)
-                    parsServerName(value);
+                {
+                    if (singleServer.serverName.size() == 0)
+                        parsServerName(value);
+                    else
+                    {
+                        std::cout << "Error: duplicate server_name directive\n";
+                        exit(1);
+                    }
+                }
                 else if ((key == "index" || key == "root") && isLocation == false)
-                    parsRootIndex(value, key);
+                {
+                    if (key == "root")
+                    {
+                        if (singleServer.root.size() == 0)
+                            parsRootIndex(value, key);
+                        else
+                        {
+                            std::cout << "Error: duplicate root directive\n";
+                            exit(1);
+                        }
+                    }
+                    if (key == "index")
+                    {
+                        if (singleServer.index.size() == 0)
+                            parsRootIndex(value, key);
+                        else
+                        {
+                            std::cout << "Error: duplicate index directive\n";
+                            exit(1);
+                        }
+                    }
+                }
                 else if (key == "client_max_body_size" && isLocation == false)
-                    parsMaxBodySize(value);
+                {
+                    if (singleServer.maxBodySize == -1)
+                        parsMaxBodySize(value);
+                    else
+                    {
+                        std::cout << "Error: duplicate client_max_body_size directive\n";
+                        exit(1);
+                    }
+                }
                 else if (key == "error_page" && isLocation == false)
                     parsError_page(value);
                 else if (key == "location")
@@ -777,7 +813,7 @@ void    Conf::fill_Directives_Locations()
             std::cout << "Error: root directive is missing\n";
             exit(1);
         }
-        if (singleServer.maxBodySize == 0)
+        if (singleServer.maxBodySize == 0 || singleServer.maxBodySize == -1)
         {
             singleServer.maxBodySize = 1000000;
         }
