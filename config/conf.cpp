@@ -522,7 +522,7 @@ void    Conf::parsUpload(std::string value)
             singleServer.servLoc.upload = value;
         else
         {
-            std::cout << "Error: index accept only one value \n";
+            std::cout << "Error: upload accept only one value \n";
             exit(1);
         }
     }
