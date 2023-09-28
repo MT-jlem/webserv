@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
+#include <exception>
 #include <poll.h>
 #include <climits>
 #include <fcntl.h>
@@ -14,6 +15,7 @@
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/poll.h>
+#include <sys/signal.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -44,7 +46,24 @@ class Client {
 		std::string req;
 		bool firstTime;
 		int servIndex;
+		bool processing;
+		std::string __response;
+		long long sendLength;
+		Client(const Client &obj){
+			// std::cout << "copy con\n";
+			fd = obj.fd;
+			read = obj.read;
+			chunked = obj.chunked;
+			content_length = obj.content_length;
+			req = obj.req;
+			firstTime = obj.firstTime;
+			servIndex = obj.servIndex;
+			processing = obj.processing;
+			sendLength = obj.sendLength;
+			}
 		Client(){
+			sendLength = 0;
+			processing = false;
 			fd = -1;
 			read = 0;
 			chunked = false;
@@ -52,6 +71,7 @@ class Client {
 			req = "";
 			firstTime = true;
 			servIndex = -1;
+			__response = "";
 		};
 		~Client(){};
 		void clear(){
@@ -132,107 +152,164 @@ void statusCodesInitialize(){
 
 int main(int ac, char *av[]){
 
-	Conf config(ac, av[1]);
-	std::vector<pollfd> fds;
-	std::vector<int> servers;
-	std::map<int , Client> clients;
+	try {
+		Conf config(ac, av[1]);
+		std::vector<pollfd> fds;
+		std::vector<int> servers;
+		std::map<int , Client> clients;
 
-	config.readingFile();
-	config.checkBraces();
-	config.fill_Directives_Locations();
+		config.readingFile();
+		config.checkBraces();
+		config.fill_Directives_Locations();
 
-	for (size_t i = 0; i < config.servers.size(); ++i){
-		if (config.servers[i].createServer()){
-			for (int j = i; j >= 0; --j)
-				config.servers[j].closeFd();
-			return -1;
+		for (size_t i = 0; i < config.servers.size(); ++i){
+			if (config.servers[i].createServer()){
+				for (int j = i; j >= 0; --j)
+					config.servers[j].closeFd();
+				std::cout << "error while creating servers\n";
+				return -1;
+			}
+			fds.insert(fds.end(), config.servers[i].fds.begin(), config.servers[i].fds.end());
+			servers.insert(servers.end(), config.servers[i].fd.begin(), config.servers[i].fd.end());
 		}
-		fds.insert(fds.end(), config.servers[i].fds.begin(), config.servers[i].fds.end());
-		servers.insert(servers.end(), config.servers[i].fd.begin(), config.servers[i].fd.end());
-	}
 
-	statusCodesInitialize();
-	initializeEncode();
-	int rv;
-	config.servers[0].loc[1].upload = "/Users/mjlem/Desktop/upload/";
-	while (1) {
-		rv = poll(fds.data(), fds.size(), -1);
-		if (rv < 0){
-			std::cerr << "poll() failed\n";
-			exit(1);
-		}
-		else if (rv){
-			for (size_t i = 0; i < fds.size(); ++i){
-				if (fds[i].revents & POLLIN){
-					std::vector<int>::iterator it = std::find(servers.begin(), servers.end(), fds[i].fd);
-					if (it != servers.end()){
-						int cfd;
-						cfd = accept(fds[i].fd, NULL, NULL);
-						if (cfd < 0){
-							std::cout << "accept() failed\n";
-							std::strerror(errno);
-							exit(1);
+		statusCodesInitialize();
+		initializeEncode();
+		int rv;
+		config.servers[0].loc[1].upload = "/Users/mjlem/Desktop/upload/";
+		signal(SIGPIPE, SIG_IGN);
+		while (1) {
+			rv = poll(fds.data(), fds.size(), -1);
+			if (rv < 0){
+				std::cout << "poll() failed\n";
+				exit(1);
+			}
+			else if (rv){
+				for (size_t i = 0; i < fds.size(); ++i){
+					if (fds[i].revents & (POLLHUP |  POLLNVAL | POLLERR ))
+					{
+						std::cout << "hang up" << std::endl;
+						close(fds[i].fd);
+						clients.erase(fds[i].fd);
+						fds.erase(fds.begin() + i);
+
+					}
+					else if (fds[i].revents & POLLIN){
+						std::vector<int>::iterator it = std::find(servers.begin(), servers.end(), fds[i].fd);
+						if (it != servers.end()){
+							int cfd;
+							cfd = accept(fds[i].fd, NULL, NULL);
+							if (cfd < 0){
+								std::cout << "accept() failed\n";
+								std::strerror(errno);
+								exit(1);
+							}
+							fcntl(cfd, F_SETFL, O_NONBLOCK);
+							pollfd tmp;
+							tmp.fd = cfd;
+							tmp.events = POLLIN;
+							fds.push_back(tmp);
+							clients.insert(std::make_pair(cfd, Client()));
+							clients[cfd].servIndex = find_server(config.servers, fds[i].fd);
+						} 
+						else {
+							char buff[BUFFER_SIZE];
+							bzero(&buff, BUFFER_SIZE);
+							Client &client = clients[fds[i].fd];
+							client.fd = fds[i].fd;
+							long long recv = read(fds[i].fd, buff, BUFFER_SIZE);
+							if (recv == -1){
+								err = "500";
+								std::cout << "read error\n";
+								std::strerror(errno);
+								exit(1);
+							}
+							else if (recv == 0){
+								std::cout << "read hanging\n";
+								clients.erase(fds[i].fd);
+								close(fds[i].fd);
+								fds.erase(fds.begin() + i);
+								continue;
+							}
+							client.req.append(buff, recv);
+							client.read	+= recv;
+							if (client.firstTime)
+								first_req(client);
+							if ((client.content_length <= client.read) || (client.chunked && client.req.find("\r\n0\r\n") != std::string::npos)){
+								fds[i].events = POLLOUT;
+							}
+							// bzero(buff, recv);
 						}
-						fcntl(cfd, F_SETFL, O_NONBLOCK);
-						pollfd tmp;
-						tmp.fd = cfd;
-						tmp.events = POLLIN;
-						fds.push_back(tmp);
-						clients.insert(std::make_pair(fds[i].fd, Client()));
-						clients[cfd].servIndex = find_server(config.servers, fds[i].fd);
-					} 
-					else {
-						char buff[BUFFER_SIZE];
-						bzero(&buff, BUFFER_SIZE);
-						Client &client = clients[fds[i].fd];
-						client.fd = fds[i].fd;
-						long long recv = read(fds[i].fd, buff, BUFFER_SIZE);
-						if (recv == -1){
-							err = "500";
-							std::cout << "read error\n";
-							std::strerror(errno);
-							exit(1);
+					}
+					else if (fds[i].revents & POLLOUT) {
+						Client &ref = clients[fds[i].fd];
+						if (!ref.processing)
+						{
+							std::cout << ref.req << '\n';
+							request req(ref.req);
+							req.parse(config.servers[ref.servIndex]);
+							Response res(req, config.servers[ref.servIndex]);
+							res.resBuilder(req, config.servers[ref.servIndex]);
+							ref.processing = true;
+							ref.__response = res.res;
 						}
-						else if (recv == 0){
-							std::cout << "read hanging\n";
+						if (ref.sendLength < (long)ref.__response.length())
+						{
+							// std::cout << "writing the res\n";
+							std::cout << ref.__response << "<<res\n";
+							int res = write(fds[i].fd, ref.__response.c_str() + ref.sendLength, ref.__response.length() - ref.sendLength);
+							if (res == -1)
+							{
+								err = "";
+								std::cout << "write failed\n";
+								close(fds[i].fd);
+								clients.erase(fds[i].fd);
+								fds.erase(fds.begin() + i);
+								break;
+							} else if (res == 0){
+								err = "";
+								std::cout << "client closed the connection\n";
+								close(fds[i].fd);
+								clients.erase(fds[i].fd);
+								fds.erase(fds.begin() + i);
+								break;
+							}
+							ref.sendLength += res;
+						}
+						else
+						{
+							err = "";
 							clients.erase(fds[i].fd);
 							close(fds[i].fd);
 							fds.erase(fds.begin() + i);
-							continue;
 						}
-						client.req.append(buff, recv);
-						client.read	+= recv;
-						if (client.firstTime)
-							first_req(client);
-						if ((client.content_length <= client.read) || (client.chunked && client.req.find("\r\n0\r\n") != std::string::npos)){
-							fds[i].events = POLLOUT;
-						}
-						bzero(buff, recv);
 					}
-				}	
-				else if (fds[i].revents & POLLOUT){
-					Client &ref = clients[fds[i].fd];
-					request req(ref.req);
-					req.parse(config.servers[ref.servIndex]);
-					Response res(req, config.servers[ref.servIndex]);
-					res.resBuilder(req,config.servers[ref.servIndex]);
-					long long rt = write(fds[i].fd, res.res.c_str(), res.res.size());
-					if (rt < 0){
-						std::cerr << "write \n";
-						exit(1);
-					}
-					if (rt == 0){
-						std::cout << "connection closed\n";
-						exit(1);
-					}
-					usleep(2000);
-					clients.erase(fds[i].fd);
-					close(fds[i].fd);
-					fds.erase(fds.begin() + i);
-					err = "";
+					// else if (fds[i].revents & POLLOUT){
+					// 	Client &ref = clients[fds[i].fd];
+					// 	request req(ref.req);
+					// 	req.parse(config.servers[ref.servIndex]);
+					// 	Response res(req, config.servers[ref.servIndex]);
+					// 	res.resBuilder(req,config.servers[ref.servIndex]);
+					// 	long long rt = write(fds[i].fd, res.res.c_str(), res.res.size());
+					// 	if (rt < 0){
+					// 		std::cerr << "write \n";
+					// 		exit(1);
+					// 	}
+					// 	if (rt == 0){
+					// 		std::cout << "connection closed\n";
+					// 		exit(1);
+					// 	}
+					// 	// usleep(2000);
+					// 	clients.erase(fds[i].fd);
+					// 	close(fds[i].fd);
+					// 	fds.erase(fds.begin() + i);
+					// 	err = "";
+					// }
 				}
 			}
 		}
+	} catch (std::exception &) {
+		std::cout << "error in the server\n";
 	}
 
 }

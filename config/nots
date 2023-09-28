@@ -1,0 +1,6 @@
+// check if the value of directives is exist;--------√ DONE
+// check if location have path value;                √ DONE
+// the location is +1 size;                          √ DONE
+// duplicate directives;                             X
+// location path need '/' at bgein;                  X
+// location /somthing; {} this one need to stoped;   X

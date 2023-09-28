@@ -25,9 +25,17 @@ Location::Location()
 }
 
 
+
+
 Location::~Location(){}
 
 Server::Server(){
+    _listen = std::vector<std::pair<std::string, std::string> >();
+    root = "";
+    index = "";
+    serverName = "";
+    maxBodySize = 0;
+    errorPage = std::map<std::string, std::string>();
     memset(&hints, 0, sizeof(hints));
 }
 

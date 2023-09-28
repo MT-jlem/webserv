@@ -21,6 +21,7 @@ private:
 	size_t pos;
 	std::string ext;
 	char *cgiEnv[11];
+	bool errorHandled;
 public:
 	std::string res;
 	Response();
