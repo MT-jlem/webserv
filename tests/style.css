@@ -1,0 +1,323 @@
+/* || General setup */
+
+html, body {
+	margin: 0;
+	padding: 0;
+}
+  
+html {
+font-size: 10px;
+background: rgb(115,149,174);
+background: linear-gradient(90deg, rgba(115,149,174,1) 0%, rgba(9,107,179,1) 100%);
+}
+  
+body {
+width: 80%;
+margin: 0 auto;
+}
+  
+  /* || typography */
+  
+h1, h2, h3 {
+font-family: 'Times', sans-serif;
+color: #05416e;
+}
+  
+p, input, li {
+font-family: 'Arial', sans-serif;
+color: #2a2a2a;
+}
+  
+h1 {
+font-size: 4rem;
+text-align: center;
+color: #0d4e7f;
+}
+  
+h2 {
+font-size: 3rem;
+text-align: center;
+}
+  
+h3 {
+font-size: 2.2rem;
+}
+  
+p, li {
+font-size: 1.6rem;
+line-height: 1.5;
+}
+  
+  /* || header layout */
+  
+nav, article, aside, footer {
+background-color: white;
+padding: 1%;
+}
+  
+nav {
+/* height: 50px; */
+background-color: white;
+display: flex;
+}
+  
+nav ul {
+padding: 0;
+list-style-type: none;
+flex: 2;
+display: flex;
+}
+  
+nav li {
+display: inline;
+text-align: center;
+flex: 1;
+}
+.HO {
+	color: white;
+}
+  
+nav a {
+display: inline-block;
+font-size: 2rem;
+text-transform: uppercase;
+text-decoration: none;
+color: black;
+}
+  
+nav form {
+flex: 1;
+display: flex;
+align-items: center;
+height: 100%;
+padding: 0 2em;
+}
+  
+input {
+font-size: 1.6rem;
+height: 32px;
+}
+
+input[type="search"] {
+flex: 3;
+}
+
+input[type="submit"] {
+flex: 1;
+margin-left: 1rem;
+background-color: rgb(8, 64, 104);
+border: 0;
+color: white;
+}
+
+
+article {
+flex: 4;
+}
+
+aside {
+flex: 1;
+background-color: white;
+}
+
+aside li {
+padding-bottom: 10px;
+}
+
+footer {
+margin-top: 10px;
+}
+
+ul.b {
+	list-style-type: square;
+}
+
+.yes {
+	text-align: center;
+}
+
+.link form input{
+	border:1px solid #8d8d8d;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	text-decoration: none;
+	background-color: #264653;
+	color: #fff;
+	border-radius: 4px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	padding-left: 60px;
+	padding-right: 60px;
+
+	width: 100%;
+	text-align: center;
+	
+}
+
+form {
+	display: flex;
+	flex-direction: column;
+	padding: 10px;
+
+}
+
+a {
+	padding: 10px;
+	background-color: #1f2833;
+	border: 1px solid white;
+	border-radius: 6px;
+	color: white;
+	text-decoration: none;
+}
+
+.container
+{
+	/* border: 1px solid red; */
+	width: 70%;
+	height: 100vh;
+	margin: 0 auto;
+	margin-top: 10px;
+}
+
+.header
+{
+	border: 3px solid rgba(32, 36, 100, 0.367);
+	/* border-radius: 15px; */
+	border-left: none;
+	border-right: none;
+	border-bottom: none;
+	padding-top: 15px;
+	padding-bottom: 15px;
+	width: 90%;
+	margin: 0 auto;
+	margin-bottom: 30px;
+}
+
+.headers
+{
+	/* border: 1px solid red; */
+	display: block;
+	margin: 15px;
+	font-size: 18px;
+	font-weight: 900;
+}
+
+.methodes
+{
+	/* border: 1px solid red; */
+	margin: 15px;
+	width: 100%;
+}
+
+.methodes th a
+{
+	/* border: 1px solid red; */
+	width: 100%;
+	padding: 10px 20px;
+}
+
+.header-1
+{
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	border: 1px solid rgb(0, 30, 255);
+	border: 3px solid rgba(49, 30, 118, 0.367);
+	/* border-radius: 15px; */
+	border-left: none;
+	border-right: none;
+	border-bottom: none;
+	padding-top: 15px;
+	padding-bottom: 15px;
+	width: 90%;
+	margin: 0 auto;
+	margin-bottom: 30px;
+}
+
+.HAH {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+
+}
+
+.post-cgi
+{
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border-radius: 10px;
+	background-color: #699db33e;
+	width: 40%;
+	height: 150px;
+	/* padding-top: 15px;
+	padding-bottom: 15px; */
+	/* width: 90%;
+	margin: 0 auto;
+	margin-bottom: 30px;
+	position: relative;
+	height: 50px;
+	padding: 30px; */
+}
+
+.post-cgi #log
+{
+	width: 100%;
+	height: 40px;
+	padding: 5px;
+	text-indent: 10px;
+	border-radius: 10px;
+} 
+
+.btn {
+	
+	margin-top: 20px;
+	width: 100%;
+	padding: 10px;
+	border-radius: 10px;
+}
+.post-cgi #btn
+{
+	background-color: rgb(8, 64, 104);
+	margin-top: 20px;
+	width: 98%;
+	padding: 10px;
+	border-radius: 10px;
+} 
+
+.ul-aside
+{
+	width: 90%;
+	margin: 0 auto;
+	margin-top: 40px;
+}
+
+.ul-aside li
+{
+	margin-bottom: 18px;
+}
+
+.batat a
+{
+	color: rgba(255, 255, 255, 0.825);
+}
+
+.form-1
+{
+	border: 1px solid red;
+	height: 100%;
+}
+
+.form-1
+{
+	border: 1px solid red;
+	position: relative;
+	top: 5px;
+}
+
+.form-1 #q
+{
+	width: 100%;
+	height: 5px;
+}

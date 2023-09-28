@@ -10,6 +10,7 @@ form = cgi.FieldStorage()
 # print("Content-type: text/html\n")
 
 # HTML content
+print("\r\n")
 print("<html>")
 print("<head>")
 print("<title>Simple CGI Python Script</title>")

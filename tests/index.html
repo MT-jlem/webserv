@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>WebServr</title>
+		<link href="https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300%7CSonsie+One" rel="stylesheet" type="text/css">
+		<link rel="stylesheet" href="style.css">
+	</head>
+
+	<body>
+
+		<div class="container">
+
+			<header>
+				<h1 class="HO">Welcome To WebServe</h1>
+			</header>
+
+			<nav>
+
+				<ul class="batat">
+					<li><a href="https://profile.intra.42.fr/users/tbouzalm">Tbouzalm</a></li>
+					<li><a href="https://profile.intra.42.fr/users/mjlem">Mjlem</a></li>
+					<li><a href="https://profile.intra.42.fr/users/imittous">Mittous</a></li>
+				</ul>
+
+
+
+			</nav>
+
+			<main>
+
+				<!-- It contains an article -->
+				<article>
+
+					<h2>WebServ : Li ban lik</h2>
+
+					<div class='header'>
+						<div class="headers">GET Method</div>
+						<div class='link'>
+							<table class="methodes">
+								<tr>
+									<th>
+										<a href="/auto">testAutoIndex</a>
+									</th>
+									<th>
+										<a href="/video">Get Video</a>
+									</th>
+									<th>
+										<a href="/image">Get Image</a>
+									</th>
+									<th>
+										<a href="/redirect">Get Redirect</a>
+									</th>
+									<th>
+										<a href="/cookies">Get Cookies</a>
+									</th>
+								</tr>
+							</table>
+						</div>
+					</div>
+
+
+					<div class='header-1'>
+
+						<div class="headers">POST Method</div class="">
+
+						<form action='http://localhost:8080/' method='POST' enctype='multipart/form-data' >
+							<input type='file'  required name='file' accept="video/mp4"  id='' multiple  >
+							<input type='submit' class='btn' value='Upload Video'>
+						</form>
+
+							<form action='http://localhost:8080/' method='POST' enctype='multipart/form-data' >
+								<input type='file' required name='file' accept="image/png, image/jpeg"  id='' multiple  >
+								<input type='submit' class='btn' value='Upload Image'>
+							</form>
+
+					</div>
+								<div class='header'>
+									<div class="headers">GET CGI SCRIPTS</div>
+									<div class='link'>
+										<table class="methodes">
+											<tr>
+												<th>
+													<a href="/cgi/index.php">Get php CGI script</a>
+												</th>
+												<th>
+													<a href="/cgi/index.py">Get python CGI script</a>
+												</th>
+											</tr>
+										</table>
+									</div>
+								</div>
+
+				</article>
+
+				<!-- the aside content can also be nested within the main content -->
+				<aside>
+					<h2>POST CGI TEST</h2>
+
+					<h1>CGI Test PhP</h1>
+          <div class="HAH">
+            <div class="post-cgi">
+              <form action="/cgi/post.php" method="POST" enctype="multipart/form-data">
+                <input id="log" type="text" name="fileToUpload" id="fileToUpload" placeholder="enter your login name">
+                <input id="btn" type="submit" value="cgi php">
+              </form>
+            </div>
+  
+            <h1>CGI Test Python</h1>
+            <div class="post-cgi">
+              <form action="/cgi/post.py" method="POST" enctype="multipart/form-data">
+                <input id="log" type="text" name="fileToUpload" id="fileToUpload" placeholder="enter your login name">
+                <input id="btn" type="submit" value="cgi python">
+              </form>
+            </div>
+          </div>
+
+
+
+
+					<ul class="ul-aside">
+						<li><a href="https://shorturl.at/kpMX2">Oh I do like to be Rich men by AMLOU</a></li>
+					</ul>
+
+				</aside>
+
+			</main>
+
+			<footer>
+				<p>©Copyright 2023 by the and the only Team <b>liban lik</b>. All rights reversed.</p>
+			</footer>
+
+
+		</div>
+
+	</body>
+
+</html>

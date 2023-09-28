@@ -52,17 +52,16 @@ Response::Response(){}
 Response::Response(request &req, Server &serv){
 	res = "HTTP/1.1 ";
 	locIndex = -1;
-	pos = req.getPath().size() - 1;
+	pos = std::string::npos;
 	errorHandled = false;
 
 	if (err != ""){
-		std::cout << req.rawReq << '\n';
-		std::cout << "const\n";
 		errorRes(serv, req);
 		return;
 	}
 	locIndex = getLocation(req, serv);
 	if (locIndex == -1){
+		std::cout << "not found\n";
 		err = "404";
 		return;
 	} else {
@@ -129,20 +128,17 @@ int Response::getLocation(request &req, Server &serv){
 	size_t vecSize = serv.loc.size();
 	std::string str = req.getPath();
 
-	std::cout << vecSize << "<< loc size\n";
-	std::cout << str << "<< req path\n";
 	while (true) {
 		for (size_t i = 0; i < vecSize; ++i){
 			if (str == serv.loc[i].path)
 				return i;
 		}
 		pos = str.rfind("/", pos-1);
-		if (pos == std::string::npos){
-			std::cout << str << '\n';
-			err = "400";
+		if (pos == std::string::npos)
 			return  -1;
-		}
 		str = str.substr(0, pos + 1);
+		if (str.size() > 1)
+			str = str[str.size() - 1] == '/' ? str.substr(0, pos) : str;
 	}
 	return -1;
 }
@@ -156,7 +152,9 @@ void Response::getM(Server &serv, request &req){
 	res += "200 ";
 	res += statusCodes["200"];
 	res += getHeaders();
-	res += "\r\n";
+	if (ext != ".py" && ext != ".php"){
+		res += "\r\n";
+	}
 	res += body;
 	res += "\r\n";
 }
@@ -184,6 +182,8 @@ void Response::postM(Server &serv, request &req){
 					std::string filename = tmp.substr(filenameStart, tmp.find("\"", filenameStart) - filenameStart);
 					// path = path[path.size() -1 ] != '/' ? path + "/" : path;
 					std::string upload = serv.loc[locIndex].upload != "" ? serv.loc[locIndex].upload : "/tmp/";
+					struct stat st;
+					stat(path.data(),  &st);
 					std::ofstream file (upload + filename);
 					if (!file.is_open() || file.fail()){
 						std::cout << "can't upload(file not created)\n";
@@ -213,6 +213,8 @@ void Response::postM(Server &serv, request &req){
 		}
 		if (!serv.loc[locIndex].cgiPath.empty() && (ext == ".py" || ext == ".php")){
 			body = execCgi(serv, req);
+			if (err != "")
+				return;
 			file = ".html";
 			res += "200";
 			res += statusCodes["200"];
@@ -221,7 +223,8 @@ void Response::postM(Server &serv, request &req){
 			res += statusCodes["204"];
 		}
 		res += getHeaders();
-		res += "\r\n";
+		if (ext != ".py" && ext != ".php")
+			res += "\r\n";
 		res += body; res += "\r\n";
 	}
 	else {
@@ -230,8 +233,13 @@ void Response::postM(Server &serv, request &req){
 }
 
 void Response::deleteM(){
+	if (access(path.data(), F_OK)){
+		std::cout << "not found\n";
+		err = "404";
+		return ;
+	}
 	if (remove(path.data())){
-		std::cout << "delete m error \n";
+		std::cout << "delete error \n";
 		err = "500";
 		return;
 	}
@@ -253,10 +261,6 @@ void Response::resBuilder(request &req, Server &serv){
 				reDirRes(serv, req);
 			else 
 				getM(serv, req);
-			if (err != ""){
-					errorRes(serv, req);
-					return;
-				}
 		}
 		else{
 			err = "405";
@@ -289,6 +293,10 @@ void Response::resBuilder(request &req, Server &serv){
 			errorRes(serv, req);
 			return;
 		}
+	}
+	if (err != ""){
+		errorRes(serv, req);
+			return;
 	}
 }
 
@@ -468,7 +476,8 @@ std::string Response:: getBody(const std::string &path, Server &serv, request &r
 	if (!serv.loc[locIndex].cgiPath.empty() && (ext == ".py" || ext == ".php")){
 		buff = execCgi(serv, req);
 		file = ".html";
-	}else {
+	} 
+	else {
 		std::ifstream file(path);
 		if (!file.is_open()){
 			err = "500";
@@ -557,15 +566,14 @@ void Response::initializeEnv(request &req){
 	var[2] += req.getQuery();
 	it = headers.find("Content-Type");
 	var[3] += it != headers.end() ? it->second : "";
-	it = headers.find("Content-Length");
-	var[4] += it != headers.end() ? it->second : "";
+	var[4] += data.empty() ? "0" : std::to_string(data[0].size());
 	it = headers.find("Cookie");
 	var[5] +=  it != headers.end() ? it->second : "";
 	var[6] += req.getPath();
 	it = headers.find("User-Agent");
 	var[7] +=  it != headers.end() ? it->second : "";
 	var[8] += path;
-	var[9] += "200";
+	var[9] += "1";
 	for (int i = 0; i < 10; ++i){
 		cgiEnv[i] = strdup(var[i].c_str());
 	}
@@ -595,7 +603,6 @@ std::string Response::execCgi(Server &serv, request &req){
 	if (req.getMethod() == "POST"){
 		write(cgiFile, data[0].c_str(), data[0].size());
 		lseek(cgiFile, 0, SEEK_SET);
-		// close(cgiFile);
 	}
 	arg[0] = (char *)serv.loc[locIndex].cgiPath[ext].c_str();
 	arg[1] = (char *)path.c_str();
@@ -611,11 +618,17 @@ std::string Response::execCgi(Server &serv, request &req){
 	} else if (pid == 0){
 		dup2(cgiFile, STDIN_FILENO);
 		dup2(fd[1], STDOUT_FILENO);
-		execve(arg[0], arg, cgiEnv);
+		if (execve(arg[0], arg, cgiEnv))
+			exit(1);
 	} else{
 		char buff[BUFFER_SIZE];
 		waitpid(pid, &status, 0);
 		close(fd[1]);
+		if (status){
+			std::cout << "cgi error\n";
+			err = "500";
+			return "";
+		}
 		while (true) {
 			long long r = read(fd[0], buff, BUFFER_SIZE -1);
 			if (r == 0){
@@ -625,12 +638,16 @@ std::string Response::execCgi(Server &serv, request &req){
 				err = "500";
 				return  "";
 			}
-			buff[r - 1] = '\0';
+			buff[r] = '\0';
 			str.append(buff, r);
 			bzero(buff, r);
 		
 		}
 		close(fd[0]);
+		size_t start;
+		while ((start = path.find("%", start)) != path.npos) {
+			str.replace(start, 2, "\r\n");
+		}
 	}
 	close(cgiFile);
 	close(cgiRes);

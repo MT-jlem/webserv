@@ -1,4 +1,4 @@
-#!/usr/bin/env php-cgi
+#!/usr/bin/php
 
 <?php
 // Set the content type to HTML

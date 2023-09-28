@@ -11,10 +11,12 @@ post_data = sys.stdin.read(content_length)
 
 # Now, post_data contains the request body data (e.g., form data or JSON)
 
-print "<html>"
-print "<body>"
-print "<h1>POST Data Received(CGI TEST)</h1>"
-print "<p>Data:</p>"
-print "<pre>%s</pre>" % post_data
-print "</body>"
-print "</html>"
+print("\r\n")
+# Print the HTML response
+print("<html>")
+print("<body>")
+print("<h1 style=\"color:dodgerblue;\">Data Received (CGI TEST)</h1>")
+print("<p>Hi: </p>")
+print("<pre>%s</pre>" % post_data)
+print("</body>")
+print("</html>")

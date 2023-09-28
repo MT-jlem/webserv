@@ -1,6 +1,21 @@
+#include <algorithm>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+#include <exception>
+#include <poll.h>
 #include <climits>
 #include <fcntl.h>
 #include <iostream>
+#include <random>
+#include <strings.h>
+#include <sys/_types/_size_t.h>
+#include <sys/_types/_socklen_t.h>
+#include <sys/errno.h>
+#include <sys/fcntl.h>
+#include <sys/poll.h>
+#include <sys/signal.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -11,38 +26,90 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <utility>
 #include <vector>
 #include "request.hpp"
 #include "response.hpp"
 #include "server.hpp"
 #include "request.hpp"
+#include "config/read_config.hpp"
 #include "config/conf.hpp"
-void initializeEncode();
-//  ❌❌❌❌❌ check for "connection" and "Host" headers in a req
+
+//host connection chunked in res 
+
+class Client {
+	public:
+		int fd;
+		long long read;
+		bool chunked;
+		long long content_length;
+		std::string req;
+		bool firstTime;
+		int servIndex;
+		bool processing;
+		std::string __response;
+		long long sendLength;
+		Client(const Client &obj){
+			// std::cout << "copy con\n";
+			fd = obj.fd;
+			read = obj.read;
+			chunked = obj.chunked;
+			content_length = obj.content_length;
+			req = obj.req;
+			firstTime = obj.firstTime;
+			servIndex = obj.servIndex;
+			processing = obj.processing;
+			sendLength = obj.sendLength;
+			}
+		Client(){
+			sendLength = 0;
+			processing = false;
+			fd = -1;
+			read = 0;
+			chunked = false;
+			content_length = 0;
+			req = "";
+			firstTime = true;
+			servIndex = -1;
+			__response = "";
+		};
+		~Client(){};
+		void clear(){
+			read = 0;
+			chunked = false;
+			content_length = 0;
+			req = "";
+			firstTime = true;
+		}
+};
+
+void first_req(Client &ref){
+	size_t pos;
+	ref.firstTime = false;
+	if (std::string::npos != (pos = ref.req.find("Content-Length:"))){
+		ref.read -= ref.req.find("\r\n\r\n");
+		size_t end = ref.req.find("\n", pos);
+		ref.content_length = std::stoi(ref.req.substr(pos + 16, end - (pos + 16)));
+	} else if (std::string::npos != (pos = ref.req.find("Transfer-Encoding: chunked"))) {
+		ref.chunked = true;
+	}
+
+}
+
+int find_server(std::vector<Server> servers, int fd){
+
+	for (size_t i = 0; servers.size(); ++i){
+		for (size_t j = 0; servers[i].fd.size(); ++j){
+			if (servers[i].fd[j] == fd)
+				return i;
+		}
+	}
+	return -1;
+}
+
 std::string err = "";
 std::map<std::string, std::string> statusCodes;
-extern std::map<std::string, std::string> encode;
-/*to-do:
-	- parse conf file
-		create http class
-	- create the servers
-		create server class
-	- get the req (parse, ...)
-		create a req class
-	- proccess the req and send the response (read files, cgi,....)
-		create a response string
-	- cookies, session ...
-*/
-	//getaddrinfo
-	//socket
-	//setsockopt
-	//bind
-	// fcntl
-	//listen
-	//accept
-	//poll
-	//send || //recv
-	//PS: fcntl(sock, F_SETFL, O_NONBLOCK);//should be used with poll() for non-blocking i/o operations
+void initializeEncode();
 
 void statusCodesInitialize(){
 	statusCodes["200"] = " OK\r\n";
@@ -83,149 +150,140 @@ void statusCodesInitialize(){
 	statusCodes["505"] = " HTTP Version Not Supported\r\n";
 }
 
-void initializeServ(Server &serv){
-	//if root doesn't have "/" in the end add "/"
-	serv.root = "/Users/mjlem/Desktop/webserv/";
-	// serv.index = "index.html";
-	serv.maxBodySize = LONG_LONG_MAX;
-	serv.loc.resize(2);
-	serv.loc[0].path = "/";
-	serv.loc[0].autoIndex = true;
-	serv.loc[0].methods[GET] = 1;
-	serv.loc[0].methods[POST] = 1;
-	serv.loc[0].methods[DELETE] = 1;
-	serv.loc[0].upload = "/Users/mjlem/Desktop/upload/";
-	// serv.loc[0].cgi = true;
-	serv.loc[0].cgiPath[".py"] = "/usr/bin/python";
-	serv.loc[0].cgiPath[".php"] = "/usr/bin/php";
-	// serv.loc[0].redir.first = "301";
-	// serv.loc[0].redir.second = "https://youtu.be/3f72kbqN6hg?t=99";
-	serv.loc[1].path = "/loc";
-	serv.loc[1].autoIndex = true;
-	serv.loc[1].methods[GET] = 1;
-	serv.loc[1].methods[POST] = 1;
-	serv.loc[1].methods[DELETE] = 1;
-}
+int main(int ac, char *av[]){
 
+	try {
+		Conf config(ac, av[1]);
+		std::vector<pollfd> fds;
+		std::vector<int> servers;
+		std::map<int , Client> clients;
 
-int sock;
+		config.readingFile();
+		config.checkBraces();
+		config.fill_Directives_Locations();
 
-void handler(int){
-	std::cout << "i'm out here\n";
-	close(sock);
-	exit(1);
-}
-// int main(int ac, char *av[]){ //takes config file
-int main(){
-	err = "";
-	statusCodesInitialize();
-	initializeEncode();
-	Server serv;
-
-	initializeServ(serv);
-	signal(SIGINT, handler);
-	struct addrinfo *res, hints;
-
-	std::memset(&hints, 0, sizeof(hints));
-	hints.ai_socktype = SOCK_STREAM;
-	if (getaddrinfo("127.0.0.1", "8080", &hints, &res) != 0){
-		std::cerr << "getaddrinfo failed\n";
-	}
-
-	int yes = 1;
-	for (; res; res = res->ai_next){
-		sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-		if (sock < 0){
-			perror("socket");
-			continue;
+		for (size_t i = 0; i < config.servers.size(); ++i){
+			if (config.servers[i].createServer()){
+				for (int j = i; j >= 0; --j)
+					config.servers[j].closeFd();
+				std::cout << "error while creating servers\n";
+				return -1;
+			}
+			fds.insert(fds.end(), config.servers[i].fds.begin(), config.servers[i].fds.end());
+			servers.insert(servers.end(), config.servers[i].fd.begin(), config.servers[i].fd.end());
 		}
-		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) < 0){
-			perror("setsockopt");
-			continue;
-		}
-		if (bind(sock, res->ai_addr, res->ai_addrlen) != 0){
-			close(sock);
-			perror("bind");
-			continue;
-		}
-		listen(sock, SOMAXCONN);
-		break;
-	}
-	if (!res)
-		return 1;
-	struct sockaddr_storage s;
-	socklen_t len;
-	int host;
-	while (1)
-	{
-		std::cout << "waiting for new connection\n";
-		host = accept(sock, (sockaddr *)&s, &len);
-		if (host < 0){
-			close(sock);
-			perror("accept");
-			return 1;
-		}
-		char str[BUFFER_SIZE];
-		size_t reqSize;
-		size_t start;
-		size_t recvSize = 0;
-		size_t end;
-		std::string tmp;
-		bzero(str, BUFFER_SIZE);
 
+		statusCodesInitialize();
+		initializeEncode();
+		int rv;
+		config.servers[0].loc[0].upload = "/Users/mjlem/Desktop/upload/";
+		signal(SIGPIPE, SIG_IGN);
+		while (1) {
+			rv = poll(fds.data(), fds.size(), -1);
+			if (rv < 0){
+				std::cout << "poll() failed\n";
+				exit(1);
+			}
+			else if (rv){
+				for (size_t i = 0; i < fds.size(); ++i){
+					if (fds[i].revents & (POLLHUP |  POLLNVAL | POLLERR ))
+					{
+						close(fds[i].fd);
+						clients.erase(fds[i].fd);
+						fds.erase(fds.begin() + i);
 
-		recvSize += recv(host, str, BUFFER_SIZE , 0);
-		std::cout << "=================RECV===============\n";
-		tmp.append(str, recvSize);
-		recvSize -= tmp.find("\r\n\r\n") + 4;
-		bzero(str, BUFFER_SIZE);
-		// if (tmp.find("Transfer-Encoding: chunked") != tmp.npos){
-		// 	start = tmp.find("\r\n\r\n") + 4;
-		// 	reqSize = toHex(tmp.substr(start, tmp.find("\n", start) - start));
-
-// // 		// }
-
-		//check Content-Length and recv all the req
-		start = tmp.find("Content-Length:");
-		if (start != tmp.npos){
-			end = tmp.find("\n", start);
-			reqSize = std::stoi(tmp.substr(start + 16, end - 1));
-			std::cout << reqSize;
-			while(1){
-				if (recvSize >= reqSize)
-					break;
-				size_t tmpRecvSize = 0;
-				tmpRecvSize =  recv(host, str, BUFFER_SIZE , 0);
-				// std::cout << tmpRecvSize << "=================RECV===============\n";
-				recvSize += tmpRecvSize;
-				tmp.append(str, tmpRecvSize);
-			bzero(str, BUFFER_SIZE);
-
+					}
+					else if (fds[i].revents & POLLIN){
+						std::vector<int>::iterator it = std::find(servers.begin(), servers.end(), fds[i].fd);
+						if (it != servers.end()){
+							int cfd;
+							cfd = accept(fds[i].fd, NULL, NULL);
+							if (cfd < 0){
+								std::cout << "accept() failed\n";
+								std::strerror(errno);
+								exit(1);
+							}
+							fcntl(cfd, F_SETFL, O_NONBLOCK);
+							pollfd tmp;
+							tmp.fd = cfd;
+							tmp.events = POLLIN;
+							fds.push_back(tmp);
+							clients.insert(std::make_pair(cfd, Client()));
+							clients[cfd].servIndex = find_server(config.servers, fds[i].fd);
+						} 
+						else {
+							char buff[BUFFER_SIZE];
+							bzero(&buff, BUFFER_SIZE);
+							Client &client = clients[fds[i].fd];
+							client.fd = fds[i].fd;
+							long long recv = read(fds[i].fd, buff, BUFFER_SIZE);
+							if (recv == -1){
+								err = "500";
+								std::cout << "read error\n";
+								std::strerror(errno);
+								continue;
+							}
+							else if (recv == 0){
+								clients.erase(fds[i].fd);
+								close(fds[i].fd);
+								fds.erase(fds.begin() + i);
+								continue;
+							}
+							client.req.append(buff, recv);
+							client.read	+= recv;
+							if (client.firstTime)
+								first_req(client);
+							if ((client.content_length <= client.read) || (client.chunked && client.req.find("\r\n0\r\n") != std::string::npos)){
+								fds[i].events = POLLOUT;
+							}
+							// bzero(buff, recv);
+						}
+					}
+					else if (fds[i].revents & POLLOUT) {
+						Client &ref = clients[fds[i].fd];
+						if (!ref.processing)
+						{
+							request req(ref.req);
+							req.parse(config.servers[ref.servIndex]);
+							Response res(req, config.servers[ref.servIndex]);
+							res.resBuilder(req, config.servers[ref.servIndex]);
+							ref.processing = true;
+							ref.__response = res.res;
+						}
+						if (ref.sendLength < (long)ref.__response.length())
+						{
+							int res = write(fds[i].fd, ref.__response.c_str() + ref.sendLength, ref.__response.length() - ref.sendLength);
+							if (res == -1)
+							{
+								err = "";
+								std::cout << "write failed\n";
+								close(fds[i].fd);
+								clients.erase(fds[i].fd);
+								fds.erase(fds.begin() + i);
+								break;
+							} else if (res == 0){
+								err = "";
+								std::cout << "client closed the connection\n";
+								close(fds[i].fd);
+								clients.erase(fds[i].fd);
+								fds.erase(fds.begin() + i);
+								break;
+							}
+							ref.sendLength += res;
+						}
+						else
+						{
+							err = "";
+							clients.erase(fds[i].fd);
+							close(fds[i].fd);
+							fds.erase(fds.begin() + i);
+						}
+					}
+				}
 			}
 		}
-
-		//check "Host" header if not found return err = "400" res
-
-		{
-			err = "";
-			std::cout << tmp << '\n';
-			request req(tmp);
-
-			req.parse(serv);
-			Response resp(req, serv);
-			resp.resBuilder(req, serv);
-
-		std::string buff;
-		buff = resp.res;
-		std::cout << resp.res;
-		send(host,(char *)(buff.data()), buff.size(),0);
-		close(host);
-		}
-		// break;
+	} catch (std::exception &r) {
+		std::cout << r.what() << "\n";
 	}
-	
-	freeaddrinfo(res);
-	close(host);
-	close(sock);
-	
+
 }

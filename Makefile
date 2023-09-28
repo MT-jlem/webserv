@@ -4,7 +4,7 @@ CC = c++
 
 CPPFLAGS =  -std=c++98 -fsanitize=address -fno-omit-frame-pointer
 
-SRC =	main2.cpp request.cpp server.cpp response.cpp \
+SRC =	main.cpp request.cpp server.cpp response.cpp \
 		config/conf.cpp config/read_config.cpp
 
 OBJ = $(SRC:%.cpp=%.o)
@@ -24,5 +24,5 @@ fclean : clean
 
 re : fclean all
 
-b : re clean
+b : re
 	clear && ./$(NAME) .conf
