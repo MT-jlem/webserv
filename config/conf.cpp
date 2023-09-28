@@ -109,6 +109,11 @@ void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listen
         int pos = listenValue.find(':');
         if (pos == -1)
         {
+            if (!(listenValue.find_first_not_of("0123456789") == std::string::npos))
+            {
+                std::cout << "Error: invalid port number\n";
+                exit(1);
+            }
             port = listenValue;
             listenValue = default_ip + ':' + port;
             num << port;
@@ -134,6 +139,11 @@ void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listen
         }
         else
         {
+            if (listenValue[0] == ':')
+            {
+                std::cout << "Error: invalid ip address\n";
+                exit(1);
+            }
             ip = listenValue.substr(0, pos);
             port = listenValue.substr(pos+1, listenValue.size()-pos-1);
             num << port;
@@ -509,7 +519,7 @@ void    Conf::parsUpload(std::string value)
     {
         value = trim(value.substr(0, value.size()-1), " ");
         if (value.find(' ') == std::string::npos)
-            singleServer.index = value;
+            singleServer.servLoc.upload = value;
         else
         {
             std::cout << "Error: index accept only one value \n";

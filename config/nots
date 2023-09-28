@@ -2,5 +2,13 @@
 // check if location have path value;                √ DONE
 // the location is +1 size;                          √ DONE
 // location path need '/' at bgein;                  √ DONE
+// listen like that ":8080" need to show error;      X
 // duplicate directives;                             X
+// dup location;                                     X
+// dup directives in location just root and index;   X
 // location /somthing; {} this one need to stoped;   X
+// add default file;                                 X
+
+//************************ REMARK ************************//
+
+// add an if statment before assign new value if it is already full
