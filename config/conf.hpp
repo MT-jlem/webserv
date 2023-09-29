@@ -11,7 +11,6 @@
 #include <stack>
 #include <algorithm>
 #include <vector>
-// #include <utility
 #include "read_config.hpp"
 #include "../server.hpp"
 
@@ -28,13 +27,14 @@ class Conf : public ReadConfig
 		int listenIndx;
 		std::string default_ip;
 	public:
+		std::vector<std::string> listenDup;
 		Server singleServer;
 		std::vector<Server> servers;
         Conf(int ac, char *av);
         ~Conf();
         void    		fill_Directives_Locations();
         void    		checkIsServer(int serverIndex);
-		void			parseListen(std::string listen, std::vector<std::string> &listenDup);
+		void			parseListen(std::string listen);
 		std::string		parseIp(std::string ip);
 		bool 			listenCharIsValid(const std::string &str);
 		void			parsMaxBodySize(std::string &str);

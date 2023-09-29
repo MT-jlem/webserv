@@ -91,7 +91,7 @@ bool Conf::listenCharIsValid(const std::string &str)
     return str.find_first_not_of("0123456789.:") == std::string::npos;
 }
 
-void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listenDup)
+void	Conf::parseListen(std::string listenValue)
 {
 	
     if (listenValue[listenValue.size()-1] == ';')
@@ -120,16 +120,9 @@ void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listen
             num >> portInt;
             if (portInt > 1024 && portInt < 65535)
             {
-                if (std::count(listenDup.begin(), listenDup.end(), listenValue) == 0)
-                {
-                    listenDup.push_back(listenValue);
-                    singleServer._listen.push_back(std::make_pair(default_ip, port));
-                }
-                else
-                {
-                    std::cout << "Error: duplicate listen value\n";
-                    exit(1);
-                }
+                listenDup.push_back(listenValue);
+                singleServer._listens.push_back(listenValue);
+                singleServer._listen.push_back(std::make_pair(default_ip, port));
             }
             else
             {
@@ -144,28 +137,27 @@ void	Conf::parseListen(std::string listenValue, std::vector<std::string> &listen
                 std::cout << "Error: invalid ip address\n";
                 exit(1);
             }
-            ip = listenValue.substr(0, pos);
+            ip = parseIp(listenValue.substr(0, pos));
             port = listenValue.substr(pos+1, listenValue.size()-pos-1);
             num << port;
             num >> portInt;
             if (portInt > 1024 && portInt < 65535)
             {
-                if (std::count(listenDup.begin(), listenDup.end(), listenValue) == 0)
-                {
-                    listenDup.push_back(listenValue);
-                    singleServer._listen.push_back(std::make_pair(ip, port));
-                }
-                else
-                {
-                    std::cout << "Error: duplicate listen value\n";
-                    exit(1);
-                }
+
+                listenDup.push_back(listenValue);
+                singleServer._listens.push_back(listenValue);
+                singleServer._listen.push_back(std::make_pair(ip, port));
             }
             else
             {
                 std::cout << "Error: invalid port number\n";
                 exit(1);
             }
+        }
+        if (std::count(singleServer._listens.begin(), singleServer._listens.end(), listenValue) > 1)
+        {
+            std::cout << "Error: duplicate listen directive\n";
+            exit(1);
         }
     }
     else
@@ -659,7 +651,7 @@ void    Conf::fill_Directives_Locations()
         }
         _serverBlocks[i] = serv_push;
     }
-    std::vector<std::string> listenDup;
+
     for (int i = 0; i < (int)_serverBlocks.size(); i++)
     {
         int checkLocationBrace = 0;
@@ -699,7 +691,7 @@ void    Conf::fill_Directives_Locations()
             if (key.size() > 0)
             {
                 if (key == "listen" && isLocation == false)
-                    parseListen(value, listenDup);
+                    parseListen(value);
                 else if (key == "server_name" && isLocation == false)
                 {
                     if (singleServer.serverName.size() == 0)
@@ -810,6 +802,9 @@ void    Conf::fill_Directives_Locations()
             }
         }
 
+  
+
+
         // check if all directives of server are filled
         if (singleServer._listen.size() == 0)
         {
@@ -831,6 +826,13 @@ void    Conf::fill_Directives_Locations()
             singleServer = Server();
         }
     }
+
+    // print the vector of dup listen
+    for (int i = 0; i < (int)listenDup.size(); i++)
+    {
+        std::cout << "dup listen = " << listenDup[i] << std::endl;
+    }
+
 
     // print the vector of server blocks
     // std::cout << servers.size() << std::endl;
