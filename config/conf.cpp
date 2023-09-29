@@ -827,11 +827,7 @@ void    Conf::fill_Directives_Locations()
         }
     }
 
-    // print the vector of dup listen
-    for (int i = 0; i < (int)listenDup.size(); i++)
-    {
-        std::cout << "dup listen = " << listenDup[i] << std::endl;
-    }
+
 
 
     // print the vector of server blocks

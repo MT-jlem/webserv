@@ -57,7 +57,7 @@ public:
     std::vector<int>    fd;
 	Server();
 	~Server();
-    int createServer();
+    int createServer(std::vector<std::string> &created);
 	void closeFd();
 };
 
