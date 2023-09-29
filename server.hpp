@@ -42,6 +42,7 @@ private:
 public:
 //conf part
 	std::vector<std::pair<std::string, std::string> > _listen;
+	std::vector<std::string> _listens;
 	std::string root;
 	std::string index;
 	std::string serverName;
