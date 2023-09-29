@@ -113,13 +113,14 @@ int main(int ac, char *av[]){
 		std::vector<pollfd> fds;
 		std::vector<int> servers;
 		std::map<int , Client> clients;
+		//std::vector<std::string> created;
 
 		config.readingFile();
 		config.checkBraces();
 		config.fill_Directives_Locations();
 
 		for (size_t i = 0; i < config.servers.size(); ++i){
-			if (config.servers[i].createServer()){
+			if (config.servers[i].createServer(/*created*/)){
 				for (int j = i; j >= 0; --j)
 					config.servers[j].closeFd();
 				std::cout << "error while creating servers\n";

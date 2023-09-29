@@ -127,7 +127,10 @@ bool								request::checkHeaders(){
 			return true;
 		}
 	}
-
+	if (headers.find("Host") == headers.end()){
+		err = "400";
+		return true;
+	}
 	if (method == "POST"){
 		if (headers.find("Content-Length") == headers.end() && headers.find("Transfer-Encoding") == headers.end()){
 			err = "400";
