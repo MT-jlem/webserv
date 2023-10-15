@@ -34,4 +34,4 @@ Provide detailed instructions on how to build, configure, and run the Webserv pr
 
 ```bash
 # Example usage commands
-./webserv [configuration file]
+./webserv default.conf
